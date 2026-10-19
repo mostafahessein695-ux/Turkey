@@ -82,6 +82,9 @@ export async function testConnection() {
 testConnection();
 
 export const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({
+  prompt: 'select_account',
+});
 
 export async function loginWithGoogle() {
   try {
