@@ -1,1 +1,176 @@
 @import "tailwindcss";
+
+/* -------------------------------------------------------------
+ * HARDWARE-ACCELERATED ULTRA-SMOOTH ANIMATIONS (60FPS / 120FPS)
+ * Designed for Gen Z Dark Luxury aesthetic with zero jank or lag.
+ * Uses only composited properties (transform, opacity).
+ * ----------------------------------------------------------- */
+
+@keyframes spin-vinyl {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes marquee-drift {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@keyframes pulse-ambient {
+  0%, 100% {
+    opacity: 0.4;
+    transform: scale(0.98);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.02);
+  }
+}
+
+@keyframes float-slow {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -6px, 0);
+  }
+}
+
+@keyframes sound-bar-1 {
+  0%, 100% { transform: scaleY(0.25); }
+  50% { transform: scaleY(1); }
+}
+
+@keyframes sound-bar-2 {
+  0%, 100% { transform: scaleY(0.8); }
+  50% { transform: scaleY(0.3); }
+}
+
+@keyframes sound-bar-3 {
+  0%, 100% { transform: scaleY(0.35); }
+  50% { transform: scaleY(0.95); }
+}
+
+@keyframes sound-bar-4 {
+  0%, 100% { transform: scaleY(0.9); }
+  50% { transform: scaleY(0.2); }
+}
+
+@keyframes sheen-sweep {
+  0% {
+    transform: translate3d(-100%, -100%, 0) rotate(45deg);
+  }
+  100% {
+    transform: translate3d(200%, 200%, 0) rotate(45deg);
+  }
+}
+
+/* Reusable animation utilities */
+.animate-spin-vinyl {
+  animation: spin-vinyl 14s linear infinite;
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+.animate-spin-slow {
+  animation: spin-vinyl 28s linear infinite;
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee-drift 32s linear infinite;
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+.animate-float {
+  animation: float-slow 6s ease-in-out infinite;
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+.animate-ambient-pulse {
+  animation: pulse-ambient 3s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.bar-anim-1 {
+  transform-origin: bottom;
+  animation: sound-bar-1 1.2s ease-in-out infinite;
+}
+
+.bar-anim-2 {
+  transform-origin: bottom;
+  animation: sound-bar-2 0.9s ease-in-out infinite;
+}
+
+.bar-anim-3 {
+  transform-origin: bottom;
+  animation: sound-bar-3 1.4s ease-in-out infinite;
+}
+
+.bar-anim-4 {
+  transform-origin: bottom;
+  animation: sound-bar-4 1.1s ease-in-out infinite;
+}
+
+/* Luxury micro-interactions with zero layout shift */
+.hover-luxury-lift {
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, box-shadow 0.4s ease;
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+.hover-luxury-lift:hover {
+  transform: translate3d(0, -6px, 0);
+  box-shadow: 0 16px 32px -8px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+
+.vinyl-peek {
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+
+.group:hover .vinyl-peek {
+  transform: translate3d(24px, 0, 0) rotate(18deg);
+}
+
+/* Glass backdrop */
+.glass-panel {
+  background: rgba(11, 11, 11, 0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .animate-spin-vinyl,
+  .animate-spin-slow,
+  .animate-marquee,
+  .animate-float,
+  .animate-ambient-pulse,
+  .bar-anim-1,
+  .bar-anim-2,
+  .bar-anim-3,
+  .bar-anim-4,
+  .hover-luxury-lift {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+}

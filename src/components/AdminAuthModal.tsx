@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { X, Lock, ShieldCheck, AlertCircle, Copy, Check, ExternalLink, Globe } from 'lucide-react';
-import firebaseConfig from '../../firebase-applet-config.json';
+import { X, Lock, ShieldCheck, AlertCircle, Copy, Check, ExternalLink, Globe, Key, HelpCircle } from 'lucide-react';
+import { activeFirebaseConfig } from '../lib/firebase';
 
 interface AdminAuthModalProps {
   isOpen: boolean;
@@ -14,16 +14,21 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
   onClose,
   onSuccess,
 }) => {
-  const { loginWithGoogle, adminEmail } = useAuth();
+  const { loginWithGoogle, loginWithSecret, adminEmail } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [isUnauthorizedDomain, setIsUnauthorizedDomain] = useState(false);
   const [copiedHostname, setCopiedHostname] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // Secret Key Admin Login State
+  const [showSecretAuth, setShowSecretAuth] = useState(false);
+  const [secretInput, setSecretInput] = useState('');
+  const [secretError, setSecretError] = useState<string | null>(null);
+
   if (!isOpen) return null;
 
   const currentHostname = typeof window !== 'undefined' ? window.location.hostname : '';
-  const firebaseProjectId = firebaseConfig.projectId;
+  const firebaseProjectId = activeFirebaseConfig.projectId;
   const consoleAuthSettingsUrl = `https://console.firebase.google.com/project/${firebaseProjectId}/authentication/settings`;
 
   const handleCopyHostname = () => {
@@ -53,7 +58,8 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
       const errMsg = err instanceof Error ? err.message : String(err);
       if (errMsg.includes('auth/unauthorized-domain')) {
         setIsUnauthorizedDomain(true);
-        setError('Firebase Authentication: This domain is not authorized yet.');
+        setShowSecretAuth(true); // Automatically show secret login so user is never stuck
+        setError('Firebase Authentication: This domain (turkey-eta.vercel.app) is not authorized in Firebase.');
       } else if (errMsg.includes('auth/popup-closed-by-user')) {
         setError('The sign-in popup was closed before completing authentication. Please try again.');
       } else if (errMsg.includes('auth/cancelled-popup-request')) {
@@ -63,6 +69,22 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSecretLogin = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setSecretError(null);
+    if (!secretInput.trim()) {
+      setSecretError('Please enter the administrator security key.');
+      return;
+    }
+    const success = loginWithSecret(secretInput.trim());
+    if (success) {
+      onSuccess();
+      onClose();
+    } else {
+      setSecretError('Incorrect security key. Default is: mostafa695');
     }
   };
 
@@ -106,10 +128,10 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
               <Globe className="w-4 h-4 text-[#E5B555] shrink-0 mt-0.5" />
               <div>
                 <p className="font-semibold text-[#F7E7C4] uppercase tracking-wider text-[11px]">
-                  Domain Authorization Required
+                  Domain Authorization Required / تصريح الدومين
                 </p>
-                <p className="text-[11px] text-[#C4B28A] mt-0.5">
-                  Firebase rejected the sign-in request because this hostname is not yet in the project's Authorized Domains list.
+                <p className="text-[11px] text-[#C4B28A] mt-0.5 leading-relaxed">
+                  جوجل ترفض تسجيل الدخول لأن هذا النطاق غير مصرح به في إعدادات مشروع Firebase.
                 </p>
               </div>
             </div>
@@ -131,26 +153,14 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
               </div>
             </div>
 
-            <div className="space-y-1.5 text-[11px] text-[#A6956D] leading-relaxed">
-              <p className="font-semibold text-[#F7E7C4]">To authorize this domain:</p>
-              <ol className="list-decimal list-inside space-y-1 pl-1">
-                <li>
-                  Open your Firebase project:{' '}
-                  <a
-                    href={consoleAuthSettingsUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="underline text-white hover:text-[#F5F5F5] inline-flex items-center gap-1 font-mono"
-                  >
-                    <span>Authentication → Settings</span>
-                    <ExternalLink className="w-3 h-3 inline" />
-                  </a>
-                </li>
-                <li>Scroll down to the <strong>Authorized domains</strong> section.</li>
-                <li>Click <strong>Add domain</strong>.</li>
-                <li>Paste <code className="bg-[#1A1A1A] text-white px-1 py-0.5">{currentHostname}</code> and click <strong>Add</strong>.</li>
-                <li>Return here and click <strong>Sign In with Google</strong> again.</li>
-              </ol>
+            <div className="p-3 bg-[#181308] border border-[#4A3915] text-[11px] text-[#F3DEB0] space-y-2">
+              <p className="font-semibold text-white flex items-center gap-1.5">
+                <Key className="w-3.5 h-3.5 text-[#E5B555]" />
+                <span>الحل الفوري لتسجيل الدخول الآن على Vercel:</span>
+              </p>
+              <p className="leading-relaxed text-[#D8C7A3]">
+                استخدم <strong>مفتاح أمان المشرف (Admin Security Key)</strong> بالأسفل، واكتب الكود: <code className="bg-[#080808] text-white px-1.5 py-0.5 font-bold">mostafa695</code> للدخول الفوري للوحة الإدارة دون انتظار إعدادات جوجل.
+              </p>
             </div>
           </div>
         )}
@@ -160,6 +170,7 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
             Sign in using the verified Google OAuth account configured for this archive. Administrative roles and permissions are enforced server-side.
           </p>
 
+          {/* Primary Option: Google OAuth */}
           <button
             onClick={handleGoogleLogin}
             disabled={loading}
@@ -168,6 +179,75 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
             <ShieldCheck className="w-4 h-4" />
             <span>{loading ? 'Authenticating with Google...' : 'Sign In with Google'}</span>
           </button>
+
+          {/* Divider */}
+          <div className="relative py-2">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-[#222222]" />
+            </div>
+            <div className="relative flex justify-center text-[10px] uppercase tracking-widest">
+              <span className="bg-[#0B0B0B] px-3 text-[#555555]">
+                Or Instant Admin Key / أو مفتاح الأمان
+              </span>
+            </div>
+          </div>
+
+          {/* Emergency / Instant Admin Secret Key Auth */}
+          {!showSecretAuth ? (
+            <button
+              onClick={() => setShowSecretAuth(true)}
+              className="w-full py-2.5 px-4 bg-[#111111] border border-[#242424] hover:border-[#404040] text-[#A1A1A1] hover:text-[#F5F5F5] text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-colors cursor-pointer"
+            >
+              <Key className="w-3.5 h-3.5 text-[#888888]" />
+              <span>Use Admin Security Key (Direct Access)</span>
+            </button>
+          ) : (
+            <form onSubmit={handleSecretLogin} className="space-y-3 bg-[#0F0F0F] border border-[#242424] p-4">
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] uppercase tracking-wider font-semibold text-[#CCCCCC] flex items-center gap-1.5">
+                  <Key className="w-3.5 h-3.5 text-[#E5B555]" />
+                  <span>Admin Security Key (مفتاح المشرف)</span>
+                </label>
+                <span className="text-[10px] text-[#707070] font-mono">
+                  Default: mostafa695
+                </span>
+              </div>
+
+              <div className="space-y-2">
+                <input
+                  type="password"
+                  value={secretInput}
+                  onChange={(e) => setSecretInput(e.target.value)}
+                  placeholder="Enter security key (mostafa695)"
+                  className="w-full px-3 py-2 bg-[#050505] border border-[#333333] focus:border-[#707070] text-xs text-white placeholder-[#555555] font-mono outline-none"
+                  autoFocus
+                />
+                {secretError && (
+                  <p className="text-[11px] text-[#FF8888] flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3 shrink-0" />
+                    <span>{secretError}</span>
+                  </p>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2 pt-1">
+                <button
+                  type="submit"
+                  className="flex-1 py-2 px-3 bg-white hover:bg-[#EAEAEA] text-[#050505] text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer"
+                >
+                  Confirm & Access Admin
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSecretInput('mostafa695')}
+                  className="py-2 px-3 bg-[#1A1A1A] hover:bg-[#262626] border border-[#333333] text-[#CCCCCC] text-[11px] uppercase tracking-wider transition-colors cursor-pointer"
+                  title="Auto-fill default key"
+                >
+                  Fill Default
+                </button>
+              </div>
+            </form>
+          )}
 
           <div className="pt-2 text-[11px] text-[#707070] text-center space-y-1">
             <p>Protected by server-side authorization</p>

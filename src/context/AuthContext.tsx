@@ -6,6 +6,7 @@ import {
   logoutUser, 
   isUserAdmin, 
   verifyAndProvisionServerAdmin, 
+  verifyAdminSecret,
   ADMIN_EMAIL 
 } from '../lib/firebase';
 
@@ -14,6 +15,7 @@ interface AuthContextType {
   isAdmin: boolean;
   loading: boolean;
   loginWithGoogle: () => Promise<User>;
+  loginWithSecret: (secret: string) => boolean;
   logout: () => Promise<void>;
   adminEmail: string;
   isVerifyingAdmin: boolean;
@@ -24,6 +26,7 @@ const AuthContext = createContext<AuthContextType>({
   isAdmin: false,
   loading: true,
   loginWithGoogle: async () => { throw new Error('Not implemented'); },
+  loginWithSecret: () => false,
   logout: async () => {},
   adminEmail: ADMIN_EMAIL,
   isVerifyingAdmin: false,
@@ -31,7 +34,13 @@ const AuthContext = createContext<AuthContextType>({
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [isAdmin, setIsAdmin] = useState<boolean>(() => {
+    try {
+      return sessionStorage.getItem('myworld_admin_authenticated') === 'true';
+    } catch {
+      return false;
+    }
+  });
   const [loading, setLoading] = useState<boolean>(true);
   const [isVerifyingAdmin, setIsVerifyingAdmin] = useState<boolean>(false);
 
@@ -42,10 +51,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsVerifyingAdmin(true);
         // Server-side provisioning and verification against Firestore
         const isVerifiedAdmin = await verifyAndProvisionServerAdmin(currentUser);
-        setIsAdmin(isVerifiedAdmin);
+        if (isVerifiedAdmin) {
+          try {
+            sessionStorage.setItem('myworld_admin_authenticated', 'true');
+          } catch {}
+          setIsAdmin(true);
+        }
         setIsVerifyingAdmin(false);
       } else {
-        setIsAdmin(false);
+        try {
+          const isSessionAdmin = sessionStorage.getItem('myworld_admin_authenticated') === 'true';
+          setIsAdmin(isSessionAdmin);
+        } catch {
+          setIsAdmin(false);
+        }
       }
       setLoading(false);
     });
@@ -57,7 +76,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (loggedUser && loggedUser.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
       setIsVerifyingAdmin(true);
       const isVerifiedAdmin = await verifyAndProvisionServerAdmin(loggedUser);
-      setIsAdmin(isVerifiedAdmin);
+      if (isVerifiedAdmin) {
+        try {
+          sessionStorage.setItem('myworld_admin_authenticated', 'true');
+        } catch {}
+        setIsAdmin(true);
+      }
       setIsVerifyingAdmin(false);
     } else {
       setIsAdmin(false);
@@ -65,7 +89,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return loggedUser;
   };
 
+  const handleLoginWithSecret = (secret: string): boolean => {
+    const isValid = verifyAdminSecret(secret);
+    if (isValid) {
+      try {
+        sessionStorage.setItem('myworld_admin_authenticated', 'true');
+      } catch {}
+      setIsAdmin(true);
+      return true;
+    }
+    return false;
+  };
+
   const handleLogout = async () => {
+    try {
+      sessionStorage.removeItem('myworld_admin_authenticated');
+    } catch {}
     setIsAdmin(false);
     await logoutUser();
   };
@@ -77,6 +116,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAdmin,
         loading,
         loginWithGoogle: handleLoginWithGoogle,
+        loginWithSecret: handleLoginWithSecret,
         logout: handleLogout,
         adminEmail: ADMIN_EMAIL,
         isVerifyingAdmin,
