@@ -1,0 +1,163 @@
+{
+  "entities": {
+    "Song": {
+      "title": "Song",
+      "description": "A curated music track in the library",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 200 },
+        "artist": { "type": "string", "maxLength": 200 },
+        "album": { "type": "string", "maxLength": 200 },
+        "coverUrl": { "type": "string", "maxLength": 1000 },
+        "releaseYear": { "type": "string", "maxLength": 10 },
+        "genre": { "type": "string", "maxLength": 100 },
+        "moodTags": { "type": "array" },
+        "personalRating": { "type": "number" },
+        "personalNotes": { "type": "string", "maxLength": 3000 },
+        "externalUrl": { "type": "string", "maxLength": 1000 },
+        "embedUrl": { "type": "string", "maxLength": 1000 },
+        "isFeatured": { "type": "boolean" },
+        "isPublished": { "type": "boolean" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["title", "artist", "isPublished"]
+    },
+    "Artist": {
+      "title": "Artist",
+      "description": "An artist or musical project profile",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "maxLength": 200 },
+        "profileImage": { "type": "string", "maxLength": 1000 },
+        "bio": { "type": "string", "maxLength": 5000 },
+        "genres": { "type": "array" },
+        "country": { "type": "string", "maxLength": 100 },
+        "favoriteAlbums": { "type": "array" },
+        "personalThoughts": { "type": "string", "maxLength": 4000 },
+        "externalUrl": { "type": "string", "maxLength": 1000 },
+        "isFeatured": { "type": "boolean" },
+        "isPublished": { "type": "boolean" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["name", "isPublished"]
+    },
+    "Album": {
+      "title": "Album",
+      "description": "A musical album or EP",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 200 },
+        "artist": { "type": "string", "maxLength": 200 },
+        "coverImage": { "type": "string", "maxLength": 1000 },
+        "releaseYear": { "type": "string", "maxLength": 10 },
+        "genre": { "type": "string", "maxLength": 100 },
+        "tracklist": { "type": "array" },
+        "review": { "type": "string", "maxLength": 6000 },
+        "rating": { "type": "number" },
+        "externalUrl": { "type": "string", "maxLength": 1000 },
+        "isFeatured": { "type": "boolean" },
+        "isPublished": { "type": "boolean" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["title", "artist", "isPublished"]
+    },
+    "Collection": {
+      "title": "Collection",
+      "description": "A thematic collection or playlist grouping songs and albums",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 200 },
+        "slug": { "type": "string", "maxLength": 150 },
+        "description": { "type": "string", "maxLength": 3000 },
+        "coverImage": { "type": "string", "maxLength": 1000 },
+        "itemIds": { "type": "array" },
+        "isFeatured": { "type": "boolean" },
+        "isPublished": { "type": "boolean" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["title", "slug", "isPublished"]
+    },
+    "GalleryItem": {
+      "title": "GalleryItem",
+      "description": "Visual moodboard or aesthetic photograph",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 200 },
+        "imageUrl": { "type": "string", "maxLength": 1000 },
+        "caption": { "type": "string", "maxLength": 1000 },
+        "category": { "type": "string", "maxLength": 100 },
+        "isFeatured": { "type": "boolean" },
+        "isPublished": { "type": "boolean" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["title", "imageUrl", "isPublished"]
+    },
+    "Quote": {
+      "title": "Quote",
+      "description": "A personal quote or lyrical statement",
+      "type": "object",
+      "properties": {
+        "text": { "type": "string", "maxLength": 1500 },
+        "attribution": { "type": "string", "maxLength": 200 },
+        "context": { "type": "string", "maxLength": 500 },
+        "isFeatured": { "type": "boolean" },
+        "isPublished": { "type": "boolean" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["text", "isPublished"]
+    },
+    "SiteSettings": {
+      "title": "SiteSettings",
+      "description": "Homepage and about configuration",
+      "type": "object",
+      "properties": {
+        "heroHeadline": { "type": "string", "maxLength": 200 },
+        "heroSubhead": { "type": "string", "maxLength": 500 },
+        "heroImage": { "type": "string", "maxLength": 1000 },
+        "aboutBio": { "type": "string", "maxLength": 8000 },
+        "aboutPhoto": { "type": "string", "maxLength": 1000 },
+        "socialLinks": { "type": "array" },
+        "featuredCollectionId": { "type": "string", "maxLength": 100 },
+        "updatedAt": { "type": "string" }
+      }
+    }
+  },
+  "firestore": {
+    "/songs/{songId}": {
+      "schema": "Song",
+      "description": "Music library tracks"
+    },
+    "/artists/{artistId}": {
+      "schema": "Artist",
+      "description": "Artist profiles"
+    },
+    "/albums/{albumId}": {
+      "schema": "Album",
+      "description": "Curated albums and EPs"
+    },
+    "/collections/{collectionId}": {
+      "schema": "Collection",
+      "description": "Thematic collections and playlists"
+    },
+    "/gallery/{galleryId}": {
+      "schema": "GalleryItem",
+      "description": "Curated photography and moodboard imagery"
+    },
+    "/quotes/{quoteId}": {
+      "schema": "Quote",
+      "description": "Inspirational quotes and statements"
+    },
+    "/settings/{settingId}": {
+      "schema": "SiteSettings",
+      "description": "Global website content and preview configurations"
+    },
+    "/admins/{adminId}": {
+      "schema": { "$ref": "admins" },
+      "description": "Authorized administrative accounts"
+    }
+  }
+}

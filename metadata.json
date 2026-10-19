@@ -1,0 +1,7 @@
+{
+  "name": "MY WORLD — Music & Lifestyle Journal",
+  "description": "A curated personal universe of music, underground artists, albums, collections, photography, and quotes.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
