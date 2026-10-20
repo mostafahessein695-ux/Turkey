@@ -87,7 +87,7 @@ export const IntroEntrance: React.FC<IntroEntranceProps> = ({
           className="flex items-center gap-1.5 px-3 py-1.5 border border-[#242424] hover:border-white text-[11px] uppercase tracking-widest text-[#A1A1A1] hover:text-white transition-all cursor-pointer bg-[#0A0A0A]/80 backdrop-blur-sm"
           title="Skip intro (Press Esc)"
         >
-          <span>تخطي / Skip</span>
+          <span>Skip</span>
           <FastForward className="w-3 h-3 text-[#707070]" />
         </button>
       </div>
@@ -169,7 +169,7 @@ export const IntroEntrance: React.FC<IntroEntranceProps> = ({
             onClick={handleTriggerEnter}
             className="w-full group flex items-center justify-center gap-3 py-3.5 px-6 bg-[#F5F5F5] hover:bg-white text-[#050505] text-xs font-bold uppercase tracking-[0.2em] transition-all cursor-pointer shadow-[0_0_30px_rgba(255,255,255,0.15)] hover:shadow-[0_0_40px_rgba(255,255,255,0.3)] active:scale-[0.98]"
           >
-            <span>دخول الموقع / ENTER ARCHIVE</span>
+            <span>ENTER ARCHIVE</span>
             <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
           </button>
 
