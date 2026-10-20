@@ -58,13 +58,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className="space-y-6">
         <div className="pb-4 border-b border-[#242424]">
           <button
-            onClick={() => handleNavClick('home')}
-            className="text-left group cursor-pointer block"
+            onClick={() => {
+              if (!isAdmin) {
+                onOpenAdminAuth();
+              } else {
+                handleNavClick('home');
+              }
+            }}
+            className="text-left group cursor-pointer block w-full"
+            title={isAdmin ? "MY WORLD - Home" : "MY WORLD"}
           >
-            <span className="text-lg font-black tracking-[0.25em] text-[#F5F5F5] group-hover:text-white uppercase block leading-none">
+            <span className="text-lg font-black tracking-[0.25em] text-[#F5F5F5] group-hover:text-white uppercase block leading-none transition-colors">
               MY WORLD
             </span>
-            <span className="text-[10px] tracking-widest text-[#707070] uppercase mt-1 block">
+            <span className="text-[10px] tracking-widest text-[#707070] group-hover:text-[#A1A1A1] uppercase mt-1 block transition-colors">
               Music & Lifestyle
             </span>
           </button>
@@ -144,9 +151,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         )}
 
-        {/* User state or owner gateway */}
-        <div className="pt-2 border-t border-[#1C1C1C]">
-          {isAdmin ? (
+        {/* User state - visible only when admin is logged in */}
+        {isAdmin && (
+          <div className="pt-2 border-t border-[#1C1C1C]">
             <div className="space-y-2">
               <div className="flex items-center justify-between text-[11px]">
                 <div className="flex items-center gap-1.5 text-white truncate max-w-[140px]">
@@ -165,17 +172,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 Server-Verified Admin
               </span>
             </div>
-          ) : (
-            <button
-              onClick={onOpenAdminAuth}
-              className="w-full flex items-center justify-between text-left text-[11px] text-[#555555] hover:text-[#A1A1A1] transition-colors py-1 cursor-pointer"
-              title="Administrator Sign In"
-            >
-              <span>Personal Archive</span>
-              <Lock className="w-3 h-3 text-[#444444]" />
-            </button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -190,10 +188,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* 2. MOBILE TOP BAR WITH DRAWER TRIGGER */}
       <header className="lg:hidden sticky top-0 z-40 w-full bg-[#050505]/95 backdrop-blur-md border-b border-[#242424] px-5 py-3.5 flex items-center justify-between">
         <button
-          onClick={() => handleNavClick('home')}
-          className="text-left cursor-pointer"
+          onClick={() => {
+            if (!isAdmin) {
+              onOpenAdminAuth();
+            } else {
+              handleNavClick('home');
+            }
+          }}
+          className="text-left cursor-pointer group"
+          title={isAdmin ? "Home" : "MY WORLD"}
         >
-          <span className="text-base font-black tracking-[0.25em] text-[#F5F5F5] uppercase">
+          <span className="text-base font-black tracking-[0.25em] text-[#F5F5F5] group-hover:text-white uppercase transition-colors">
             MY WORLD
           </span>
         </button>

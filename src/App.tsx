@@ -40,12 +40,32 @@ import { AdminDashboard } from './pages/AdminDashboard';
 import { DetailModal } from './components/DetailModal';
 import { LightboxModal } from './components/LightboxModal';
 import { AdminAuthModal } from './components/AdminAuthModal';
+import { IntroEntrance } from './components/IntroEntrance';
 import { ASSET_IMAGES } from './assets/images';
 
 const MainApp: React.FC = () => {
   const { isAdmin } = useAuth();
   const [currentTab, setCurrentTab] = useState<NavTab>('home');
   const [loading, setLoading] = useState(true);
+
+  // Cinematic Intro Entrance State
+  const [showIntro, setShowIntro] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return !sessionStorage.getItem('myworld_intro_completed');
+    }
+    return true;
+  });
+
+  const handleIntroComplete = () => {
+    setShowIntro(false);
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('myworld_intro_completed', 'true');
+    }
+  };
+
+  const handleReplayIntro = () => {
+    setShowIntro(true);
+  };
 
   // Database states
   const [songs, setSongs] = useState<Song[]>([]);
@@ -170,6 +190,7 @@ const MainApp: React.FC = () => {
                   onSelectTab={setCurrentTab}
                   onOpenDetail={(type, data) => setDetailTarget({ type, data })}
                   onOpenLightbox={item => setLightboxItem(item)}
+                  onOpenAdminAuth={() => setAdminAuthOpen(true)}
                 />
               )}
 
@@ -260,8 +281,18 @@ const MainApp: React.FC = () => {
           settings={settings}
           onSelectTab={setCurrentTab}
           onOpenAdminAuth={() => setAdminAuthOpen(true)}
+          onReplayIntro={handleReplayIntro}
         />
       </div>
+
+      {/* Cinematic Intro Entrance Overlay */}
+      {showIntro && (
+        <IntroEntrance
+          onEnter={handleIntroComplete}
+          siteName="MY WORLD"
+          tagline={settings.heroSubhead || "A SENSORY SANCTUARY & DIGITAL SOUND ARCHIVE"}
+        />
+      )}
 
       {/* Modals & Overlays */}
       <DetailModal

@@ -35,6 +35,7 @@ interface HomePageProps {
   onSelectTab: (tab: NavTab) => void;
   onOpenDetail: (type: 'song' | 'artist' | 'album' | 'collection', data: any) => void;
   onOpenLightbox: (item: GalleryItem) => void;
+  onOpenAdminAuth?: () => void;
 }
 
 export const HomePage: React.FC<HomePageProps> = ({
@@ -48,6 +49,7 @@ export const HomePage: React.FC<HomePageProps> = ({
   onSelectTab,
   onOpenDetail,
   onOpenLightbox,
+  onOpenAdminAuth,
 }) => {
   const scrollToFeatured = () => {
     const el = document.getElementById('featured-section');
@@ -109,7 +111,11 @@ export const HomePage: React.FC<HomePageProps> = ({
                 <span className="hidden sm:inline-block text-[#707070] font-mono">33⅓ RPM</span>
               </div>
 
-              <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight text-[#F5F5F5] uppercase leading-[0.95]">
+              <h1 
+                onClick={onOpenAdminAuth}
+                className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight text-[#F5F5F5] uppercase leading-[0.95] cursor-pointer hover:text-white transition-colors"
+                title="MY WORLD"
+              >
                 {settings.heroHeadline || 'MY WORLD. MY RULES.'}
               </h1>
 
