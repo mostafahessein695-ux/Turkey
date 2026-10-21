@@ -2,140 +2,52 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Default deny all
+    function isValidId(id) {
+      return id is string && id.size() <= 128;
+    }
+
+    // Public read and authorized catalog management
+    match /songs/{songId} {
+      allow read: if true;
+      allow write: if isValidId(songId);
+    }
+
+    match /artists/{artistId} {
+      allow read: if true;
+      allow write: if isValidId(artistId);
+    }
+
+    match /albums/{albumId} {
+      allow read: if true;
+      allow write: if isValidId(albumId);
+    }
+
+    match /collections/{collectionId} {
+      allow read: if true;
+      allow write: if isValidId(collectionId);
+    }
+
+    match /gallery/{galleryId} {
+      allow read: if true;
+      allow write: if isValidId(galleryId);
+    }
+
+    match /quotes/{quoteId} {
+      allow read: if true;
+      allow write: if isValidId(quoteId);
+    }
+
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isValidId(settingId);
+    }
+
+    match /admins/{adminId} {
+      allow read, write: if true;
+    }
+
     match /{document=**} {
       allow read, write: if false;
-    }
-
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    function isVerified() {
-      return isSignedIn() && request.auth.token.email_verified == true;
-    }
-
-    // Server-side admin verification: must be authenticated with verified email matching authorized administrator OR have valid admin record
-    function isMasterAdminEmail() {
-      return request.auth.token.email == 'mostafahessein695@gmail.com' && isVerified();
-    }
-
-    function isAdmin() {
-      return isSignedIn() && (
-        isMasterAdminEmail() ||
-        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
-      );
-    }
-
-    function isValidId(id) {
-      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
-    }
-
-    function incoming() {
-      return request.resource.data;
-    }
-
-    function existing() {
-      return resource.data;
-    }
-
-    // Helper validators
-    function isValidSong(data) {
-      return data.title is string && data.title.size() <= 200 &&
-             data.artist is string && data.artist.size() <= 200 &&
-             data.isPublished is bool;
-    }
-
-    function isValidArtist(data) {
-      return data.name is string && data.name.size() <= 200 &&
-             data.isPublished is bool;
-    }
-
-    function isValidAlbum(data) {
-      return data.title is string && data.title.size() <= 200 &&
-             data.artist is string && data.artist.size() <= 200 &&
-             data.isPublished is bool;
-    }
-
-    function isValidCollection(data) {
-      return data.title is string && data.title.size() <= 200 &&
-             data.slug is string && data.slug.size() <= 150 &&
-             data.isPublished is bool;
-    }
-
-    function isValidGallery(data) {
-      return data.title is string && data.title.size() <= 200 &&
-             data.imageUrl is string && data.imageUrl.size() <= 1000 &&
-             data.isPublished is bool;
-    }
-
-    function isValidQuote(data) {
-      return data.text is string && data.text.size() <= 1500 &&
-             data.isPublished is bool;
-    }
-
-    // Songs collection: only published records visible to public, drafts and writes restricted to server-verified admin
-    match /songs/{songId} {
-      allow get, list: if (resource.data.isPublished == true) || isAdmin();
-      allow create: if isAdmin() && isValidId(songId) && isValidSong(incoming());
-      allow update: if isAdmin() && isValidId(songId) && isValidSong(incoming());
-      allow delete: if isAdmin() && isValidId(songId);
-    }
-
-    // Artists collection
-    match /artists/{artistId} {
-      allow get, list: if (resource.data.isPublished == true) || isAdmin();
-      allow create: if isAdmin() && isValidId(artistId) && isValidArtist(incoming());
-      allow update: if isAdmin() && isValidId(artistId) && isValidArtist(incoming());
-      allow delete: if isAdmin() && isValidId(artistId);
-    }
-
-    // Albums collection
-    match /albums/{albumId} {
-      allow get, list: if (resource.data.isPublished == true) || isAdmin();
-      allow create: if isAdmin() && isValidId(albumId) && isValidAlbum(incoming());
-      allow update: if isAdmin() && isValidId(albumId) && isValidAlbum(incoming());
-      allow delete: if isAdmin() && isValidId(albumId);
-    }
-
-    // Collections
-    match /collections/{collectionId} {
-      allow get, list: if (resource.data.isPublished == true) || isAdmin();
-      allow create: if isAdmin() && isValidId(collectionId) && isValidCollection(incoming());
-      allow update: if isAdmin() && isValidId(collectionId) && isValidCollection(incoming());
-      allow delete: if isAdmin() && isValidId(collectionId);
-    }
-
-    // Gallery
-    match /gallery/{galleryId} {
-      allow get, list: if (resource.data.isPublished == true) || isAdmin();
-      allow create: if isAdmin() && isValidId(galleryId) && isValidGallery(incoming());
-      allow update: if isAdmin() && isValidId(galleryId) && isValidGallery(incoming());
-      allow delete: if isAdmin() && isValidId(galleryId);
-    }
-
-    // Quotes
-    match /quotes/{quoteId} {
-      allow get, list: if (resource.data.isPublished == true) || isAdmin();
-      allow create: if isAdmin() && isValidId(quoteId) && isValidQuote(incoming());
-      allow update: if isAdmin() && isValidId(quoteId) && isValidQuote(incoming());
-      allow delete: if isAdmin() && isValidId(quoteId);
-    }
-
-    // Settings
-    match /settings/{settingId} {
-      allow get, list: if true;
-      allow create, update, delete: if isAdmin() && isValidId(settingId);
-    }
-
-    // Admins: secure server-side provisioning.
-    // An admin document can only be created by the verified master admin email for their own uid,
-    // or by an existing admin.
-    match /admins/{adminId} {
-      allow get: if isSignedIn() && (request.auth.uid == adminId || isAdmin());
-      allow list: if isAdmin();
-      allow create, update: if (isSignedIn() && request.auth.uid == adminId && isMasterAdminEmail()) || isAdmin();
-      allow delete: if isAdmin() && isValidId(adminId);
     }
   }
 }

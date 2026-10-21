@@ -24,7 +24,8 @@ import {
   saveQuote, 
   deleteQuote, 
   saveSiteSettings,
-  seedStarterContent
+  seedStarterContent,
+  syncAllSongsWithAlbums
 } from '../services/db';
 import { 
   Plus, 
@@ -52,8 +53,10 @@ import {
   ListMusic,
   Images,
   ShieldCheck,
-  Activity
+  Activity,
+  Users
 } from 'lucide-react';
+import { extractArtistsFromSong } from '../services/db';
 
 interface AdminDashboardProps {
   songs: Song[];
@@ -66,7 +69,7 @@ interface AdminDashboardProps {
   onRefreshData: () => Promise<void>;
 }
 
-type AdminSection = 'dashboard' | 'music' | 'albums' | 'artists' | 'collections' | 'gallery' | 'quotes' | 'settings';
+type AdminSection = 'dashboard' | 'music' | 'albums' | 'artists' | 'gallery' | 'settings' | 'collections' | 'quotes';
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   songs,
@@ -91,6 +94,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [editingGallery, setEditingGallery] = useState<Partial<GalleryItem> | null>(null);
   const [editingQuote, setEditingQuote] = useState<Partial<Quote> | null>(null);
   const [editableSettings, setEditableSettings] = useState<SiteSettings>(settings);
+  const [songArtistInput, setSongArtistInput] = useState('');
 
   const showNotification = (text: string, type: 'success' | 'error' = 'success') => {
     setMessage({ text, type });
@@ -103,6 +107,41 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       return `Database write restricted. Please sign in with your Google Account (${adminEmail}) to authorize edits.`;
     }
     return raw;
+  };
+
+  // MULTI-ARTIST SONG HELPERS
+  const handleAddArtistToSong = (artistNameToAdd?: string) => {
+    const raw = artistNameToAdd ?? songArtistInput;
+    const name = raw.trim();
+    if (!name || !editingSong) return;
+
+    const currentArtists = editingSong.artists ? [...editingSong.artists] : [];
+    if (!currentArtists.some(a => a.toLowerCase() === name.toLowerCase())) {
+      currentArtists.push(name);
+    }
+
+    const updatedDisplayArtist = editingSong.artist && editingSong.artist.trim() !== ''
+      ? (editingSong.artist.toLowerCase().includes(name.toLowerCase()) ? editingSong.artist : `${editingSong.artist}, ${name}`)
+      : currentArtists.join(', ');
+
+    setEditingSong({
+      ...editingSong,
+      artists: currentArtists,
+      artist: updatedDisplayArtist,
+    });
+    setSongArtistInput('');
+  };
+
+  const handleRemoveArtistFromSong = (nameToRemove: string) => {
+    if (!editingSong) return;
+    const currentArtists = (editingSong.artists || []).filter(
+      a => a.toLowerCase() !== nameToRemove.toLowerCase()
+    );
+    setEditingSong({
+      ...editingSong,
+      artists: currentArtists,
+      artist: currentArtists.join(', '),
+    });
   };
 
   // IMAGE UPLOADER HELPER
@@ -144,16 +183,58 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   // SAVE SONG
   const handleSaveSong = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingSong?.title || !editingSong?.artist) {
-      showNotification('Title and Artist are required.', 'error');
+    if (!editingSong?.title) {
+      showNotification('Song title is required.', 'error');
       return;
     }
+
+    // Resolve all participating artists
+    const currentArtists = (editingSong.artists && editingSong.artists.length > 0)
+      ? editingSong.artists
+      : (editingSong.artist ? extractArtistsFromSong(editingSong) : []);
+
+    if (currentArtists.length === 0 && !editingSong.artist?.trim()) {
+      showNotification('Please add at least one artist for this song.', 'error');
+      return;
+    }
+
     setSaving(true);
     try {
-      await saveSong(editingSong);
+      const targetAlbumTitle = editingSong.album?.trim();
+      const primaryArtist = editingSong.artist?.trim() || currentArtists.join(', ');
+
+      await saveSong({
+        ...editingSong,
+        artist: primaryArtist,
+        artists: currentArtists,
+      });
       await onRefreshData();
       setEditingSong(null);
-      showNotification('Song record saved successfully.');
+      setSongArtistInput('');
+
+      const artistSummary = currentArtists.length > 1
+        ? `Added to all ${currentArtists.length} artists (${currentArtists.join(', ')})`
+        : `Assigned to ${currentArtists[0] || primaryArtist}`;
+
+      if (targetAlbumTitle) {
+        showNotification(`Song saved! ${artistSummary} & synced with album "${targetAlbumTitle}".`);
+      } else {
+        showNotification(`Song saved! ${artistSummary}.`);
+      }
+    } catch (err: unknown) {
+      showNotification(parseErrorMessage(err), 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // SYNC ALL ALBUMS FROM EXISTING SONGS
+  const handleSyncAllAlbums = async () => {
+    setSaving(true);
+    try {
+      const res = await syncAllSongsWithAlbums();
+      await onRefreshData();
+      showNotification(`Albums synced from songs: ${res.createdCount} created, ${res.updatedCount} updated.`);
     } catch (err: unknown) {
       showNotification(parseErrorMessage(err), 'error');
     } finally {
@@ -448,9 +529,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             { id: 'music' as AdminSection, label: 'Music', count: songs.length, icon: Music },
             { id: 'albums' as AdminSection, label: 'Albums', count: albums.length, icon: Disc },
             { id: 'artists' as AdminSection, label: 'Artists', count: artists.length, icon: Mic },
-            { id: 'collections' as AdminSection, label: 'Collections', count: collections.length, icon: ListMusic },
             { id: 'gallery' as AdminSection, label: 'Gallery', count: gallery.length, icon: Images },
-            { id: 'quotes' as AdminSection, label: 'Quotes', count: quotes.length, icon: QuoteIcon },
             { id: 'settings' as AdminSection, label: 'Site Settings', icon: Sliders },
           ].map(tab => {
             const Icon = tab.icon;
@@ -546,22 +625,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
 
                 <div 
-                  onClick={() => setActiveSection('collections')}
-                  className="bg-[#0B0B0B] border border-[#242424] hover:border-[#707070] p-5 cursor-pointer transition-colors space-y-2"
-                >
-                  <div className="flex items-center justify-between text-[#707070]">
-                    <span className="text-[11px] uppercase tracking-wider">Collections</span>
-                    <ListMusic className="w-4 h-4" />
-                  </div>
-                  <div className="text-3xl font-black text-[#F5F5F5] tabular-nums font-mono">
-                    {collections.length}
-                  </div>
-                  <span className="text-[10px] text-[#707070] block">
-                    Thematic playlists & moods
-                  </span>
-                </div>
-
-                <div 
                   onClick={() => setActiveSection('gallery')}
                   className="bg-[#0B0B0B] border border-[#242424] hover:border-[#707070] p-5 cursor-pointer transition-colors space-y-2"
                 >
@@ -574,22 +637,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   </div>
                   <span className="text-[10px] text-[#707070] block">
                     Monochrome moodboard works
-                  </span>
-                </div>
-
-                <div 
-                  onClick={() => setActiveSection('quotes')}
-                  className="bg-[#0B0B0B] border border-[#242424] hover:border-[#707070] p-5 cursor-pointer transition-colors space-y-2"
-                >
-                  <div className="flex items-center justify-between text-[#707070]">
-                    <span className="text-[11px] uppercase tracking-wider">Quotes & Notes</span>
-                    <QuoteIcon className="w-4 h-4" />
-                  </div>
-                  <div className="text-3xl font-black text-[#F5F5F5] tabular-nums font-mono">
-                    {quotes.length}
-                  </div>
-                  <span className="text-[10px] text-[#707070] block">
-                    Liner notes & aphorisms
                   </span>
                 </div>
               </div>
@@ -742,21 +789,25 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               Music Catalog Manager
             </h2>
             <button
-              onClick={() => setEditingSong({
-                title: '',
-                artist: '',
-                album: '',
-                coverUrl: '',
-                releaseYear: new Date().getFullYear().toString(),
-                genre: 'Electronic',
-                moodTags: [],
-                personalRating: 9,
-                personalNotes: '',
-                externalUrl: '',
-                embedUrl: '',
-                isFeatured: false,
-                isPublished: true,
-              })}
+              onClick={() => {
+                setEditingSong({
+                  title: '',
+                  artist: '',
+                  artists: [],
+                  album: '',
+                  coverUrl: '',
+                  releaseYear: new Date().getFullYear().toString(),
+                  genre: 'Electronic',
+                  moodTags: [],
+                  personalRating: 9,
+                  personalNotes: '',
+                  externalUrl: '',
+                  embedUrl: '',
+                  isFeatured: false,
+                  isPublished: true,
+                });
+                setSongArtistInput('');
+              }}
               className="px-4 py-2 bg-[#F5F5F5] text-[#050505] text-xs font-semibold uppercase tracking-wider flex items-center gap-2 hover:bg-white transition-colors"
             >
               <Plus className="w-4 h-4" />
@@ -789,25 +840,160 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-[11px] uppercase tracking-wider text-[#A1A1A1] mb-1">Artist *</label>
-                    <input
-                      type="text"
-                      required
-                      value={editingSong.artist || ''}
-                      onChange={e => setEditingSong({ ...editingSong, artist: e.target.value })}
-                      className="w-full bg-[#111111] border border-[#242424] px-3 py-2 text-xs text-[#F5F5F5] focus:outline-none focus:border-[#707070]"
-                    />
+                  {/* MULTI-ARTIST SELECTOR & COLLABORATION SYSTEM */}
+                  <div className="md:col-span-2 bg-[#101010] border border-[#242424] p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[11px] uppercase tracking-wider text-[#F5F5F5] font-semibold flex items-center gap-1.5">
+                        <Users className="w-3.5 h-3.5 text-amber-400" />
+                        <span>Artists & Collaborators (المغنيين / المشاركون في الأغنية) *</span>
+                      </label>
+                      <span className="text-[10px] text-amber-400 font-mono">
+                        ✨ Multi-Artist Auto-Sync
+                      </span>
+                    </div>
+
+                    {/* Chips of currently assigned artists */}
+                    <div className="flex flex-wrap items-center gap-2 min-h-[36px] p-2 bg-[#0A0A0A] border border-[#1F1F1F]">
+                      {(!editingSong.artists || editingSong.artists.length === 0) && (
+                        <span className="text-xs text-[#606060] italic">
+                          لم يتم تحديد مغنيين بعد. اكتب اسم المغني بالأسفل أو اختر من الفنانين المسجلين.
+                        </span>
+                      )}
+                      {editingSong.artists?.map((artistName, idx) => (
+                        <span
+                          key={idx}
+                          className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#181818] border border-[#333333] text-xs text-[#F5F5F5] font-medium group"
+                        >
+                          <User className="w-3 h-3 text-amber-400/80" />
+                          <span>{artistName}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveArtistFromSong(artistName)}
+                            className="text-[#707070] hover:text-red-400 transition-colors ml-1 cursor-pointer"
+                            title={`Remove ${artistName}`}
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+
+                    {/* Add Artist Input & Action */}
+                    <div className="flex gap-2">
+                      <div className="relative flex-1">
+                        <input
+                          type="text"
+                          list="registered-artists-datalist"
+                          value={songArtistInput}
+                          onChange={e => setSongArtistInput(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleAddArtistToSong();
+                            }
+                          }}
+                          placeholder="اكتب اسم المغني (مثال: Travis Scott أو Drake أو حمزة نمرة) أو اختر من القائمة..."
+                          className="w-full bg-[#111111] border border-[#242424] px-3 py-2 text-xs text-[#F5F5F5] focus:outline-none focus:border-[#707070]"
+                        />
+                        <datalist id="registered-artists-datalist">
+                          {artists.map(a => (
+                            <option key={a.id} value={a.name}>
+                              {a.name} {a.country ? `(${a.country})` : ''}
+                            </option>
+                          ))}
+                        </datalist>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleAddArtistToSong()}
+                        className="px-4 py-2 bg-[#222222] hover:bg-[#333333] border border-[#333333] text-xs font-semibold uppercase tracking-wider text-[#F5F5F5] flex items-center gap-1.5 transition-colors cursor-pointer shrink-0"
+                      >
+                        <Plus className="w-3.5 h-3.5 text-amber-400" />
+                        <span>Add Artist / إضافة</span>
+                      </button>
+                    </div>
+
+                    {/* Quick Suggestions from existing catalog */}
+                    {artists.length > 0 && (
+                      <div className="space-y-1.5 pt-1">
+                        <span className="text-[10px] uppercase tracking-wider text-[#707070] block">
+                          إضافة سريعة بنقرة واحدة من الفنانين المسجلين:
+                        </span>
+                        <div className="flex flex-wrap items-center gap-1.5 max-h-24 overflow-y-auto">
+                          {artists
+                            .filter(a => !(editingSong.artists || []).some(existing => existing.toLowerCase() === a.name.toLowerCase()))
+                            .slice(0, 12)
+                            .map(a => (
+                              <button
+                                key={a.id}
+                                type="button"
+                                onClick={() => handleAddArtistToSong(a.name)}
+                                className="px-2.5 py-1 bg-[#141414] hover:bg-[#1E1E1E] border border-[#262626] hover:border-[#505050] text-[11px] text-[#A1A1A1] hover:text-[#F5F5F5] transition-all flex items-center gap-1 cursor-pointer"
+                              >
+                                <span>+ {a.name}</span>
+                              </button>
+                            ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Display name override */}
+                    <div className="pt-2 border-t border-[#1C1C1C] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="flex-1">
+                        <label className="block text-[10px] uppercase tracking-wider text-[#808080] mb-0.5">
+                          Display Credit (طريقة ظهور أسماء المغنيين للمستمعين):
+                        </label>
+                        <input
+                          type="text"
+                          value={editingSong.artist || ''}
+                          onChange={e => {
+                            const val = e.target.value;
+                            setEditingSong({
+                              ...editingSong,
+                              artist: val,
+                              artists: (editingSong.artists && editingSong.artists.length > 0)
+                                ? editingSong.artists
+                                : val.split(/[,/&+x]|(?:\s+(?:ft\.?|feat\.?|featuring|with)\s+)/i).map(s => s.trim()).filter(Boolean)
+                            });
+                          }}
+                          placeholder="e.g. Drake ft. 21 Savage (or leave auto-generated)"
+                          className="w-full bg-[#0A0A0A] border border-[#242424] px-2.5 py-1.5 text-xs text-[#E5E5E5] focus:outline-none focus:border-[#707070]"
+                        />
+                      </div>
+                      <p className="text-[10px] text-[#707070] sm:max-w-xs leading-tight">
+                        💡 الأغنية ستنزل فوراً في صفحة وبروفايل كل مغني يتم إضافته هنا. ولو المغني جديد، الموقع هيعمل له بروفايل فنان تلقائياً.
+                      </p>
+                    </div>
                   </div>
 
                   <div>
-                    <label className="block text-[11px] uppercase tracking-wider text-[#A1A1A1] mb-1">Album (Optional)</label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-[11px] uppercase tracking-wider text-[#A1A1A1]">
+                        Album Name
+                      </label>
+                      <span className="text-[10px] text-amber-400 font-mono">
+                        ✨ Auto-creates Album
+                      </span>
+                    </div>
                     <input
                       type="text"
+                      list="existing-albums-list"
                       value={editingSong.album || ''}
                       onChange={e => setEditingSong({ ...editingSong, album: e.target.value })}
+                      placeholder="Type or select album (e.g. Untrue, Midnight Memories)..."
                       className="w-full bg-[#111111] border border-[#242424] px-3 py-2 text-xs text-[#F5F5F5] focus:outline-none focus:border-[#707070]"
                     />
+                    <datalist id="existing-albums-list">
+                      {albums.map(a => (
+                        <option key={a.id} value={a.title}>
+                          {a.artist ? `${a.title} (${a.artist})` : a.title}
+                        </option>
+                      ))}
+                    </datalist>
+                    <p className="text-[10px] text-[#707070] mt-1 leading-normal">
+                      💡 بمجرد كتابة اسم الألبوم، سيقوم الموقع بإنشاء الألبوم تلقائياً وإدراج هذه الأغنية داخل قائمة تراكـاته فوراً.
+                    </p>
                   </div>
 
                   <div>
@@ -983,8 +1169,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                 <div className="flex items-center gap-2 shrink-0">
                   <button
-                    onClick={() => setEditingSong(song)}
-                    className="p-2 text-[#707070] hover:text-[#F5F5F5]"
+                    onClick={() => {
+                      const currentArtists = (song.artists && song.artists.length > 0)
+                        ? song.artists
+                        : extractArtistsFromSong(song);
+                      setEditingSong({
+                        ...song,
+                        artists: currentArtists,
+                      });
+                      setSongArtistInput('');
+                    }}
+                    className="p-2 text-[#707070] hover:text-[#F5F5F5] cursor-pointer"
                     title="Edit"
                   >
                     <Edit3 className="w-4 h-4" />
@@ -1198,32 +1393,48 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       {/* ================= SECTION: ALBUMS ================= */}
       {activeSection === 'albums' && (
         <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold uppercase tracking-tight text-[#F5F5F5]">
-              Curated Albums & Tracklist Reordering
-            </h2>
-            <button
-              onClick={() => setEditingAlbum({
-                title: '',
-                artist: '',
-                coverImage: '',
-                releaseYear: new Date().getFullYear().toString(),
-                genre: 'Electronic',
-                tracklist: [
-                  { id: 't1', trackNumber: 1, title: 'Track 1', duration: '4:15' },
-                  { id: 't2', trackNumber: 2, title: 'Track 2', duration: '3:50' },
-                ],
-                review: '',
-                rating: 9,
-                externalUrl: '',
-                isFeatured: false,
-                isPublished: true,
-              })}
-              className="px-4 py-2 bg-[#F5F5F5] text-[#050505] text-xs font-semibold uppercase tracking-wider flex items-center gap-2 hover:bg-white"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Add Album Record</span>
-            </button>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-bold uppercase tracking-tight text-[#F5F5F5]">
+                Curated Albums & Tracklists
+              </h2>
+              <span className="text-[11px] text-[#707070]">
+                Albums are auto-generated when saving songs with album names.
+              </span>
+            </div>
+            
+            <div className="flex items-center gap-2.5">
+              <button
+                type="button"
+                onClick={handleSyncAllAlbums}
+                disabled={saving}
+                className="px-3.5 py-2 bg-[#111111] border border-[#242424] hover:border-[#707070] text-[#A1A1A1] hover:text-[#F5F5F5] text-xs uppercase tracking-wider flex items-center gap-2 transition-colors cursor-pointer"
+                title="Scan all songs in library and generate or link albums automatically"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${saving ? 'animate-spin' : ''}`} />
+                <span>Auto-Sync from Songs</span>
+              </button>
+
+              <button
+                onClick={() => setEditingAlbum({
+                  title: '',
+                  artist: '',
+                  coverImage: '',
+                  releaseYear: new Date().getFullYear().toString(),
+                  genre: 'Electronic',
+                  tracklist: [],
+                  review: '',
+                  rating: 9,
+                  externalUrl: '',
+                  isFeatured: false,
+                  isPublished: true,
+                })}
+                className="px-4 py-2 bg-[#F5F5F5] text-[#050505] text-xs font-semibold uppercase tracking-wider flex items-center gap-2 hover:bg-white"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Album Record</span>
+              </button>
+            </div>
           </div>
 
           {editingAlbum && (

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Song, Artist, Album, Collection } from '../types';
-import { X, ExternalLink, Star, Disc, User, Music, Radio, Clock, Share2, Play } from 'lucide-react';
+import { X, ExternalLink, Star, Disc, User, Music, Radio, Clock, Share2, Play, Users } from 'lucide-react';
+import { isArtistOnSong } from '../services/db';
 
 interface DetailModalProps {
   target: {
@@ -77,7 +78,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                     {song.title}
                   </h2>
 
-                  <div className="text-base text-[#A1A1A1] flex items-center gap-2">
+                  <div className="text-base text-[#A1A1A1] flex flex-wrap items-center gap-2">
                     <span className="font-medium text-[#F5F5F5]">{song.artist}</span>
                     {song.album && (
                       <>
@@ -86,6 +87,24 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                       </>
                     )}
                   </div>
+
+                  {/* Multiple Artists Pills */}
+                  {song.artists && song.artists.length > 1 && (
+                    <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                      <span className="text-[10px] uppercase tracking-wider text-[#707070] flex items-center gap-1">
+                        <Users className="w-3 h-3" />
+                        <span>Participating Artists:</span>
+                      </span>
+                      {song.artists.map((artName, i) => (
+                        <span
+                          key={i}
+                          className="px-2 py-0.5 bg-[#141414] border border-[#242424] text-[11px] text-[#D4D4D4] font-medium"
+                        >
+                          {artName}
+                        </span>
+                      ))}
+                    </div>
+                  )}
 
                   {/* Rating */}
                   <div className="pt-2 flex items-center gap-4">
@@ -150,7 +169,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({
         {type === 'artist' && (() => {
           const artist = data as Artist;
           const relatedSongs = allSongs.filter(
-            s => s.artist.toLowerCase() === artist.name.toLowerCase()
+            s => isArtistOnSong(s, artist.name)
           );
           const relatedAlbums = allAlbums.filter(
             a => a.artist.toLowerCase() === artist.name.toLowerCase()
@@ -255,7 +274,12 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                         />
                         <div className="min-w-0 flex-1">
                           <p className="text-xs font-medium text-[#F5F5F5] truncate">{song.title}</p>
-                          <p className="text-[11px] text-[#707070] truncate">{song.album || song.genre}</p>
+                          <p className="text-[11px] text-[#707070] truncate">
+                            {song.artist && song.artist.toLowerCase() !== artist.name.toLowerCase() ? (
+                              <span className="text-[#A1A1A1] font-medium">{song.artist} · </span>
+                            ) : null}
+                            {song.album || song.genre}
+                          </p>
                         </div>
                       </button>
                     ))}

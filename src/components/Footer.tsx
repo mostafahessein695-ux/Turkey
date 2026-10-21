@@ -76,28 +76,10 @@ export const Footer: React.FC<FooterProps> = ({
                 Artists & Profiles
               </button>
               <button
-                onClick={() => { onSelectTab('collections'); scrollToTop(); }}
-                className="text-left hover:text-[#F5F5F5] transition-colors"
-              >
-                Thematic Collections
-              </button>
-              <button
                 onClick={() => { onSelectTab('gallery'); scrollToTop(); }}
                 className="text-left hover:text-[#F5F5F5] transition-colors"
               >
                 Visual Gallery
-              </button>
-              <button
-                onClick={() => { onSelectTab('quotes'); scrollToTop(); }}
-                className="text-left hover:text-[#F5F5F5] transition-colors"
-              >
-                Quotes & Liner Notes
-              </button>
-              <button
-                onClick={() => { onSelectTab('about'); scrollToTop(); }}
-                className="text-left hover:text-[#F5F5F5] transition-colors"
-              >
-                About & Philosophy
               </button>
             </div>
           </div>
@@ -120,14 +102,6 @@ export const Footer: React.FC<FooterProps> = ({
                   <span className="text-xs text-[#707070] group-hover:text-[#A1A1A1]">{link.handle}</span>
                 </a>
               ))}
-            </div>
-            <div className="pt-4">
-              <button
-                onClick={() => { onSelectTab('about'); scrollToTop(); }}
-                className="text-xs uppercase tracking-wider text-[#A1A1A1] hover:text-[#F5F5F5] underline underline-offset-4"
-              >
-                Read about the philosophy →
-              </button>
             </div>
           </div>
         </div>

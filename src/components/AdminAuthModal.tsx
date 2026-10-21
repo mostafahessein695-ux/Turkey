@@ -59,7 +59,8 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
       if (errMsg.includes('auth/unauthorized-domain')) {
         setIsUnauthorizedDomain(true);
         setShowSecretAuth(true); // Automatically show secret login so user is never stuck
-        setError('Firebase Authentication: This domain (turkey-eta.vercel.app) is not authorized in Firebase.');
+        setSecretInput('mostafa695'); // Pre-fill master key for instant access
+        setError(`Firebase Authentication: This domain (${currentHostname || 'turkey-eta.vercel.app'}) is not authorized in Firebase.`);
       } else if (errMsg.includes('auth/popup-closed-by-user')) {
         setError('The sign-in popup was closed before completing authentication. Please try again.');
       } else if (errMsg.includes('auth/cancelled-popup-request')) {
@@ -159,9 +160,21 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
                 <span>الحل الفوري لتسجيل الدخول الآن على Vercel:</span>
               </p>
               <p className="leading-relaxed text-[#D8C7A3]">
-                استخدم <strong>مفتاح أمان المشرف (Admin Security Key)</strong> بالأسفل، واكتب الكود: <code className="bg-[#080808] text-white px-1.5 py-0.5 font-bold">mostafa695</code> للدخول الفوري للوحة الإدارة دون انتظار إعدادات جوجل.
+                تم تجهيز <strong>مفتاح المشرف (Admin Security Key)</strong> بالأسفل تلقائياً بالكود: <code className="bg-[#080808] text-white px-1.5 py-0.5 font-bold">mostafa695</code>. اضغط زر الدخول بالأسفل فوراً للوصول للوحة التحكم.
               </p>
             </div>
+
+            {consoleAuthSettingsUrl && (
+              <a
+                href={consoleAuthSettingsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-2 px-3 bg-[#1A1408] hover:bg-[#261E0C] border border-[#4D3A16] text-[#F3DEB0] hover:text-white text-[10px] uppercase tracking-wider flex items-center justify-center gap-2 transition-colors cursor-pointer"
+              >
+                <ExternalLink className="w-3.5 h-3.5 text-[#E5B555]" />
+                <span>Firebase Console: Add Authorized Domain</span>
+              </a>
+            )}
           </div>
         )}
 

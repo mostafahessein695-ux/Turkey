@@ -474,13 +474,267 @@ export async function fetchAllSongs(): Promise<Song[]> {
   }
 }
 
+// ==========================================
+// ALBUM AUTO-SYNC HELPER
+// Automatically creates an album when a song has an album name,
+// or appends the song to the album's tracklist if it already exists.
+// ==========================================
+export async function autoSyncAlbumForSong(song: Song): Promise<{ action: 'created' | 'updated' | 'unchanged'; albumId: string; albumTitle: string } | null> {
+  const albumTitle = song.album?.trim();
+  if (!albumTitle) return null;
+
+  try {
+    const allAlbums = await fetchAllAlbums();
+    const normalizedTitle = albumTitle.toLowerCase();
+
+    // 1. Check if album already exists (by title and artist, or by title)
+    let existingAlbum = allAlbums.find(
+      a => a.title.trim().toLowerCase() === normalizedTitle &&
+           a.artist.trim().toLowerCase() === (song.artist || '').trim().toLowerCase()
+    );
+
+    if (!existingAlbum) {
+      existingAlbum = allAlbums.find(
+        a => a.title.trim().toLowerCase() === normalizedTitle
+      );
+    }
+
+    const now = new Date().toISOString();
+
+    if (!existingAlbum) {
+      // Case A: Album does NOT exist -> Automatically create it with this song as Track 1
+      const newAlbumId = `album_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+      const newAlbum: Album = {
+        id: newAlbumId,
+        title: albumTitle,
+        artist: song.artist || 'Unknown Artist',
+        coverImage: song.coverUrl && song.coverUrl !== ASSET_IMAGES.albumCover 
+          ? song.coverUrl 
+          : ASSET_IMAGES.albumCover,
+        releaseYear: song.releaseYear || new Date().getFullYear().toString(),
+        genre: song.genre || 'Electronic',
+        tracklist: [
+          {
+            id: song.id,
+            trackNumber: 1,
+            title: song.title,
+            duration: '',
+          }
+        ],
+        review: `Curated album archive for ${albumTitle} by ${song.artist}.`,
+        rating: song.personalRating ?? 9,
+        externalUrl: song.externalUrl || '',
+        isFeatured: false,
+        isPublished: true,
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      await setDoc(doc(db, ALBUMS_COLL, newAlbumId), newAlbum);
+      return { action: 'created', albumId: newAlbumId, albumTitle };
+    } else {
+      // Case B: Album already exists -> Check if this song is in the tracklist
+      const currentTracklist = Array.isArray(existingAlbum.tracklist) ? [...existingAlbum.tracklist] : [];
+      
+      const trackIndex = currentTracklist.findIndex(
+        t => t.id === song.id || t.title.trim().toLowerCase() === song.title.trim().toLowerCase()
+      );
+
+      let wasChanged = false;
+
+      if (trackIndex === -1) {
+        // Not in tracklist yet -> append it
+        currentTracklist.push({
+          id: song.id,
+          trackNumber: currentTracklist.length + 1,
+          title: song.title,
+          duration: '',
+        });
+        wasChanged = true;
+      } else {
+        // Already in tracklist -> ensure id and title match current song
+        if (currentTracklist[trackIndex].title !== song.title || currentTracklist[trackIndex].id !== song.id) {
+          currentTracklist[trackIndex] = {
+            ...currentTracklist[trackIndex],
+            id: song.id,
+            title: song.title,
+          };
+          wasChanged = true;
+        }
+      }
+
+      // If album had default cover and song has a custom cover, adopt it
+      let coverImage = existingAlbum.coverImage;
+      if (
+        (!coverImage || coverImage === ASSET_IMAGES.albumCover) &&
+        song.coverUrl &&
+        song.coverUrl !== ASSET_IMAGES.albumCover
+      ) {
+        coverImage = song.coverUrl;
+        wasChanged = true;
+      }
+
+      if (wasChanged) {
+        const updatedAlbumPayload: Album = {
+          ...existingAlbum,
+          coverImage,
+          tracklist: currentTracklist,
+          updatedAt: now,
+        };
+        await setDoc(doc(db, ALBUMS_COLL, existingAlbum.id), updatedAlbumPayload);
+        return { action: 'updated', albumId: existingAlbum.id, albumTitle: existingAlbum.title };
+      }
+
+      return { action: 'unchanged', albumId: existingAlbum.id, albumTitle: existingAlbum.title };
+    }
+  } catch (err) {
+    console.error('Error in autoSyncAlbumForSong:', err);
+    return null;
+  }
+}
+
+// Utility to sync all songs across all albums in one pass
+export async function syncAllSongsWithAlbums(): Promise<{ createdCount: number; updatedCount: number }> {
+  const songs = await fetchAllSongs();
+  let createdCount = 0;
+  let updatedCount = 0;
+
+  for (const song of songs) {
+    if (song.album && song.album.trim().length > 0) {
+      const res = await autoSyncAlbumForSong(song);
+      if (res?.action === 'created') createdCount++;
+      if (res?.action === 'updated') updatedCount++;
+    }
+  }
+
+  return { createdCount, updatedCount };
+}
+
+// ==========================================
+// MULTI-ARTIST EXTRACTION & SYNC HELPERS
+// Ensures tracks with multiple artists are properly indexed under each artist
+// and auto-creates artist catalog profiles if an artist doesn't exist yet.
+// ==========================================
+
+export function extractArtistsFromSong(song: Partial<Song>): string[] {
+  const result: string[] = [];
+  const seen = new Set<string>();
+
+  const add = (name?: string) => {
+    if (!name) return;
+    const clean = name.trim();
+    if (clean && !seen.has(clean.toLowerCase())) {
+      seen.add(clean.toLowerCase());
+      result.push(clean);
+    }
+  };
+
+  // 1. Add from explicit artists array
+  if (Array.isArray(song.artists)) {
+    song.artists.forEach(add);
+  }
+
+  // 2. Also parse from song.artist string (split on comma, &, /, +, feat., ft., featuring, with)
+  if (song.artist && song.artist.trim()) {
+    const parts = song.artist
+      .split(/[,/&+x]|(?:\s+(?:ft\.?|feat\.?|featuring|with)\s+)/i)
+      .map(p => p.trim())
+      .filter(Boolean);
+    parts.forEach(add);
+  }
+
+  return result;
+}
+
+export function isArtistOnSong(song: Song, artistName: string): boolean {
+  if (!song || !artistName) return false;
+  const target = artistName.trim().toLowerCase();
+  if (!target) return false;
+
+  // 1. Explicit artists array check
+  if (Array.isArray(song.artists) && song.artists.length > 0) {
+    if (song.artists.some(a => a && a.trim().toLowerCase() === target)) {
+      return true;
+    }
+  }
+
+  // 2. Main artist exact match
+  const primary = (song.artist || '').trim().toLowerCase();
+  if (primary === target) return true;
+
+  // 3. Extracted parts check
+  const parts = primary
+    .split(/[,/&+x]|(?:\s+(?:ft\.?|feat\.?|featuring|with)\s+)/i)
+    .map(p => p.trim().toLowerCase())
+    .filter(Boolean);
+  if (parts.some(p => p === target)) return true;
+
+  // 4. Substring check
+  if (primary.includes(target)) return true;
+
+  return false;
+}
+
+export async function autoSyncArtistsForSong(song: Song): Promise<string[]> {
+  try {
+    const artistNames = extractArtistsFromSong(song);
+    if (artistNames.length === 0) return [];
+
+    const existingArtists = await fetchAllArtists();
+    const createdNames: string[] = [];
+
+    for (const name of artistNames) {
+      const match = existingArtists.find(
+        a => a.name.trim().toLowerCase() === name.toLowerCase()
+      );
+
+      if (!match) {
+        // Automatically create an artist profile so the song is immediately accessible under this artist!
+        const artistId = `artist_${name.toLowerCase().replace(/[^a-z0-9]/g, '_').slice(0, 24)}_${Date.now().toString().slice(-4)}`;
+        const now = new Date().toISOString();
+        const newArtistPayload: Artist = {
+          id: artistId,
+          name: name,
+          profileImage: song.coverUrl && song.coverUrl !== ASSET_IMAGES.albumCover 
+            ? song.coverUrl 
+            : ASSET_IMAGES.artistPortrait,
+          bio: `Artist cataloged in MY WORLD archive. Featured on track: "${song.title}".`,
+          genres: song.genre ? [song.genre] : [],
+          country: '',
+          favoriteAlbums: song.album ? [song.album] : [],
+          personalThoughts: `Archived automatically via release "${song.title}".`,
+          externalUrl: song.externalUrl || '',
+          isFeatured: false,
+          isPublished: true,
+          createdAt: now,
+          updatedAt: now,
+        };
+        await setDoc(doc(db, ARTISTS_COLL, artistId), newArtistPayload);
+        createdNames.push(name);
+        existingArtists.push(newArtistPayload);
+      }
+    }
+    return createdNames;
+  } catch (err) {
+    console.error('Error in autoSyncArtistsForSong:', err);
+    return [];
+  }
+}
+
 export async function saveSong(song: Partial<Song> & { id?: string }): Promise<string> {
   const songId = song.id || `song_${Date.now()}`;
   const now = new Date().toISOString();
+
+  // Normalize artists array and primary artist string
+  const extracted = extractArtistsFromSong(song);
+  const normalizedArtists = extracted.length > 0 ? extracted : (song.artist?.trim() ? [song.artist.trim()] : []);
+  const primaryArtist = song.artist?.trim() || (normalizedArtists.length > 0 ? normalizedArtists.join(', ') : 'Unknown Artist');
+
   const payload: Song = {
     id: songId,
     title: song.title || 'Untitled Track',
-    artist: song.artist || 'Unknown Artist',
+    artist: primaryArtist,
+    artists: normalizedArtists,
     album: song.album || '',
     coverUrl: song.coverUrl || ASSET_IMAGES.albumCover,
     releaseYear: song.releaseYear || new Date().getFullYear().toString(),
@@ -498,6 +752,18 @@ export async function saveSong(song: Partial<Song> & { id?: string }): Promise<s
 
   try {
     await setDoc(doc(db, SONGS_COLL, songId), payload);
+
+    // AUTO-CREATE OR LINK ALBUM:
+    // If user specified an album name, automatically ensure the album exists
+    // and that this song is included in its tracklist!
+    if (payload.album && payload.album.trim().length > 0) {
+      await autoSyncAlbumForSong(payload);
+    }
+
+    // AUTO-CREATE OR LINK ARTISTS:
+    // Automatically ensures each artist has a profile and the song is indexed under each of them!
+    await autoSyncArtistsForSong(payload);
+
     return songId;
   } catch (err) {
     handleFirestoreError(err, OperationType.WRITE, `${SONGS_COLL}/${songId}`);
@@ -508,6 +774,25 @@ export async function saveSong(song: Partial<Song> & { id?: string }): Promise<s
 export async function deleteSong(id: string): Promise<void> {
   try {
     await deleteDoc(doc(db, SONGS_COLL, id));
+
+    // Also remove from any album tracklist that contains this song
+    try {
+      const allAlbums = await fetchAllAlbums();
+      for (const album of allAlbums) {
+        if (album.tracklist && album.tracklist.some(t => t.id === id)) {
+          const updatedTracklist = album.tracklist
+            .filter(t => t.id !== id)
+            .map((t, idx) => ({ ...t, trackNumber: idx + 1 }));
+          await setDoc(doc(db, ALBUMS_COLL, album.id), {
+            ...album,
+            tracklist: updatedTracklist,
+            updatedAt: new Date().toISOString(),
+          });
+        }
+      }
+    } catch (cleanupErr) {
+      console.warn('Could not clean up tracklist in albums after song deletion:', cleanupErr);
+    }
   } catch (err) {
     handleFirestoreError(err, OperationType.DELETE, `${SONGS_COLL}/${id}`);
     throw err;

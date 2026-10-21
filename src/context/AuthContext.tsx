@@ -36,7 +36,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState<boolean>(() => {
     try {
-      return sessionStorage.getItem('myworld_admin_authenticated') === 'true';
+      return (
+        sessionStorage.getItem('myworld_admin_authenticated') === 'true' ||
+        localStorage.getItem('myworld_admin_authenticated') === 'true'
+      );
     } catch {
       return false;
     }
@@ -54,14 +57,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (isVerifiedAdmin) {
           try {
             sessionStorage.setItem('myworld_admin_authenticated', 'true');
+            localStorage.setItem('myworld_admin_authenticated', 'true');
           } catch {}
           setIsAdmin(true);
         }
         setIsVerifyingAdmin(false);
       } else {
         try {
-          const isSessionAdmin = sessionStorage.getItem('myworld_admin_authenticated') === 'true';
-          setIsAdmin(isSessionAdmin);
+          const isStoredAdmin = (
+            sessionStorage.getItem('myworld_admin_authenticated') === 'true' ||
+            localStorage.getItem('myworld_admin_authenticated') === 'true'
+          );
+          setIsAdmin(isStoredAdmin);
         } catch {
           setIsAdmin(false);
         }
@@ -79,6 +86,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (isVerifiedAdmin) {
         try {
           sessionStorage.setItem('myworld_admin_authenticated', 'true');
+          localStorage.setItem('myworld_admin_authenticated', 'true');
         } catch {}
         setIsAdmin(true);
       }
@@ -94,6 +102,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (isValid) {
       try {
         sessionStorage.setItem('myworld_admin_authenticated', 'true');
+        localStorage.setItem('myworld_admin_authenticated', 'true');
       } catch {}
       setIsAdmin(true);
       return true;
@@ -104,6 +113,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const handleLogout = async () => {
     try {
       sessionStorage.removeItem('myworld_admin_authenticated');
+      localStorage.removeItem('myworld_admin_authenticated');
     } catch {}
     setIsAdmin(false);
     await logoutUser();

@@ -2,6 +2,7 @@ export interface Song {
   id: string;
   title: string;
   artist: string;
+  artists?: string[]; // Multiple artists / collaborators
   album?: string;
   coverUrl: string;
   releaseYear?: string;
@@ -112,10 +113,7 @@ export type NavTab =
   | 'music' 
   | 'artists' 
   | 'albums' 
-  | 'collections' 
   | 'gallery' 
-  | 'quotes' 
-  | 'about' 
   | 'admin';
 
 export interface DetailViewTarget {

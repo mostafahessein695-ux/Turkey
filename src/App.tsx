@@ -32,10 +32,7 @@ import { HomePage } from './pages/HomePage';
 import { MusicPage } from './pages/MusicPage';
 import { AlbumsPage } from './pages/AlbumsPage';
 import { ArtistsPage } from './pages/ArtistsPage';
-import { CollectionsPage } from './pages/CollectionsPage';
 import { GalleryPage } from './pages/GalleryPage';
-import { QuotesPage } from './pages/QuotesPage';
-import { AboutPage } from './pages/AboutPage';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { DetailModal } from './components/DetailModal';
 import { LightboxModal } from './components/LightboxModal';
@@ -215,31 +212,10 @@ const MainApp: React.FC = () => {
                 />
               )}
 
-              {currentTab === 'collections' && (
-                <CollectionsPage
-                  collections={collections}
-                  songs={songs}
-                  albums={albums}
-                  onOpenDetail={col => setDetailTarget({ type: 'collection', data: col })}
-                />
-              )}
-
               {currentTab === 'gallery' && (
                 <GalleryPage
                   gallery={gallery}
                   onOpenLightbox={item => setLightboxItem(item)}
-                />
-              )}
-
-              {currentTab === 'quotes' && (
-                <QuotesPage
-                  quotes={quotes}
-                />
-              )}
-
-              {currentTab === 'about' && (
-                <AboutPage
-                  settings={settings}
                 />
               )}
 

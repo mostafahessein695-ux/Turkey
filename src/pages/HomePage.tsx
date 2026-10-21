@@ -23,6 +23,7 @@ import {
   Music,
   Users
 } from 'lucide-react';
+import { isArtistOnSong } from '../services/db';
 
 interface HomePageProps {
   settings: SiteSettings;
@@ -73,13 +74,7 @@ export const HomePage: React.FC<HomePageProps> = ({
   // 3. Current favorites (rating >= 9.5 or featured)
   const favoriteSongs = songs.filter(s => s.personalRating >= 9.5 || s.isFeatured).slice(0, 4);
 
-  // 4. Featured collection
-  const featuredCollection = collections.find(c => c.isFeatured) || collections[0];
-
-  // 5. Featured quote
-  const featuredQuote = quotes.find(q => q.isFeatured) || quotes[0];
-
-  // 6. Visual moodboard items
+  // 4. Visual moodboard items
   const moodboardItems = gallery.slice(0, 6);
 
   return (
@@ -141,10 +136,11 @@ export const HomePage: React.FC<HomePageProps> = ({
                 </button>
 
                 <button
-                  onClick={() => onSelectTab('about')}
-                  className="px-6 py-4 bg-transparent hover:bg-[#111111]/40 border border-[#242424] hover:border-[#707070] text-[#A1A1A1] hover:text-white text-xs font-medium uppercase tracking-widest transition-colors cursor-pointer"
+                  onClick={() => onSelectTab('albums')}
+                  className="px-6 py-4 bg-transparent hover:bg-[#111111]/40 border border-[#242424] hover:border-[#707070] text-[#A1A1A1] hover:text-white text-xs font-medium uppercase tracking-widest transition-colors flex items-center gap-2 cursor-pointer"
                 >
-                  Philosophy
+                  <Disc className="w-3.5 h-3.5 text-[#A1A1A1]" />
+                  <span>Curated Albums</span>
                 </button>
               </div>
             </div>
@@ -294,7 +290,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {homeArtists.map(artist => {
               const artistSongsCount = songs.filter(
-                s => s.artist.toLowerCase() === artist.name.toLowerCase()
+                s => isArtistOnSong(s, artist.name)
               ).length;
               const artistAlbumsCount = albums.filter(
                 a => a.artist.toLowerCase() === artist.name.toLowerCase()
@@ -579,53 +575,7 @@ export const HomePage: React.FC<HomePageProps> = ({
         </div>
       </section>
 
-      {/* 6. FEATURED COLLECTION SPOTLIGHT */}
-      {featuredCollection && (
-        <section className="max-w-7xl mx-auto px-6">
-          <div className="relative bg-[#0B0B0B] border border-[#242424] overflow-hidden grid grid-cols-1 md:grid-cols-12 hover-luxury-lift">
-            <div className="md:col-span-6 p-8 sm:p-12 lg:p-16 flex flex-col justify-between space-y-6">
-              <div>
-                <span className="text-xs uppercase tracking-widest text-[#707070] block mb-2">
-                  Featured Collection Playlist
-                </span>
-                <h3 className="text-3xl sm:text-4xl font-black text-[#F5F5F5] uppercase tracking-tight">
-                  {featuredCollection.title}
-                </h3>
-                <p className="text-sm text-[#A1A1A1] leading-relaxed mt-4 font-light">
-                  {featuredCollection.description}
-                </p>
-                <div className="mt-4 text-xs text-[#707070] flex items-center gap-2">
-                  <span>{featuredCollection.itemIds?.length || 0} Tracks & Albums Included</span>
-                  <span>·</span>
-                  <span>Curated by MY WORLD</span>
-                </div>
-              </div>
-
-              <div>
-                <button
-                  onClick={() => onOpenDetail('collection', featuredCollection)}
-                  className="px-6 py-3.5 bg-[#F5F5F5] text-[#050505] hover:bg-white text-xs font-bold uppercase tracking-widest transition-colors flex items-center gap-2 cursor-pointer shadow-lg"
-                >
-                  <span>Open Collection</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-
-            <div className="md:col-span-6 aspect-video md:aspect-auto relative min-h-[300px]">
-              <img
-                src={featuredCollection.coverImage}
-                alt={featuredCollection.title}
-                referrerPolicy="no-referrer"
-                className="w-full h-full object-cover filter grayscale contrast-125"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-[#0B0B0B] via-transparent to-transparent" />
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* 7. VISUAL MOODBOARD */}
+      {/* VISUAL MOODBOARD */}
       <section className="max-w-7xl mx-auto px-6">
         <div className="flex items-end justify-between mb-8 pb-4 border-b border-[#242424]">
           <div>
@@ -671,52 +621,6 @@ export const HomePage: React.FC<HomePageProps> = ({
             ))}
           </div>
         )}
-      </section>
-
-      {/* 8. PERSONAL QUOTE */}
-      {featuredQuote && (
-        <section className="max-w-4xl mx-auto px-6 py-12 text-center">
-          <div className="space-y-4">
-            <span className="text-xs uppercase tracking-widest text-[#707070] block">
-              Liner Note & Reflection
-            </span>
-            <blockquote className="text-2xl sm:text-3xl md:text-4xl font-editorial italic font-normal text-[#F5F5F5] leading-relaxed">
-              "{featuredQuote.text}"
-            </blockquote>
-            {featuredQuote.attribution && (
-              <div className="text-xs uppercase tracking-widest text-[#A1A1A1] pt-2">
-                — {featuredQuote.attribution} {featuredQuote.context ? `(${featuredQuote.context})` : ''}
-              </div>
-            )}
-          </div>
-        </section>
-      )}
-
-      {/* 9. ABOUT PREVIEW */}
-      <section className="max-w-7xl mx-auto px-6">
-        <div className="border border-[#242424] bg-[#0B0B0B] p-8 sm:p-12 md:p-16 flex flex-col md:flex-row items-center justify-between gap-8 hover-luxury-lift">
-          <div className="max-w-2xl space-y-4">
-            <span className="text-xs uppercase tracking-widest text-[#707070]">
-              About MY WORLD
-            </span>
-            <h3 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#F5F5F5] uppercase">
-              The Vision & The Sound
-            </h3>
-            <p className="text-sm text-[#A1A1A1] leading-relaxed line-clamp-3 font-light">
-              {settings.aboutBio}
-            </p>
-          </div>
-
-          <div className="shrink-0">
-            <button
-              onClick={() => onSelectTab('about')}
-              className="px-6 py-3.5 bg-[#111111] border border-[#242424] hover:border-[#707070] text-[#F5F5F5] text-xs font-semibold uppercase tracking-widest transition-colors flex items-center gap-2 cursor-pointer"
-            >
-              <span>Read Full About</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
       </section>
 
     </div>

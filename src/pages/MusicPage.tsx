@@ -35,6 +35,7 @@ export const MusicPage: React.FC<MusicPageProps> = ({ songs, onOpenDetail }) => 
         const matchesSearch =
           song.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
           song.artist.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (song.artists && song.artists.some(a => a.toLowerCase().includes(searchQuery.toLowerCase()))) ||
           (song.album && song.album.toLowerCase().includes(searchQuery.toLowerCase()));
 
         const matchesGenre =

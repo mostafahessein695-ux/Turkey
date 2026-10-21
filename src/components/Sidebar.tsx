@@ -6,10 +6,7 @@ import {
   Music, 
   Disc, 
   Mic, 
-  ListMusic, 
   Images, 
-  Quote, 
-  Info, 
   Shield, 
   Lock, 
   LogOut, 
@@ -40,10 +37,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'music', label: 'Music', icon: Music },
     { id: 'albums', label: 'Albums', icon: Disc },
     { id: 'artists', label: 'Artists', icon: Mic },
-    { id: 'collections', label: 'Collections', icon: ListMusic },
     { id: 'gallery', label: 'Gallery', icon: Images },
-    { id: 'quotes', label: 'Quotes', icon: Quote },
-    { id: 'about', label: 'About', icon: Info },
   ];
 
   const handleNavClick = (tab: NavTab) => {
