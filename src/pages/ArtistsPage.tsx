@@ -1,13 +1,15 @@
 import React, { useState, useMemo } from 'react';
-import { Artist } from '../types';
-import { Search, User, ExternalLink, ArrowRight } from 'lucide-react';
+import { Artist, Song } from '../types';
+import { Search, User, ExternalLink, ArrowRight, Music } from 'lucide-react';
+import { isArtistOnSong } from '../services/db';
 
 interface ArtistsPageProps {
   artists: Artist[];
+  songs?: Song[];
   onOpenDetail: (artist: Artist) => void;
 }
 
-export const ArtistsPage: React.FC<ArtistsPageProps> = ({ artists, onOpenDetail }) => {
+export const ArtistsPage: React.FC<ArtistsPageProps> = ({ artists, songs = [], onOpenDetail }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGenre, setSelectedGenre] = useState<string>('all');
 
@@ -104,9 +106,16 @@ export const ArtistsPage: React.FC<ArtistsPageProps> = ({ artists, onOpenDetail 
 
               <div className="p-6 space-y-4 flex-1 flex flex-col justify-between">
                 <div>
-                  <h3 className="text-xl font-bold text-[#F5F5F5] group-hover:text-white transition-colors">
-                    {artist.name}
-                  </h3>
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="text-xl font-bold text-[#F5F5F5] group-hover:text-white transition-colors">
+                      {artist.name}
+                    </h3>
+                    {songs.length > 0 && (
+                      <span className="text-[10px] font-mono tracking-wider px-2 py-0.5 bg-[#141414] border border-[#2B2B2B] text-[#A1A1A1] shrink-0">
+                        {songs.filter(s => isArtistOnSong(s, artist.name)).length} Tracks
+                      </span>
+                    )}
+                  </div>
                   
                   {artist.genres && artist.genres.length > 0 && (
                     <div className="text-xs text-[#707070] mt-1">

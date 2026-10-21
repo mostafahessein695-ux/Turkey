@@ -45,19 +45,11 @@ const MainApp: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<NavTab>('home');
   const [loading, setLoading] = useState(true);
 
-  // Cinematic Intro Entrance State
-  const [showIntro, setShowIntro] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      return !sessionStorage.getItem('myworld_intro_completed');
-    }
-    return true;
-  });
+  // Cinematic Intro Entrance State (Full-screen underground rap intro)
+  const [showIntro, setShowIntro] = useState<boolean>(true);
 
   const handleIntroComplete = () => {
     setShowIntro(false);
-    if (typeof window !== 'undefined') {
-      sessionStorage.setItem('myworld_intro_completed', 'true');
-    }
   };
 
   const handleReplayIntro = () => {
@@ -208,6 +200,7 @@ const MainApp: React.FC = () => {
               {currentTab === 'artists' && (
                 <ArtistsPage
                   artists={artists}
+                  songs={songs}
                   onOpenDetail={artist => setDetailTarget({ type: 'artist', data: artist })}
                 />
               )}
