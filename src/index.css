@@ -86,10 +86,51 @@
 
 @keyframes glitch-flash {
   0% { opacity: 1; transform: scale(1); filter: contrast(100%); }
-  25% { opacity: 0.9; transform: scale(1.03) translate3d(4px, -2px, 0); filter: contrast(160%) hue-rotate(15deg); }
-  50% { opacity: 1; transform: scale(1.08) translate3d(-3px, 2px, 0); filter: invert(20%) contrast(200%); }
-  75% { opacity: 0.85; transform: scale(1.15) translate3d(2px, 1px, 0); filter: brightness(180%); }
-  100% { opacity: 0; transform: scale(1.25); filter: contrast(250%) brightness(0%); }
+  25% { opacity: 0.95; transform: scale(1.05) translate3d(2px, -1px, 0); filter: contrast(150%) brightness(130%); }
+  50% { opacity: 1; transform: scale(1.18) translate3d(-2px, 1px, 0); filter: invert(15%) contrast(180%); }
+  75% { opacity: 0.9; transform: scale(1.4) translate3d(1px, -1px, 0); filter: brightness(220%) blur(2px); }
+  100% { opacity: 0; transform: scale(2.2); filter: contrast(250%) brightness(0%) blur(8px); }
+}
+
+@keyframes warp-zoom-enter {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+    filter: brightness(1) contrast(100%);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1.06);
+    filter: brightness(1.6) contrast(140%);
+  }
+  60% {
+    opacity: 0.95;
+    transform: scale(1.35);
+    filter: brightness(2.2) contrast(180%) blur(2px);
+  }
+  85% {
+    opacity: 0.7;
+    transform: scale(1.9);
+    filter: brightness(3) contrast(200%) blur(6px);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2.6);
+    filter: brightness(0%) contrast(300%) blur(12px);
+  }
+}
+
+@keyframes shockwave-ring {
+  0% {
+    transform: scale(0.8);
+    opacity: 1;
+    border-color: rgba(239, 68, 68, 0.9);
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+    border-color: rgba(239, 68, 68, 0);
+  }
 }
 
 @keyframes blink-rec {
@@ -140,6 +181,16 @@
 .animate-glitch-exit {
   animation: glitch-flash 0.65s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
   will-change: transform, opacity, filter;
+}
+
+.animate-warp-exit {
+  animation: warp-zoom-enter 0.75s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity, filter;
+}
+
+.animate-shockwave {
+  animation: shockwave-ring 0.6s cubic-bezier(0.1, 0.8, 0.2, 1) forwards;
+  will-change: transform, opacity;
 }
 
 .animate-blink-rec {
