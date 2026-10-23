@@ -121,26 +121,28 @@ export const IntroEntrance: React.FC<IntroEntranceProps> = ({
       style={{ willChange: 'opacity, transform, filter' }}
     >
       {/* ========================================================
-          1. WOLF ARTWORK FULL-SCREEN BACKGROUND (TAKES UP ENTIRE SCREEN)
+          1. WOLF ARTWORK 16:9 LANDSCAPE BACKGROUND
       ======================================================== */}
-      <div className="absolute inset-0 z-0 overflow-hidden bg-black pointer-events-none">
-        {/* Full-screen Wolf Artwork covering 100% of the viewport from edge to edge */}
+      <div className={`absolute inset-0 z-0 overflow-hidden pointer-events-none transition-colors duration-700 ${invertWolf ? 'bg-black' : 'bg-white'}`}>
+        {/* Full-screen 16:9 Wolf Landing Background */}
         <img
-          src={ASSET_IMAGES.wolfCropped || '/assets/aistudio/wolf_cropped.png'}
-          alt="Distressed Wolf Full Screen Artwork"
-          className={`absolute inset-0 w-full h-full object-cover object-center transition-all duration-700 select-none ${
+          src={ASSET_IMAGES.wolfLandingBg || '/assets/aistudio/wolf_landing_bg.jpg'}
+          alt="16:9 Underground Rap Wolf Background"
+          className={`absolute inset-0 w-full h-full object-cover object-bottom sm:object-[20%_80%] lg:object-center transition-all duration-700 select-none ${
             invertWolf
-              ? 'filter invert contrast-140 brightness-110 opacity-80 sm:opacity-90'
-              : 'contrast-130 brightness-100 opacity-85 sm:opacity-95 mix-blend-screen'
+              ? 'filter invert contrast-140 brightness-105 opacity-90 sm:opacity-95'
+              : 'contrast-130 brightness-100 opacity-100'
           }`}
         />
 
-        {/* Ambient red backlight focused right in the center behind START */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-red-600/15 rounded-full blur-[160px] pointer-events-none animate-ambient-pulse" />
+        {/* Ambient red backlight focused right behind the wolf & center */}
+        {invertWolf && (
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-red-600/15 rounded-full blur-[160px] pointer-events-none animate-ambient-pulse" />
+        )}
 
         {/* Film grain & subtle CRT scanline texture */}
         <div
-          className="absolute inset-0 opacity-[0.14] pointer-events-none mix-blend-overlay"
+          className="absolute inset-0 opacity-[0.12] pointer-events-none mix-blend-overlay"
           style={{
             backgroundImage:
               'repeating-linear-gradient(0deg, rgba(0,0,0,0.4) 0px, rgba(0,0,0,0.4) 1px, transparent 1px, transparent 2px)',
@@ -221,7 +223,11 @@ export const IntroEntrance: React.FC<IntroEntranceProps> = ({
 
         {/* Central Brand Title */}
         <div className="space-y-1">
-          <h1 className="text-5xl sm:text-7xl md:text-8xl font-black uppercase tracking-[0.2em] text-[#F5F5F5] leading-none drop-shadow-[0_12px_35px_rgba(0,0,0,1)]">
+          <h1 className={`text-5xl sm:text-7xl md:text-8xl font-black uppercase tracking-[0.2em] leading-none transition-colors duration-500 ${
+            invertWolf
+              ? 'text-[#F5F5F5] drop-shadow-[0_12px_35px_rgba(0,0,0,1)]'
+              : 'text-[#080808] drop-shadow-[0_2px_10px_rgba(255,255,255,0.9)]'
+          }`}>
             {siteName}
           </h1>
         </div>
@@ -259,7 +265,9 @@ export const IntroEntrance: React.FC<IntroEntranceProps> = ({
           </button>
 
           {/* Interactive Keyboard / Action Cue */}
-          <div className="flex items-center gap-2 text-[10px] sm:text-[11px] font-mono tracking-widest text-[#888888] uppercase pt-2">
+          <div className={`flex items-center gap-2 text-[10px] sm:text-[11px] font-mono tracking-widest uppercase pt-2 transition-colors duration-500 ${
+            invertWolf ? 'text-[#888888]' : 'text-[#333333]'
+          }`}>
             <span>[ PRESS</span>
             <kbd className="px-1.5 py-0.5 bg-[#141414] border border-[#333333] text-zinc-200 text-[9px]">
               ENTER
@@ -269,7 +277,9 @@ export const IntroEntrance: React.FC<IntroEntranceProps> = ({
         </div>
 
         {/* Bottom Coordinates & Status */}
-        <div className="pt-6 flex items-center justify-center gap-4 text-[10px] font-mono tracking-[0.25em] text-[#666666] uppercase">
+        <div className={`pt-6 flex items-center justify-center gap-4 text-[10px] font-mono tracking-[0.25em] uppercase transition-colors duration-500 ${
+          invertWolf ? 'text-[#666666]' : 'text-[#444444]'
+        }`}>
           <span>CURATED RAP VAULT</span>
           <span>·</span>
           <span>HIGH-FIDELITY AUDIO</span>
