@@ -121,28 +121,26 @@ export const IntroEntrance: React.FC<IntroEntranceProps> = ({
       style={{ willChange: 'opacity, transform, filter' }}
     >
       {/* ========================================================
-          1. WOLF ARTWORK CENTERPIECE & BACKGROUND (CLEARLY VISIBLE BEHIND START)
+          1. WOLF ARTWORK FULL-SCREEN BACKGROUND (TAKES UP ENTIRE SCREEN)
       ======================================================== */}
-      <div className="absolute inset-0 z-0 overflow-hidden bg-black pointer-events-none flex items-center justify-center">
-        {/* Ambient red backlight focused right behind the wolf */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[580px] h-[580px] bg-red-600/20 rounded-full blur-[140px] pointer-events-none animate-ambient-pulse" />
+      <div className="absolute inset-0 z-0 overflow-hidden bg-black pointer-events-none">
+        {/* Full-screen Wolf Artwork covering 100% of the viewport from edge to edge */}
+        <img
+          src={ASSET_IMAGES.wolfCropped || '/assets/aistudio/wolf_cropped.png'}
+          alt="Distressed Wolf Full Screen Artwork"
+          className={`absolute inset-0 w-full h-full object-cover object-center transition-all duration-700 select-none ${
+            invertWolf
+              ? 'filter invert contrast-140 brightness-110 opacity-80 sm:opacity-90'
+              : 'contrast-130 brightness-100 opacity-85 sm:opacity-95 mix-blend-screen'
+          }`}
+        />
 
-        {/* The Distressed Wolf - Clearly Visible & Centered behind START */}
-        <div className="relative w-[340px] h-[340px] sm:w-[480px] sm:h-[480px] md:w-[560px] md:h-[560px] flex items-center justify-center">
-          <img
-            src={ASSET_IMAGES.wolfCropped || '/assets/aistudio/wolf_cropped.png'}
-            alt="Distressed Wolf Artwork"
-            className={`w-full h-full object-contain transition-all duration-700 select-none ${
-              invertWolf
-                ? 'filter invert contrast-150 brightness-110 opacity-90 sm:opacity-95 drop-shadow-[0_0_30px_rgba(255,255,255,0.25)]'
-                : 'contrast-150 brightness-105 opacity-90 sm:opacity-95 mix-blend-screen drop-shadow-[0_0_30px_rgba(239,68,68,0.35)]'
-            }`}
-          />
-        </div>
+        {/* Ambient red backlight focused right in the center behind START */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-red-600/15 rounded-full blur-[160px] pointer-events-none animate-ambient-pulse" />
 
-        {/* Film grain & CRT scanline texture */}
+        {/* Film grain & subtle CRT scanline texture */}
         <div
-          className="absolute inset-0 opacity-[0.16] pointer-events-none mix-blend-overlay"
+          className="absolute inset-0 opacity-[0.14] pointer-events-none mix-blend-overlay"
           style={{
             backgroundImage:
               'repeating-linear-gradient(0deg, rgba(0,0,0,0.4) 0px, rgba(0,0,0,0.4) 1px, transparent 1px, transparent 2px)',
