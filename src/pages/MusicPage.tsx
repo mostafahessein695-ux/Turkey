@@ -165,12 +165,18 @@ export const MusicPage: React.FC<MusicPageProps> = ({ songs, onOpenDetail }) => 
           <p className="text-sm text-[#707070]">No tracks found matching your query.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {filteredSongs.map(song => (
+        <div 
+          key={`${selectedGenre}-${selectedMood}-${sortBy}-${searchQuery ? 'filtered' : 'all'}`}
+          className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
+        >
+          {filteredSongs.map((song, index) => (
             <div
               key={song.id}
               onClick={() => onOpenDetail(song)}
-              className="group bg-[#0B0B0B] border border-[#242424] hover:border-[#707070] transition-all cursor-pointer flex flex-col justify-between"
+              style={{
+                animationDelay: `${Math.min(index * 45, 600)}ms`,
+              }}
+              className="group bg-[#0B0B0B] border border-[#242424] hover:border-[#707070] transition-all duration-300 cursor-pointer flex flex-col justify-between hover-luxury-lift animate-song-reveal"
             >
               <div className="aspect-square relative overflow-hidden bg-[#111111]">
                 <img
