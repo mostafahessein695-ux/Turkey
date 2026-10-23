@@ -7,7 +7,9 @@ import {
   GalleryItem, 
   Quote, 
   SiteSettings, 
-  TrackItem 
+  TrackItem,
+  formatInstagramUrl,
+  formatInstagramHandle
 } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { 
@@ -54,7 +56,8 @@ import {
   Images,
   ShieldCheck,
   Activity,
-  Users
+  Users,
+  Instagram
 } from 'lucide-react';
 import { extractArtistsFromSong } from '../services/db';
 
@@ -1215,6 +1218,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 favoriteAlbums: [],
                 personalThoughts: '',
                 externalUrl: '',
+                instagramUrl: '',
                 isFeatured: false,
                 isPublished: true,
               })}
@@ -1319,6 +1323,50 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       className="w-full bg-[#111111] border border-[#242424] px-3 py-2 text-xs text-[#F5F5F5]"
                     />
                   </div>
+
+                  {/* INSTAGRAM PROFILE FIELD */}
+                  <div className="md:col-span-2 bg-[#101010] border border-[#282828] p-4 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[11px] uppercase tracking-wider text-[#F5F5F5] font-semibold flex items-center gap-1.5">
+                        <Instagram className="w-3.5 h-3.5 text-pink-400" />
+                        <span>Instagram Profile / انستجرام المغني</span>
+                      </label>
+                      <span className="text-[10px] text-pink-400 font-mono">
+                        Direct Fan Profile
+                      </span>
+                    </div>
+
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-pink-400">
+                        <Instagram className="w-4 h-4" />
+                      </div>
+                      <input
+                        type="text"
+                        value={editingArtist.instagramUrl || ''}
+                        onChange={e => setEditingArtist({ ...editingArtist, instagramUrl: e.target.value })}
+                        placeholder="e.g. @champagnepapi or https://instagram.com/travisscott"
+                        className="w-full bg-[#141414] border border-[#2B2B2B] pl-9 pr-3 py-2 text-xs text-[#F5F5F5] focus:outline-none focus:border-pink-500 placeholder-[#606060]"
+                      />
+                    </div>
+
+                    {editingArtist.instagramUrl && editingArtist.instagramUrl.trim() && (
+                      <div className="flex items-center justify-between pt-1 text-[11px]">
+                        <div className="flex items-center gap-1.5 text-pink-300 font-mono">
+                          <span>Handle:</span>
+                          <span className="font-semibold text-[#F5F5F5]">{formatInstagramHandle(editingArtist.instagramUrl)}</span>
+                        </div>
+                        <a
+                          href={formatInstagramUrl(editingArtist.instagramUrl)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-[11px] text-pink-400 hover:text-pink-300 underline"
+                        >
+                          <span>Test Profile Link</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div>
@@ -1376,7 +1424,32 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <div className="flex items-center gap-4 min-w-0">
                   <img src={artist.profileImage} alt={artist.name} className="w-12 h-12 object-cover bg-black border border-[#242424] shrink-0" />
                   <div className="min-w-0">
-                    <h4 className="text-sm font-semibold text-[#F5F5F5] truncate">{artist.name}</h4>
+                    <div className="flex items-center gap-2">
+                      <h4 className="text-sm font-semibold text-[#F5F5F5] truncate">{artist.name}</h4>
+                      {artist.instagramUrl ? (
+                        <a
+                          href={formatInstagramUrl(artist.instagramUrl)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={e => e.stopPropagation()}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 bg-pink-950/40 border border-pink-700/50 hover:border-pink-500 text-pink-300 text-[10px] font-mono shrink-0"
+                          title={`Visit ${artist.name}'s Instagram`}
+                        >
+                          <Instagram className="w-2.5 h-2.5 text-pink-400" />
+                          <span>{formatInstagramHandle(artist.instagramUrl)}</span>
+                        </a>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setEditingArtist(artist)}
+                          className="text-[10px] font-mono text-[#666666] hover:text-pink-400 flex items-center gap-1 cursor-pointer"
+                          title="Add Instagram account"
+                        >
+                          <Instagram className="w-2.5 h-2.5" />
+                          <span>+ Add IG</span>
+                        </button>
+                      )}
+                    </div>
                     <p className="text-xs text-[#707070] truncate">{artist.country || 'Artist'} · {artist.genres?.join(', ')}</p>
                   </div>
                 </div>

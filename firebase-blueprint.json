@@ -36,6 +36,8 @@
         "favoriteAlbums": { "type": "array" },
         "personalThoughts": { "type": "string", "maxLength": 4000 },
         "externalUrl": { "type": "string", "maxLength": 1000 },
+        "instagramUrl": { "type": "string", "maxLength": 500 },
+        "spotifyUrl": { "type": "string", "maxLength": 500 },
         "isFeatured": { "type": "boolean" },
         "isPublished": { "type": "boolean" },
         "createdAt": { "type": "string" },

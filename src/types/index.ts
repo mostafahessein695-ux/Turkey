@@ -52,10 +52,34 @@ export interface Artist {
   favoriteAlbums?: string[];
   personalThoughts?: string;
   externalUrl?: string;
+  instagramUrl?: string; // Instagram handle or link (@username or https://instagram.com/username)
+  spotifyUrl?: string; // Spotify artist profile URL
   isFeatured: boolean;
   isPublished: boolean;
   createdAt: string;
   updatedAt?: string;
+}
+
+export function formatInstagramUrl(input?: string): string {
+  if (!input) return '';
+  const trimmed = input.trim();
+  if (!trimmed) return '';
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return trimmed;
+  }
+  const handle = trimmed.replace(/^@/, '');
+  return `https://instagram.com/${handle}`;
+}
+
+export function formatInstagramHandle(input?: string): string {
+  if (!input) return '';
+  const trimmed = input.trim();
+  if (!trimmed) return '';
+  if (trimmed.includes('instagram.com/')) {
+    const parts = trimmed.split('instagram.com/')[1].split('/')[0].split('?')[0];
+    return `@${parts}`;
+  }
+  return trimmed.startsWith('@') ? trimmed : `@${trimmed}`;
 }
 
 export interface Collection {

@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { Artist, Song } from '../types';
-import { Search, User, ExternalLink, ArrowRight, Music } from 'lucide-react';
+import { Artist, Song, formatInstagramUrl, formatInstagramHandle } from '../types';
+import { Search, User, ExternalLink, ArrowRight, Music, Instagram } from 'lucide-react';
 import { isArtistOnSong } from '../services/db';
 
 interface ArtistsPageProps {
@@ -101,6 +101,19 @@ export const ArtistsPage: React.FC<ArtistsPageProps> = ({ artists, songs = [], o
                   <div className="absolute bottom-3 left-3 bg-[#050505]/90 border border-[#242424] px-2.5 py-1 text-[10px] uppercase tracking-wider text-[#A1A1A1]">
                     {artist.country}
                   </div>
+                )}
+                {artist.instagramUrl && (
+                  <a
+                    href={formatInstagramUrl(artist.instagramUrl)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={e => e.stopPropagation()}
+                    className="absolute top-3 right-3 bg-black/90 hover:bg-[#180a14] border border-pink-700/60 hover:border-pink-500 px-2 py-1 text-[10px] text-pink-300 hover:text-white flex items-center gap-1.5 transition-all shadow-lg font-mono z-10"
+                    title={`Visit ${artist.name} on Instagram`}
+                  >
+                    <Instagram className="w-3 h-3 text-pink-400" />
+                    <span className="font-semibold">{formatInstagramHandle(artist.instagramUrl)}</span>
+                  </a>
                 )}
               </div>
 

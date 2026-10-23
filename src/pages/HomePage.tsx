@@ -7,7 +7,9 @@ import {
   GalleryItem, 
   Quote, 
   SiteSettings, 
-  NavTab 
+  NavTab,
+  formatInstagramUrl,
+  formatInstagramHandle
 } from '../types';
 import { 
   ArrowDown, 
@@ -21,7 +23,8 @@ import {
   Radio,
   Volume2,
   Music,
-  Users
+  Users,
+  Instagram
 } from 'lucide-react';
 import { isArtistOnSong } from '../services/db';
 
@@ -324,6 +327,21 @@ export const HomePage: React.FC<HomePageProps> = ({
                         <Star className="w-3 h-3 fill-white text-white" />
                         <span className="hidden sm:inline">Featured</span>
                       </div>
+                    )}
+
+                    {/* Instagram Handle Badge */}
+                    {artist.instagramUrl && (
+                      <a
+                        href={formatInstagramUrl(artist.instagramUrl)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={e => e.stopPropagation()}
+                        className={`absolute ${artist.isFeatured ? 'top-10' : 'top-3'} right-3 bg-black/90 hover:bg-[#180a14] border border-pink-700/60 hover:border-pink-500 px-2 py-1 text-[10px] text-pink-300 hover:text-white flex items-center gap-1.5 transition-all shadow-lg font-mono z-10`}
+                        title={`Visit ${artist.name} on Instagram`}
+                      >
+                        <Instagram className="w-3 h-3 text-pink-400" />
+                        <span className="font-semibold">{formatInstagramHandle(artist.instagramUrl)}</span>
+                      </a>
                     )}
 
                     {/* Subtle Audio Waveform on Hover */}

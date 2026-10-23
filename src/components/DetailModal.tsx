@@ -1,6 +1,6 @@
 import React from 'react';
-import { Song, Artist, Album, Collection } from '../types';
-import { X, ExternalLink, Star, Disc, User, Music, Radio, Clock, Share2, Play, Users } from 'lucide-react';
+import { Song, Artist, Album, Collection, formatInstagramUrl, formatInstagramHandle } from '../types';
+import { X, ExternalLink, Star, Disc, User, Music, Radio, Clock, Share2, Play, Users, Instagram } from 'lucide-react';
 import { isArtistOnSong } from '../services/db';
 
 interface DetailModalProps {
@@ -210,19 +210,36 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                     </p>
                   )}
 
-                  {artist.externalUrl && (
-                    <div className="pt-3">
+                  {/* ARTIST SOCIAL & PROFILE LINKS */}
+                  <div className="pt-3 flex flex-wrap items-center gap-3">
+                    {artist.instagramUrl && (
+                      <a
+                        href={formatInstagramUrl(artist.instagramUrl)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-3.5 py-2 bg-gradient-to-r from-[#1b0c16] to-[#120810] border border-pink-700/60 hover:border-pink-500 text-pink-200 hover:text-white transition-all text-xs font-semibold tracking-wider uppercase group shadow-md"
+                      >
+                        <Instagram className="w-4 h-4 text-pink-400 group-hover:scale-110 transition-transform" />
+                        <span>Instagram:</span>
+                        <span className="font-mono text-pink-300 font-bold lowercase">
+                          {formatInstagramHandle(artist.instagramUrl)}
+                        </span>
+                        <ExternalLink className="w-3 h-3 text-pink-400/80 ml-0.5" />
+                      </a>
+                    )}
+
+                    {artist.externalUrl && (
                       <a
                         href={artist.externalUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 text-xs uppercase tracking-wider text-[#F5F5F5] hover:text-white underline underline-offset-4"
+                        className="inline-flex items-center gap-2 px-3.5 py-2 bg-[#111111] border border-[#2B2B2B] hover:border-[#606060] text-[#E0E0E0] hover:text-white transition-all text-xs uppercase tracking-wider font-medium"
                       >
-                        <ExternalLink className="w-3.5 h-3.5" />
-                        <span>Official Channel / Releases</span>
+                        <ExternalLink className="w-3.5 h-3.5 text-[#888888]" />
+                        <span>Releases / Web</span>
                       </a>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               </div>
 
