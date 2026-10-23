@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, ArrowRight, Volume2, VolumeX } from 'lucide-react';
+import { Play, ArrowRight, Volume2, VolumeX, Eye } from 'lucide-react';
+import { ASSET_IMAGES } from '../assets/images';
 
 interface IntroEntranceProps {
   onEnter: () => void;
@@ -14,6 +15,8 @@ export const IntroEntrance: React.FC<IntroEntranceProps> = ({
 }) => {
   const [isStarting, setIsStarting] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(false);
+  // Default to inverted (dark wolf on pitch black) to match the dark theme, with toggle for raw white
+  const [invertWolf, setInvertWolf] = useState(true);
   const audioCtxRef = useRef<AudioContext | null>(null);
 
   // Web Audio API: Cinematic 808 Sub-Bass Impact & Whoosh on Click
@@ -106,6 +109,10 @@ export const IntroEntrance: React.FC<IntroEntranceProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isStarting]);
 
+  const wolfImgSrc =
+    ASSET_IMAGES.wolfArtwork ||
+    '/assets/aistudio/Distressed_Wolf_in_Negative_Space_fcc28b6d.png';
+
   return (
     <div
       className={`fixed inset-0 z-50 flex items-center justify-center bg-black text-[#F5F5F5] select-none overflow-hidden transition-all duration-700 ease-out ${
@@ -113,28 +120,68 @@ export const IntroEntrance: React.FC<IntroEntranceProps> = ({
       }`}
       style={{ willChange: 'opacity, transform, filter' }}
     >
-      {/* PURE BLACK CANVAS - Completely dark background */}
-      <div className="absolute inset-0 bg-[#000000] pointer-events-none" />
+      {/* ========================================================
+          1. WOLF ARTWORK CENTERPIECE & BACKGROUND (CLEARLY VISIBLE BEHIND START)
+      ======================================================== */}
+      <div className="absolute inset-0 z-0 overflow-hidden bg-black pointer-events-none flex items-center justify-center">
+        {/* Ambient red backlight focused right behind the wolf */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[580px] h-[580px] bg-red-600/20 rounded-full blur-[140px] pointer-events-none animate-ambient-pulse" />
 
-      {/* Subtle, restrained ambient red glow centered behind START */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[480px] h-[480px] bg-red-600/10 rounded-full blur-[140px] pointer-events-none animate-ambient-pulse" />
+        {/* The Distressed Wolf - Clearly Visible & Centered behind START */}
+        <div className="relative w-[340px] h-[340px] sm:w-[480px] sm:h-[480px] md:w-[560px] md:h-[560px] flex items-center justify-center">
+          <img
+            src={ASSET_IMAGES.wolfCropped || '/assets/aistudio/wolf_cropped.png'}
+            alt="Distressed Wolf Artwork"
+            className={`w-full h-full object-contain transition-all duration-700 select-none ${
+              invertWolf
+                ? 'filter invert contrast-150 brightness-110 opacity-90 sm:opacity-95 drop-shadow-[0_0_30px_rgba(255,255,255,0.25)]'
+                : 'contrast-150 brightness-105 opacity-90 sm:opacity-95 mix-blend-screen drop-shadow-[0_0_30px_rgba(239,68,68,0.35)]'
+            }`}
+          />
+        </div>
 
-      {/* Minimal corner indicators */}
-      {/* Top Left: Clean brand mark */}
-      <div className="absolute top-6 left-6 z-20 flex items-center gap-2 font-mono text-[11px] text-[#666666] uppercase tracking-[0.25em]">
-        <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ambient-pulse" />
-        <span>{siteName}</span>
+        {/* Film grain & CRT scanline texture */}
+        <div
+          className="absolute inset-0 opacity-[0.16] pointer-events-none mix-blend-overlay"
+          style={{
+            backgroundImage:
+              'repeating-linear-gradient(0deg, rgba(0,0,0,0.4) 0px, rgba(0,0,0,0.4) 1px, transparent 1px, transparent 2px)',
+            backgroundSize: '100% 2px',
+          }}
+        />
       </div>
 
-      {/* Top Right: Sound & Skip */}
-      <div className="absolute top-6 right-6 z-20 flex items-center gap-3">
+      {/* ========================================================
+          2. MINIMAL CORNER CONTROLS & HUD
+      ======================================================== */}
+      {/* Top Left: Clean brand mark */}
+      <div className="absolute top-6 left-6 z-20 flex items-center gap-2 font-mono text-[11px] text-[#888888] uppercase tracking-[0.25em]">
+        <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ambient-pulse" />
+        <span className="text-[#E0E0E0] font-bold">{siteName}</span>
+        <span className="hidden sm:inline text-[#555555]">·</span>
+        <span className="hidden sm:inline text-[#666666]">WOLF VAULT EDITION</span>
+      </div>
+
+      {/* Top Right: Artwork Style Toggle, Sound & Skip */}
+      <div className="absolute top-6 right-6 z-20 flex items-center gap-2 sm:gap-3">
+        {/* Toggle dark/inverted vs raw white wolf background */}
+        <button
+          onClick={() => setInvertWolf(!invertWolf)}
+          className="group flex items-center gap-1.5 px-2.5 py-1.5 bg-[#0A0A0A]/90 hover:bg-[#141414] border border-[#2B2B2B] hover:border-red-500/60 text-[10px] uppercase tracking-wider text-[#A1A1A1] hover:text-white transition-all cursor-pointer font-mono backdrop-blur-md"
+          title={invertWolf ? 'Switch to raw white artwork' : 'Switch to dark inverted artwork'}
+        >
+          <Eye className="w-3.5 h-3.5 text-red-500/80 group-hover:text-red-400" />
+          <span className="hidden sm:inline">{invertWolf ? 'DARK WOLF' : 'RAW WOLF'}</span>
+        </button>
+
+        {/* Sound toggle */}
         <button
           onClick={() => {
             const next = !soundEnabled;
             setSoundEnabled(next);
             if (next) playCinematicDrop();
           }}
-          className="group flex items-center gap-2 px-3 py-1.5 bg-[#0A0A0A] hover:bg-[#141414] border border-[#222222] hover:border-red-500/60 text-[10px] uppercase tracking-wider text-[#777777] hover:text-white transition-all cursor-pointer font-mono"
+          className="group flex items-center gap-2 px-3 py-1.5 bg-[#0A0A0A]/90 hover:bg-[#141414] border border-[#2B2B2B] hover:border-red-500/60 text-[10px] uppercase tracking-wider text-[#A1A1A1] hover:text-white transition-all cursor-pointer font-mono backdrop-blur-md"
           title={soundEnabled ? 'Mute sound effects' : 'Enable sound effects'}
         >
           {soundEnabled ? (
@@ -144,15 +191,16 @@ export const IntroEntrance: React.FC<IntroEntranceProps> = ({
             </>
           ) : (
             <>
-              <VolumeX className="w-3.5 h-3.5 text-[#555555] group-hover:text-white" />
+              <VolumeX className="w-3.5 h-3.5 text-[#666666] group-hover:text-white" />
               <span>SOUND: OFF</span>
             </>
           )}
         </button>
 
+        {/* Skip button */}
         <button
           onClick={onEnter}
-          className="px-2.5 py-1.5 text-[10px] uppercase tracking-widest text-[#555555] hover:text-white transition-colors cursor-pointer font-mono"
+          className="px-2.5 py-1.5 text-[10px] uppercase tracking-widest text-[#777777] hover:text-white transition-colors cursor-pointer font-mono"
           title="Skip intro directly"
         >
           SKIP [ESC]
@@ -160,7 +208,7 @@ export const IntroEntrance: React.FC<IntroEntranceProps> = ({
       </div>
 
       {/* ========================================================
-          CENTER "START" EXPERIENCE & CINEMATIC ANIMATION
+          3. CENTER "START" EXPERIENCE DIRECTLY OVER WOLF
       ======================================================== */}
       <div className="relative z-10 max-w-xl w-full mx-6 flex flex-col items-center text-center space-y-8">
         
@@ -175,12 +223,12 @@ export const IntroEntrance: React.FC<IntroEntranceProps> = ({
 
         {/* Central Brand Title */}
         <div className="space-y-1">
-          <h1 className="text-5xl sm:text-7xl md:text-8xl font-black uppercase tracking-[0.2em] text-[#F5F5F5] leading-none drop-shadow-[0_10px_30px_rgba(0,0,0,1)]">
+          <h1 className="text-5xl sm:text-7xl md:text-8xl font-black uppercase tracking-[0.2em] text-[#F5F5F5] leading-none drop-shadow-[0_12px_35px_rgba(0,0,0,1)]">
             {siteName}
           </h1>
         </div>
 
-        {/* The START Button Container */}
+        {/* The START Button Container positioned over the Wolf Artwork */}
         <div className="relative pt-2 flex flex-col items-center space-y-5">
           {/* Shockwave expanding ring when clicked */}
           {isStarting && (
@@ -193,10 +241,10 @@ export const IntroEntrance: React.FC<IntroEntranceProps> = ({
             className="group relative cursor-pointer outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-4 focus:ring-offset-black transition-all duration-300 active:scale-95 hover:scale-105"
           >
             {/* Outer pulsating neon bloom */}
-            <div className="absolute -inset-1 bg-gradient-to-r from-red-600 via-rose-500 to-red-600 opacity-60 blur-md group-hover:opacity-100 group-hover:blur-lg transition duration-500 animate-neon-pulse" />
+            <div className="absolute -inset-1.5 bg-gradient-to-r from-red-600 via-rose-500 to-red-600 opacity-70 blur-md group-hover:opacity-100 group-hover:blur-lg transition duration-500 animate-neon-pulse" />
 
             {/* Main Button Body: Pure Black Core with High-End Red/White Accent */}
-            <div className="relative px-12 sm:px-18 py-5 sm:py-7 bg-[#050505] border-2 border-red-500/90 group-hover:border-white text-white flex items-center justify-center gap-5 transition-all duration-300 shadow-[0_0_35px_rgba(239,68,68,0.4)]">
+            <div className="relative px-12 sm:px-18 py-5 sm:py-7 bg-[#050505]/95 backdrop-blur-md border-2 border-red-500/90 group-hover:border-white text-white flex items-center justify-center gap-5 transition-all duration-300 shadow-[0_0_40px_rgba(239,68,68,0.45)]">
               {/* Play triangle badge */}
               <div className="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center text-white shadow-[0_0_15px_#EF4444] group-hover:bg-white group-hover:text-black transition-colors duration-300">
                 <Play className="w-4 h-4 fill-current ml-0.5" />
@@ -213,9 +261,9 @@ export const IntroEntrance: React.FC<IntroEntranceProps> = ({
           </button>
 
           {/* Interactive Keyboard / Action Cue */}
-          <div className="flex items-center gap-2 text-[10px] sm:text-[11px] font-mono tracking-widest text-[#666666] uppercase pt-2">
+          <div className="flex items-center gap-2 text-[10px] sm:text-[11px] font-mono tracking-widest text-[#888888] uppercase pt-2">
             <span>[ PRESS</span>
-            <kbd className="px-1.5 py-0.5 bg-[#111111] border border-[#2B2B2B] text-zinc-300 text-[9px]">
+            <kbd className="px-1.5 py-0.5 bg-[#141414] border border-[#333333] text-zinc-200 text-[9px]">
               ENTER
             </kbd>
             <span>OR CLICK TO ENTER ]</span>
@@ -223,7 +271,7 @@ export const IntroEntrance: React.FC<IntroEntranceProps> = ({
         </div>
 
         {/* Bottom Coordinates & Status */}
-        <div className="pt-8 flex items-center justify-center gap-4 text-[10px] font-mono tracking-[0.25em] text-[#555555] uppercase">
+        <div className="pt-6 flex items-center justify-center gap-4 text-[10px] font-mono tracking-[0.25em] text-[#666666] uppercase">
           <span>CURATED RAP VAULT</span>
           <span>·</span>
           <span>HIGH-FIDELITY AUDIO</span>
