@@ -132,15 +132,35 @@ export interface SiteSettings {
   updatedAt?: string;
 }
 
+export interface MerchItem {
+  id: string;
+  name: string;
+  price: number;
+  currency?: string;
+  description?: string;
+  category: 'hoodies' | 'tees' | 'headwear' | 'pants' | 'accessories' | string;
+  coverImage: string;
+  images?: string[];
+  sizes: string[]; // e.g. ['S', 'M', 'L', 'XL', 'XXL']
+  inStock: boolean;
+  isFeatured: boolean;
+  isPublished: boolean;
+  orderUrl?: string; // external checkout or Instagram/store link
+  whatsappNumber?: string; // WhatsApp ordering e.g. '201xxxxxxxxx'
+  createdAt: string;
+  updatedAt?: string;
+}
+
 export type NavTab = 
   | 'home' 
   | 'music' 
   | 'artists' 
+  | 'merch'
   | 'albums' 
   | 'gallery' 
   | 'admin';
 
 export interface DetailViewTarget {
-  type: 'song' | 'artist' | 'album' | 'collection';
+  type: 'song' | 'artist' | 'album' | 'collection' | 'merch';
   id: string;
 }

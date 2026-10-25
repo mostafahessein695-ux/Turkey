@@ -126,6 +126,29 @@
         "featuredCollectionId": { "type": "string", "maxLength": 100 },
         "updatedAt": { "type": "string" }
       }
+    },
+    "MerchItem": {
+      "title": "MerchItem",
+      "description": "Streetwear, clothing, and merchandise items",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "maxLength": 200 },
+        "price": { "type": "number" },
+        "currency": { "type": "string", "maxLength": 20 },
+        "description": { "type": "string", "maxLength": 3000 },
+        "category": { "type": "string", "maxLength": 100 },
+        "coverImage": { "type": "string", "maxLength": 1000 },
+        "images": { "type": "array" },
+        "sizes": { "type": "array" },
+        "inStock": { "type": "boolean" },
+        "isFeatured": { "type": "boolean" },
+        "isPublished": { "type": "boolean" },
+        "orderUrl": { "type": "string", "maxLength": 1000 },
+        "whatsappNumber": { "type": "string", "maxLength": 100 },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["name", "price", "isPublished"]
     }
   },
   "firestore": {
@@ -156,6 +179,10 @@
     "/settings/{settingId}": {
       "schema": "SiteSettings",
       "description": "Global website content and preview configurations"
+    },
+    "/merch/{merchId}": {
+      "schema": "MerchItem",
+      "description": "Merch and clothing garments for sale"
     },
     "/admins/{adminId}": {
       "schema": { "$ref": "admins" },

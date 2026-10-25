@@ -7,6 +7,7 @@ import {
   Disc, 
   Mic, 
   Images, 
+  ShoppingBag,
   Shield, 
   Lock, 
   LogOut, 
@@ -31,12 +32,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const { user, isAdmin, logout, adminEmail } = useAuth();
 
-  // Navigation items matching exact requested order & icons
+  // Navigation items: Merch/Store tab placed adjacent to Songs and Artists as requested
   const navItems: { id: NavTab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
     { id: 'home', label: 'Home', icon: Home },
-    { id: 'music', label: 'Music', icon: Music },
-    { id: 'albums', label: 'Albums', icon: Disc },
+    { id: 'music', label: 'Songs', icon: Music },
     { id: 'artists', label: 'Artists', icon: Mic },
+    { id: 'merch', label: 'Store / Clothes', icon: ShoppingBag },
+    { id: 'albums', label: 'Albums', icon: Disc },
     { id: 'gallery', label: 'Gallery', icon: Images },
   ];
 

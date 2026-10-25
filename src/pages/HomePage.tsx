@@ -62,8 +62,16 @@ export const HomePage: React.FC<HomePageProps> = ({
     }
   };
 
-  // 1. Featured content
+  // 1. Featured content & user-added songs for Sound & Vision
   const featuredSongs = songs.filter(s => s.isFeatured);
+  const userAddedSongs = [...songs].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+  // Guarantee every song the user adds is displayed in Featured Sound & Vision
+  const displaySoundAndVisionSongs = Array.from(
+    new Map([...featuredSongs, ...userAddedSongs].map(s => [s.id, s])).values()
+  ).slice(0, 6);
+
   const featuredArtists = artists.filter(a => a.isFeatured);
   const homeArtists = featuredArtists.length > 0 
     ? [...featuredArtists, ...artists.filter(a => !a.isFeatured)].slice(0, 6)
@@ -417,13 +425,13 @@ export const HomePage: React.FC<HomePageProps> = ({
           </button>
         </div>
 
-        {featuredSongs.length === 0 ? (
+        {displaySoundAndVisionSongs.length === 0 ? (
           <div className="py-12 text-center border border-[#242424] bg-[#0B0B0B] text-xs text-[#707070]">
-            No featured tracks selected yet. Set tracks as featured from the dashboard.
+            No tracks in library yet. Add your favorite tracks from the dashboard.
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {featuredSongs.slice(0, 3).map(song => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {displaySoundAndVisionSongs.map(song => (
               <div
                 key={song.id}
                 onClick={() => onOpenDetail('song', song)}
@@ -439,6 +447,13 @@ export const HomePage: React.FC<HomePageProps> = ({
                   <div className="absolute top-3 left-3 bg-[#050505]/90 border border-[#242424] px-2.5 py-1 text-[10px] uppercase tracking-wider text-[#F5F5F5]">
                     {song.genre}
                   </div>
+
+                  {song.isFeatured && (
+                    <div className="absolute top-3 right-3 bg-[#050505]/90 border border-[#333333] px-2 py-0.5 text-[10px] font-mono uppercase text-[#F5F5F5] flex items-center gap-1">
+                      <Star className="w-3 h-3 fill-white text-white" />
+                      <span>Featured</span>
+                    </div>
+                  )}
                   
                   {/* Subtle Vinyl Peek-Out on Hover */}
                   <div className="absolute -right-16 top-1/2 -translate-y-1/2 w-28 h-28 rounded-full bg-[#111111] border-2 border-[#242424] vinyl-peek pointer-events-none opacity-0 group-hover:opacity-100 flex items-center justify-center shadow-2xl">
@@ -455,7 +470,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                     {song.title}
                   </h3>
                   <p className="text-xs text-[#A1A1A1] truncate">
-                    {song.artist} {song.album ? `— ${song.album}` : ''}
+                    {song.artists && song.artists.length > 0 ? song.artists.join(' · ') : song.artist} {song.album ? `— ${song.album}` : ''}
                   </p>
                   {song.personalNotes && (
                     <p className="text-xs text-[#707070] line-clamp-2 pt-1 font-light italic">

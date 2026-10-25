@@ -19,7 +19,8 @@ import {
   Collection, 
   GalleryItem, 
   Quote, 
-  SiteSettings 
+  SiteSettings,
+  MerchItem
 } from '../types';
 import { ASSET_IMAGES } from '../assets/images';
 
@@ -31,6 +32,7 @@ const COLLECTIONS_COLL = 'collections';
 const GALLERY_COLL = 'gallery';
 const QUOTES_COLL = 'quotes';
 const SETTINGS_COLL = 'settings';
+const MERCH_COLL = 'merch';
 
 // ==========================================
 // CURATED STARTER DATA (DEFAULT / FALLBACK)
@@ -446,6 +448,110 @@ export const DEFAULT_QUOTES: Quote[] = [
     isPublished: true,
     createdAt: '2024-01-01T00:00:00.000Z',
   },
+];
+
+export const DEFAULT_MERCH: MerchItem[] = [
+  {
+    id: 'merch_distressed_wolf_hoodie',
+    name: 'MY WORLD — Distressed Wolf Heavyweight Hoodie',
+    price: 85,
+    currency: '$',
+    description: '460 GSM organic French terry cotton. Screenprinted distressed wolf artwork on back with vintage puff typography on chest. Drop shoulder oversized boxy fit. Heavyweight ribbed cuffs and hem.',
+    category: 'hoodies',
+    coverImage: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=1000&q=80',
+    images: [
+      'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=1000&q=80',
+      'https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=1000&q=80'
+    ],
+    sizes: ['S', 'M', 'L', 'XL', 'XXL'],
+    inStock: true,
+    isFeatured: true,
+    isPublished: true,
+    orderUrl: '',
+    whatsappNumber: '+201000000000',
+    createdAt: '2024-01-01T00:00:00.000Z',
+    updatedAt: '2024-01-01T00:00:00.000Z',
+  },
+  {
+    id: 'merch_underground_vintage_tee',
+    name: 'UNDERGROUND SOUND — Boxy Heavyweight Tee',
+    price: 45,
+    currency: '$',
+    description: '280 GSM heavyweight combed cotton. Acid-washed charcoal finish with raw cut hems and cracked plastisol print. Relaxed streetwear silhouette made for concerts and street sessions.',
+    category: 'tees',
+    coverImage: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=1000&q=80',
+    images: [
+      'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=1000&q=80'
+    ],
+    sizes: ['M', 'L', 'XL', 'XXL'],
+    inStock: true,
+    isFeatured: true,
+    isPublished: true,
+    orderUrl: '',
+    whatsappNumber: '+201000000000',
+    createdAt: '2024-01-01T00:00:00.000Z',
+    updatedAt: '2024-01-01T00:00:00.000Z',
+  },
+  {
+    id: 'merch_raw_ink_longsleeve',
+    name: 'SONIC VAULT — Raw Ink Longsleeve',
+    price: 55,
+    currency: '$',
+    description: '320 GSM dense knit black longsleeve. Sleeve print with catalog track coordinates and monochrome high-density ink print on the front. Pre-shrunk and garment dyed.',
+    category: 'tees',
+    coverImage: 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?auto=format&fit=crop&w=1000&q=80',
+    images: [
+      'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?auto=format&fit=crop&w=1000&q=80'
+    ],
+    sizes: ['S', 'M', 'L', 'XL'],
+    inStock: true,
+    isFeatured: false,
+    isPublished: true,
+    orderUrl: '',
+    whatsappNumber: '+201000000000',
+    createdAt: '2024-01-01T00:00:00.000Z',
+    updatedAt: '2024-01-01T00:00:00.000Z',
+  },
+  {
+    id: 'merch_archive_trucker_cap',
+    name: 'MY WORLD ARCHIVE — 3D Embroidered Trucker Cap',
+    price: 35,
+    currency: '$',
+    description: 'Foam-structured mesh back trucker cap with distressed brim, silver snapback closure, and raised 3D tonal embroidery. Vintage underground club aesthetic.',
+    category: 'headwear',
+    coverImage: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=1000&q=80',
+    images: [
+      'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=1000&q=80'
+    ],
+    sizes: ['One Size (Adjustable)'],
+    inStock: true,
+    isFeatured: true,
+    isPublished: true,
+    orderUrl: '',
+    whatsappNumber: '+201000000000',
+    createdAt: '2024-01-01T00:00:00.000Z',
+    updatedAt: '2024-01-01T00:00:00.000Z',
+  },
+  {
+    id: 'merch_brutalist_beanie',
+    name: 'SUB-BASS — Chunky Ribbed Knit Beanie',
+    price: 30,
+    currency: '$',
+    description: 'Deep black double-layered merino wool blend beanie with custom woven damask label. Form-fitting, ultra warm, and minimal street brutalist look.',
+    category: 'headwear',
+    coverImage: 'https://images.unsplash.com/photo-1576871337632-b9aef4c17ab9?auto=format&fit=crop&w=1000&q=80',
+    images: [
+      'https://images.unsplash.com/photo-1576871337632-b9aef4c17ab9?auto=format&fit=crop&w=1000&q=80'
+    ],
+    sizes: ['One Size Fits All'],
+    inStock: true,
+    isFeatured: false,
+    isPublished: true,
+    orderUrl: '',
+    whatsappNumber: '+201000000000',
+    createdAt: '2024-01-01T00:00:00.000Z',
+    updatedAt: '2024-01-01T00:00:00.000Z',
+  }
 ];
 
 // ==========================================
@@ -1177,6 +1283,76 @@ export function subscribeToPublishedCollection<T>(
   );
 }
 
+// ==========================================
+// MERCH & CLOTHING STORE API
+// ==========================================
+export async function fetchPublishedMerch(): Promise<MerchItem[]> {
+  try {
+    const q = query(collection(db, MERCH_COLL), where('isPublished', '==', true));
+    const snap = await getDocs(q);
+    if (snap.docs.length > 0) {
+      return snap.docs.map(d => ({ id: d.id, ...d.data() } as MerchItem));
+    }
+    return DEFAULT_MERCH;
+  } catch (err) {
+    console.warn('Using curated starter merch:', err);
+    return DEFAULT_MERCH;
+  }
+}
+
+export async function fetchAllMerch(): Promise<MerchItem[]> {
+  try {
+    const snap = await getDocs(collection(db, MERCH_COLL));
+    if (snap.docs.length > 0) {
+      return snap.docs.map(d => ({ id: d.id, ...d.data() } as MerchItem));
+    }
+    return DEFAULT_MERCH;
+  } catch (err) {
+    console.warn('Using curated starter merch:', err);
+    return DEFAULT_MERCH;
+  }
+}
+
+export async function saveMerchItem(item: Partial<MerchItem> & { id?: string }): Promise<string> {
+  const merchId = item.id || `merch_${Date.now()}`;
+  const now = new Date().toISOString();
+  const payload: MerchItem = {
+    id: merchId,
+    name: item.name || 'Untitled Garment',
+    price: Number(item.price) || 0,
+    currency: item.currency || '$',
+    description: item.description || '',
+    category: item.category || 'hoodies',
+    coverImage: item.coverImage || 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=1000&q=80',
+    images: item.images && item.images.length > 0 ? item.images : [item.coverImage || 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=1000&q=80'],
+    sizes: item.sizes && item.sizes.length > 0 ? item.sizes : ['M', 'L', 'XL'],
+    inStock: item.inStock ?? true,
+    isFeatured: item.isFeatured ?? false,
+    isPublished: item.isPublished ?? true,
+    orderUrl: item.orderUrl || '',
+    whatsappNumber: item.whatsappNumber || '',
+    createdAt: item.createdAt || now,
+    updatedAt: now,
+  };
+
+  try {
+    await setDoc(doc(db, MERCH_COLL, merchId), payload);
+    return merchId;
+  } catch (err) {
+    handleFirestoreError(err, OperationType.WRITE, `${MERCH_COLL}/${merchId}`);
+    throw err;
+  }
+}
+
+export async function deleteMerchItem(id: string): Promise<void> {
+  try {
+    await deleteDoc(doc(db, MERCH_COLL, id));
+  } catch (err) {
+    handleFirestoreError(err, OperationType.DELETE, `${MERCH_COLL}/${id}`);
+    throw err;
+  }
+}
+
 // SEED STARTER CONTENT
 export async function seedStarterContent(): Promise<void> {
   for (const s of DEFAULT_SONGS) {
@@ -1196,6 +1372,9 @@ export async function seedStarterContent(): Promise<void> {
   }
   for (const q of DEFAULT_QUOTES) {
     await saveQuote(q);
+  }
+  for (const m of DEFAULT_MERCH) {
+    await saveMerchItem(m);
   }
   await saveSiteSettings(DEFAULT_SETTINGS);
 }

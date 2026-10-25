@@ -7,6 +7,7 @@ import {
   Collection, 
   GalleryItem, 
   Quote, 
+  MerchItem,
   SiteSettings, 
   NavTab 
 } from './types';
@@ -23,6 +24,8 @@ import {
   fetchAllGallery,
   fetchPublishedQuotes, 
   fetchAllQuotes,
+  fetchPublishedMerch,
+  fetchAllMerch,
   fetchSiteSettings,
   seedStarterContent
 } from './services/db';
@@ -32,6 +35,7 @@ import { HomePage } from './pages/HomePage';
 import { MusicPage } from './pages/MusicPage';
 import { AlbumsPage } from './pages/AlbumsPage';
 import { ArtistsPage } from './pages/ArtistsPage';
+import { MerchPage } from './pages/MerchPage';
 import { GalleryPage } from './pages/GalleryPage';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { DetailModal } from './components/DetailModal';
@@ -63,6 +67,7 @@ const MainApp: React.FC = () => {
   const [collections, setCollections] = useState<Collection[]>([]);
   const [gallery, setGallery] = useState<GalleryItem[]>([]);
   const [quotes, setQuotes] = useState<Quote[]>([]);
+  const [merch, setMerch] = useState<MerchItem[]>([]);
   const [settings, setSettings] = useState<SiteSettings>({
     heroHeadline: 'MY WORLD. MY RULES.',
     heroSubhead: 'A collection of sounds, people, moments, and things that mean something to me.',
@@ -98,6 +103,7 @@ const MainApp: React.FC = () => {
         collectionsData,
         galleryData,
         quotesData,
+        merchData,
         settingsData,
       ] = await Promise.all([
         isAdmin ? fetchAllSongs() : fetchPublishedSongs(),
@@ -106,6 +112,7 @@ const MainApp: React.FC = () => {
         isAdmin ? fetchAllCollections() : fetchPublishedCollections(),
         isAdmin ? fetchAllGallery() : fetchPublishedGallery(),
         isAdmin ? fetchAllQuotes() : fetchPublishedQuotes(),
+        isAdmin ? fetchAllMerch() : fetchPublishedMerch(),
         fetchSiteSettings(),
       ]);
 
@@ -116,6 +123,7 @@ const MainApp: React.FC = () => {
       setCollections(collectionsData);
       setGallery(galleryData);
       setQuotes(quotesData);
+      setMerch(merchData);
       setSettings(settingsData);
     } catch (err) {
       console.error('Failed to load application data:', err);
@@ -205,6 +213,12 @@ const MainApp: React.FC = () => {
                 />
               )}
 
+              {currentTab === 'merch' && (
+                <MerchPage
+                  merch={merch}
+                />
+              )}
+
               {currentTab === 'gallery' && (
                 <GalleryPage
                   gallery={gallery}
@@ -221,6 +235,7 @@ const MainApp: React.FC = () => {
                     collections={collections}
                     gallery={gallery}
                     quotes={quotes}
+                    merch={merch}
                     settings={settings}
                     onRefreshData={loadData}
                   />

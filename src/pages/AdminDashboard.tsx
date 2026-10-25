@@ -6,6 +6,7 @@ import {
   Collection, 
   GalleryItem, 
   Quote, 
+  MerchItem,
   SiteSettings, 
   TrackItem,
   formatInstagramUrl,
@@ -25,6 +26,8 @@ import {
   deleteGalleryItem, 
   saveQuote, 
   deleteQuote, 
+  saveMerchItem,
+  deleteMerchItem,
   saveSiteSettings,
   seedStarterContent,
   syncAllSongsWithAlbums
@@ -54,6 +57,8 @@ import {
   Mic,
   ListMusic,
   Images,
+  ShoppingBag,
+  Tag,
   ShieldCheck,
   Activity,
   Users,
@@ -68,11 +73,12 @@ interface AdminDashboardProps {
   collections: Collection[];
   gallery: GalleryItem[];
   quotes: Quote[];
+  merch: MerchItem[];
   settings: SiteSettings;
   onRefreshData: () => Promise<void>;
 }
 
-type AdminSection = 'dashboard' | 'music' | 'albums' | 'artists' | 'gallery' | 'settings' | 'collections' | 'quotes';
+type AdminSection = 'dashboard' | 'music' | 'albums' | 'artists' | 'merch' | 'gallery' | 'settings' | 'collections' | 'quotes';
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   songs,
@@ -81,6 +87,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   collections,
   gallery,
   quotes,
+  merch,
   settings,
   onRefreshData,
 }) => {
@@ -96,6 +103,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [editingCollection, setEditingCollection] = useState<Partial<Collection> | null>(null);
   const [editingGallery, setEditingGallery] = useState<Partial<GalleryItem> | null>(null);
   const [editingQuote, setEditingQuote] = useState<Partial<Quote> | null>(null);
+  const [editingMerch, setEditingMerch] = useState<Partial<MerchItem> | null>(null);
+  const [merchSizeInput, setMerchSizeInput] = useState('');
   const [editableSettings, setEditableSettings] = useState<SiteSettings>(settings);
   const [songArtistInput, setSongArtistInput] = useState('');
 
@@ -449,6 +458,50 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   };
 
+  // MERCH / CLOTHING HANDLERS
+  const handleSaveMerch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingMerch?.name) {
+      showNotification('Product name is required.', 'error');
+      return;
+    }
+    setSaving(true);
+    try {
+      await saveMerchItem(editingMerch);
+      await onRefreshData();
+      setEditingMerch(null);
+      showNotification('Garment product saved successfully.');
+    } catch (err: unknown) {
+      showNotification(parseErrorMessage(err), 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteMerch = async (id: string) => {
+    if (!window.confirm('Delete this garment product from the store archive?')) return;
+    try {
+      await deleteMerchItem(id);
+      await onRefreshData();
+      showNotification('Garment removed from store.');
+    } catch (err: unknown) {
+      showNotification(parseErrorMessage(err), 'error');
+    }
+  };
+
+  const handleToggleMerchStock = async (item: MerchItem) => {
+    try {
+      await saveMerchItem({
+        ...item,
+        inStock: !item.inStock,
+      });
+      await onRefreshData();
+      showNotification(`${item.name} marked as ${!item.inStock ? 'IN STOCK' : 'OUT OF STOCK'}`);
+    } catch (err: unknown) {
+      showNotification(parseErrorMessage(err), 'error');
+    }
+  };
+
   // SAVE SITE SETTINGS
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -532,6 +585,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             { id: 'music' as AdminSection, label: 'Music', count: songs.length, icon: Music },
             { id: 'albums' as AdminSection, label: 'Albums', count: albums.length, icon: Disc },
             { id: 'artists' as AdminSection, label: 'Artists', count: artists.length, icon: Mic },
+            { id: 'merch' as AdminSection, label: 'Clothing / Store', count: merch.length, icon: ShoppingBag },
             { id: 'gallery' as AdminSection, label: 'Gallery', count: gallery.length, icon: Images },
             { id: 'settings' as AdminSection, label: 'Site Settings', icon: Sliders },
           ].map(tab => {
@@ -640,6 +694,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   </div>
                   <span className="text-[10px] text-[#707070] block">
                     Monochrome moodboard works
+                  </span>
+                </div>
+
+                <div 
+                  onClick={() => setActiveSection('merch')}
+                  className="bg-[#0B0B0B] border border-[#242424] hover:border-[#707070] p-5 cursor-pointer transition-colors space-y-2"
+                >
+                  <div className="flex items-center justify-between text-[#707070]">
+                    <span className="text-[11px] uppercase tracking-wider">Clothing & Merch</span>
+                    <ShoppingBag className="w-4 h-4" />
+                  </div>
+                  <div className="text-3xl font-black text-[#F5F5F5] tabular-nums font-mono">
+                    {merch.length}
+                  </div>
+                  <span className="text-[10px] text-[#707070] block">
+                    {merch.filter(m => m.inStock).length} in stock · {merch.filter(m => m.isPublished).length} active
                   </span>
                 </div>
               </div>
@@ -2165,6 +2235,389 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* ================= SECTION: CLOTHING / MERCH ================= */}
+      {activeSection === 'merch' && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#242424] pb-4">
+            <div>
+              <h2 className="text-lg font-bold uppercase tracking-tight text-[#F5F5F5] flex items-center gap-2">
+                <ShoppingBag className="w-5 h-5 text-white" />
+                <span>Clothing & Merch Store Manager</span>
+              </h2>
+              <p className="text-xs text-[#707070] font-mono mt-0.5">
+                Add streetwear products, manage pricing, stock inventory, and direct WhatsApp sales.
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                setEditingMerch({
+                  name: '',
+                  price: 45,
+                  currency: '$',
+                  category: 'hoodies',
+                  description: '',
+                  coverImage: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=1000&q=80',
+                  images: [],
+                  sizes: ['S', 'M', 'L', 'XL'],
+                  inStock: true,
+                  isFeatured: false,
+                  isPublished: true,
+                  whatsappNumber: '+201000000000',
+                  orderUrl: '',
+                });
+                setMerchSizeInput('');
+              }}
+              className="px-4 py-2 bg-[#F5F5F5] text-[#050505] text-xs font-semibold uppercase tracking-wider flex items-center gap-2 hover:bg-white cursor-pointer shrink-0"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add New Garment</span>
+            </button>
+          </div>
+
+          {/* Garment Edit / Create Form */}
+          {editingMerch && (
+            <div className="bg-[#0B0B0B] border border-[#242424] p-6 space-y-6">
+              <div className="flex items-center justify-between border-b border-[#1C1C1C] pb-3">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-white font-mono flex items-center gap-2">
+                  <Tag className="w-4 h-4 text-white" />
+                  <span>{editingMerch.id ? 'Edit Garment Piece' : 'Create New Garment Drop'}</span>
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setEditingMerch(null)}
+                  className="text-[#707070] hover:text-white"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveMerch} className="space-y-4">
+                {/* 1. Name & Category */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="sm:col-span-2">
+                    <label className="block text-[11px] uppercase tracking-wider text-[#A1A1A1] mb-1 font-mono">
+                      Garment / Product Name *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={editingMerch.name || ''}
+                      onChange={e => setEditingMerch({ ...editingMerch, name: e.target.value })}
+                      placeholder="e.g. SUB-BASS HEAVY HOODIE, ARCHIVE CAP..."
+                      className="w-full bg-[#111111] border border-[#242424] px-3 py-2 text-xs text-[#F5F5F5] focus:outline-none focus:border-white font-mono"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] uppercase tracking-wider text-[#A1A1A1] mb-1 font-mono">
+                      Category
+                    </label>
+                    <select
+                      value={editingMerch.category || 'hoodies'}
+                      onChange={e => setEditingMerch({ ...editingMerch, category: e.target.value })}
+                      className="w-full bg-[#111111] border border-[#242424] px-3 py-2 text-xs text-[#F5F5F5] focus:outline-none focus:border-white font-mono"
+                    >
+                      <option value="hoodies">Hoodies & Sweatshirts</option>
+                      <option value="tees">T-Shirts & Longsleeves</option>
+                      <option value="headwear">Headwear & Caps & Beanies</option>
+                      <option value="pants">Pants & Bottoms</option>
+                      <option value="accessories">Accessories & Bags</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* 2. Price & Currency */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-[11px] uppercase tracking-wider text-[#A1A1A1] mb-1 font-mono">
+                      Price *
+                    </label>
+                    <input
+                      type="number"
+                      step="any"
+                      required
+                      value={editingMerch.price ?? 0}
+                      onChange={e => setEditingMerch({ ...editingMerch, price: parseFloat(e.target.value) || 0 })}
+                      className="w-full bg-[#111111] border border-[#242424] px-3 py-2 text-xs text-[#F5F5F5] focus:outline-none focus:border-white font-mono tabular-nums"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] uppercase tracking-wider text-[#A1A1A1] mb-1 font-mono">
+                      Currency Symbol
+                    </label>
+                    <input
+                      type="text"
+                      value={editingMerch.currency || '$'}
+                      onChange={e => setEditingMerch({ ...editingMerch, currency: e.target.value })}
+                      placeholder="$, EGP, EUR, £"
+                      className="w-full bg-[#111111] border border-[#242424] px-3 py-2 text-xs text-[#F5F5F5] focus:outline-none focus:border-white font-mono"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] uppercase tracking-wider text-[#A1A1A1] mb-1 font-mono">
+                      WhatsApp Phone (Orders)
+                    </label>
+                    <input
+                      type="text"
+                      value={editingMerch.whatsappNumber || ''}
+                      onChange={e => setEditingMerch({ ...editingMerch, whatsappNumber: e.target.value })}
+                      placeholder="+201xxxxxxxxx"
+                      className="w-full bg-[#111111] border border-[#242424] px-3 py-2 text-xs text-[#F5F5F5] focus:outline-none focus:border-white font-mono"
+                    />
+                  </div>
+                </div>
+
+                {/* 3. Cover Image & Upload */}
+                <div>
+                  <label className="block text-[11px] uppercase tracking-wider text-[#A1A1A1] mb-1 font-mono">
+                    Product Image (URL or Local Upload)
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={editingMerch.coverImage || ''}
+                      onChange={e => setEditingMerch({ ...editingMerch, coverImage: e.target.value })}
+                      placeholder="https://... or upload photo"
+                      className="flex-1 bg-[#111111] border border-[#242424] px-3 py-2 text-xs text-[#F5F5F5] focus:outline-none focus:border-white font-mono"
+                    />
+                    <label className="px-3 py-2 bg-[#161616] border border-[#242424] hover:border-[#707070] cursor-pointer text-xs text-[#A1A1A1] flex items-center gap-1.5 shrink-0">
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>Upload</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={e => handleImageFileUpload(e, base64 => setEditingMerch({ ...editingMerch, coverImage: base64 }))}
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                {/* 4. Sizes Builder */}
+                <div className="space-y-2">
+                  <label className="block text-[11px] uppercase tracking-wider text-[#A1A1A1] font-mono">
+                    Available Sizes
+                  </label>
+                  <div className="flex flex-wrap items-center gap-1.5 mb-2">
+                    {(editingMerch.sizes || []).map((sz, idx) => (
+                      <span
+                        key={idx}
+                        className="inline-flex items-center gap-1.5 bg-[#161616] border border-[#333] px-2.5 py-1 text-xs text-white font-mono uppercase"
+                      >
+                        <span>{sz}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = (editingMerch.sizes || []).filter((_, i) => i !== idx);
+                            setEditingMerch({ ...editingMerch, sizes: updated });
+                          }}
+                          className="text-[#777] hover:text-red-400"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="flex gap-2 max-w-sm">
+                    <input
+                      type="text"
+                      value={merchSizeInput}
+                      onChange={e => setMerchSizeInput(e.target.value)}
+                      placeholder="e.g. S, M, L, XL, XXL..."
+                      className="flex-1 bg-[#111111] border border-[#242424] px-3 py-1.5 text-xs text-[#F5F5F5] font-mono uppercase"
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          if (merchSizeInput.trim()) {
+                            const cur = editingMerch.sizes || [];
+                            if (!cur.includes(merchSizeInput.trim().toUpperCase())) {
+                              setEditingMerch({ ...editingMerch, sizes: [...cur, merchSizeInput.trim().toUpperCase()] });
+                            }
+                            setMerchSizeInput('');
+                          }
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (merchSizeInput.trim()) {
+                          const cur = editingMerch.sizes || [];
+                          if (!cur.includes(merchSizeInput.trim().toUpperCase())) {
+                            setEditingMerch({ ...editingMerch, sizes: [...cur, merchSizeInput.trim().toUpperCase()] });
+                          }
+                          setMerchSizeInput('');
+                        }
+                      }}
+                      className="px-3 py-1.5 bg-[#1F1F1F] border border-[#333] text-xs uppercase font-mono text-white hover:bg-[#2A2A2A]"
+                    >
+                      Add Size
+                    </button>
+                  </div>
+                </div>
+
+                {/* 5. External Order / Checkout URL (Optional) */}
+                <div>
+                  <label className="block text-[11px] uppercase tracking-wider text-[#A1A1A1] mb-1 font-mono">
+                    External Checkout URL (Optional)
+                  </label>
+                  <input
+                    type="url"
+                    value={editingMerch.orderUrl || ''}
+                    onChange={e => setEditingMerch({ ...editingMerch, orderUrl: e.target.value })}
+                    placeholder="https://store.example.com/item or Leave blank for WhatsApp ordering"
+                    className="w-full bg-[#111111] border border-[#242424] px-3 py-2 text-xs text-[#F5F5F5] font-mono"
+                  />
+                </div>
+
+                {/* 6. Description & Material details */}
+                <div>
+                  <label className="block text-[11px] uppercase tracking-wider text-[#A1A1A1] mb-1 font-mono">
+                    Description & Fabric Specifications
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={editingMerch.description || ''}
+                    onChange={e => setEditingMerch({ ...editingMerch, description: e.target.value })}
+                    placeholder="400 GSM heavyweight French terry cotton, garment dyed, screen-printed graphic on chest and back."
+                    className="w-full bg-[#111111] border border-[#242424] px-3 py-2 text-xs text-[#F5F5F5] font-mono"
+                  />
+                </div>
+
+                {/* 7. Checkbox Toggles */}
+                <div className="flex flex-wrap items-center gap-6 pt-2 border-t border-[#1C1C1C]">
+                  <label className="flex items-center gap-2 cursor-pointer text-xs text-[#F5F5F5] font-mono">
+                    <input
+                      type="checkbox"
+                      checked={editingMerch.inStock ?? true}
+                      onChange={e => setEditingMerch({ ...editingMerch, inStock: e.target.checked })}
+                      className="accent-white"
+                    />
+                    <span>Available In Stock</span>
+                  </label>
+
+                  <label className="flex items-center gap-2 cursor-pointer text-xs text-[#F5F5F5] font-mono">
+                    <input
+                      type="checkbox"
+                      checked={editingMerch.isFeatured ?? false}
+                      onChange={e => setEditingMerch({ ...editingMerch, isFeatured: e.target.checked })}
+                      className="accent-white"
+                    />
+                    <span>Featured / Top Drop</span>
+                  </label>
+
+                  <label className="flex items-center gap-2 cursor-pointer text-xs text-[#F5F5F5] font-mono">
+                    <input
+                      type="checkbox"
+                      checked={editingMerch.isPublished ?? true}
+                      onChange={e => setEditingMerch({ ...editingMerch, isPublished: e.target.checked })}
+                      className="accent-white"
+                    />
+                    <span>Published in Store</span>
+                  </label>
+                </div>
+
+                {/* Action buttons */}
+                <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#242424]">
+                  <button
+                    type="button"
+                    onClick={() => setEditingMerch(null)}
+                    className="px-4 py-2 border border-[#333] text-xs uppercase tracking-wider text-[#A1A1A1] hover:text-white"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="px-6 py-2 bg-white text-black text-xs font-black uppercase tracking-wider hover:bg-[#E5E5E5] flex items-center gap-1.5"
+                  >
+                    <Save className="w-4 h-4" />
+                    <span>{saving ? 'Saving...' : 'Save Garment'}</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* List of Existing Clothing Items */}
+          <div className="border border-[#242424] divide-y divide-[#1C1C1C] bg-[#0B0B0B]">
+            {merch.length === 0 ? (
+              <div className="p-8 text-center text-xs font-mono text-[#707070]">
+                No clothing products in archive yet. Click "Add New Garment" above to create your first piece.
+              </div>
+            ) : (
+              merch.map(item => (
+                <div
+                  key={item.id}
+                  className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:bg-[#111111] transition-colors"
+                >
+                  <div className="flex items-center gap-4 min-w-0">
+                    <img
+                      src={item.coverImage}
+                      alt={item.name}
+                      className="w-14 h-14 object-cover border border-[#242424] shrink-0 bg-[#161616]"
+                    />
+                    <div className="min-w-0 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-white uppercase tracking-wider truncate">
+                          {item.name}
+                        </span>
+                        {item.isFeatured && (
+                          <span className="bg-white text-black text-[9px] font-black uppercase px-1.5 py-0.2">
+                            DROP
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 text-[11px] font-mono text-[#707070]">
+                        <span className="text-white font-bold">{item.currency || '$'}{item.price}</span>
+                        <span>·</span>
+                        <span className="uppercase">{item.category}</span>
+                        <span>·</span>
+                        <span>Sizes: {item.sizes?.join(', ') || 'N/A'}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                    {/* Fast stock toggler */}
+                    <button
+                      type="button"
+                      onClick={() => handleToggleMerchStock(item)}
+                      className={`text-[10px] font-mono uppercase px-2.5 py-1 border transition-colors cursor-pointer ${
+                        item.inStock
+                          ? 'border-[#23582A] text-[#4ADE80] bg-[#122B15] hover:bg-[#1a3d1e]'
+                          : 'border-[#582323] text-[#F87171] bg-[#2B1212] hover:bg-[#3d1a1a]'
+                      }`}
+                    >
+                      {item.inStock ? 'IN STOCK' : 'SOLD OUT'}
+                    </button>
+
+                    <button
+                      onClick={() => setEditingMerch(item)}
+                      className="p-2 text-[#707070] hover:text-[#F5F5F5]"
+                      title="Edit Garment"
+                    >
+                      <Edit3 className="w-4 h-4" />
+                    </button>
+
+                    <button
+                      onClick={() => handleDeleteMerch(item.id)}
+                      className="p-2 text-[#707070] hover:text-red-400"
+                      title="Delete Garment"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       )}
