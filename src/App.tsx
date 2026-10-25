@@ -85,7 +85,7 @@ const MainApp: React.FC = () => {
 
   // Modal states
   const [detailTarget, setDetailTarget] = useState<{
-    type: 'song' | 'artist' | 'album' | 'collection';
+    type: 'song' | 'artist' | 'album' | 'collection' | 'merch';
     data: any;
   } | null>(null);
 
@@ -137,7 +137,7 @@ const MainApp: React.FC = () => {
   }, [loadData]);
 
   // Handle switching between related items in detail view
-  const handleSelectOtherDetailItem = (type: 'song' | 'artist' | 'album' | 'collection', id: string) => {
+  const handleSelectOtherDetailItem = (type: 'song' | 'artist' | 'album' | 'collection' | 'merch', id: string) => {
     if (type === 'song') {
       const s = songs.find(item => item.id === id);
       if (s) setDetailTarget({ type: 'song', data: s });
@@ -150,6 +150,9 @@ const MainApp: React.FC = () => {
     } else if (type === 'collection') {
       const c = collections.find(item => item.id === id);
       if (c) setDetailTarget({ type: 'collection', data: c });
+    } else if (type === 'merch') {
+      const m = merch.find(item => item.id === id);
+      if (m) setDetailTarget({ type: 'merch', data: m });
     }
   };
 
@@ -216,6 +219,7 @@ const MainApp: React.FC = () => {
               {currentTab === 'merch' && (
                 <MerchPage
                   merch={merch}
+                  onOpenDetail={item => setDetailTarget({ type: 'merch', data: item })}
                 />
               )}
 

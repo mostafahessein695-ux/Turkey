@@ -2256,8 +2256,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               onClick={() => {
                 setEditingMerch({
                   name: '',
-                  price: 45,
-                  currency: '$',
+                  price: 650,
+                  currency: 'EGP',
                   category: 'hoodies',
                   description: '',
                   coverImage: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=1000&q=80',
@@ -2352,9 +2352,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     </label>
                     <input
                       type="text"
-                      value={editingMerch.currency || '$'}
+                      value={editingMerch.currency || 'EGP'}
                       onChange={e => setEditingMerch({ ...editingMerch, currency: e.target.value })}
-                      placeholder="$, EGP, EUR, £"
+                      placeholder="EGP, $, EUR, £"
                       className="w-full bg-[#111111] border border-[#242424] px-3 py-2 text-xs text-[#F5F5F5] focus:outline-none focus:border-white font-mono"
                     />
                   </div>
@@ -2576,7 +2576,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         )}
                       </div>
                       <div className="flex items-center gap-2 text-[11px] font-mono text-[#707070]">
-                        <span className="text-white font-bold">{item.currency || '$'}{item.price}</span>
+                        <span className="text-white font-bold">{item.price} {item.currency || 'EGP'}</span>
                         <span>·</span>
                         <span className="uppercase">{item.category}</span>
                         <span>·</span>

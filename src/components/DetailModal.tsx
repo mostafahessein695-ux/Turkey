@@ -1,17 +1,17 @@
-import React from 'react';
-import { Song, Artist, Album, Collection, formatInstagramUrl, formatInstagramHandle } from '../types';
-import { X, ExternalLink, Star, Disc, User, Music, Radio, Clock, Share2, Play, Users, Instagram } from 'lucide-react';
+import React, { useState } from 'react';
+import { Song, Artist, Album, Collection, MerchItem, formatInstagramUrl, formatInstagramHandle } from '../types';
+import { X, ExternalLink, Star, Disc, User, Music, Radio, Clock, Share2, Play, Users, Instagram, ShoppingBag, MessageCircle, Tag, Check, Ruler } from 'lucide-react';
 import { isArtistOnSong } from '../services/db';
 
 interface DetailModalProps {
   target: {
-    type: 'song' | 'artist' | 'album' | 'collection';
-    data: Song | Artist | Album | Collection;
+    type: 'song' | 'artist' | 'album' | 'collection' | 'merch';
+    data: Song | Artist | Album | Collection | MerchItem;
   } | null;
   allSongs?: Song[];
   allAlbums?: Album[];
   onClose: () => void;
-  onSelectOtherItem?: (type: 'song' | 'artist' | 'album' | 'collection', id: string) => void;
+  onSelectOtherItem?: (type: 'song' | 'artist' | 'album' | 'collection' | 'merch', id: string) => void;
 }
 
 export const DetailModal: React.FC<DetailModalProps> = ({
@@ -503,6 +503,176 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                       </div>
                     </button>
                   ))}
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* MERCH / CLOTHING DETAIL */}
+        {type === 'merch' && (() => {
+          const item = data as MerchItem;
+          const [selectedSize, setSelectedSize] = useState<string>(item.sizes?.[0] || 'M');
+          const [activeImg, setActiveImg] = useState<string>(item.coverImage || item.images?.[0] || '');
+
+          const formatPrice = (price: number, currency?: string) => {
+            const cur = currency?.trim() || 'EGP';
+            if (cur === '$' || cur === '£' || cur === '€') {
+              return `${cur}${price.toLocaleString()}`;
+            }
+            return `${price.toLocaleString()} ${cur}`;
+          };
+
+          const handleWhatsApp = () => {
+            const phone = (item.whatsappNumber || '').replace(/[^\d+]/g, '') || '201000000000';
+            const msg = encodeURIComponent(
+              `Hello! I want to order "${item.name}" from MY WORLD.\nSize: ${selectedSize}\nPrice: ${formatPrice(item.price, item.currency)}`
+            );
+            window.open(`https://wa.me/${phone.replace('+', '')}?text=${msg}`, '_blank');
+          };
+
+          return (
+            <div className="p-6 sm:p-10 space-y-8">
+              {/* Header tags */}
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[10px] font-mono uppercase tracking-widest text-[#888888] bg-[#141414] px-2.5 py-1 border border-[#242424]">
+                  {item.category}
+                </span>
+                {item.inStock ? (
+                  <span className="bg-[#122B15] text-[#4ADE80] border border-[#23582A] text-[10px] font-mono uppercase tracking-widest px-2.5 py-1 font-bold">
+                    IN STOCK · متوفر
+                  </span>
+                ) : (
+                  <span className="bg-[#2B1212] text-[#F87171] border border-[#582323] text-[10px] font-mono uppercase tracking-widest px-2.5 py-1 font-bold">
+                    SOLD OUT · غير متوفر
+                  </span>
+                )}
+                {item.isFeatured && (
+                  <span className="bg-white text-black text-[10px] font-black uppercase tracking-widest px-2 py-0.5">
+                    FEATURED DROP
+                  </span>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+                {/* Artwork / Imagery */}
+                <div className="md:col-span-5 space-y-3">
+                  <div className="aspect-square bg-[#111111] border border-[#242424] overflow-hidden">
+                    <img
+                      src={activeImg || item.coverImage}
+                      alt={item.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+
+                  {item.images && item.images.length > 1 && (
+                    <div className="flex gap-2 overflow-x-auto pb-1">
+                      {item.images.map((img, i) => (
+                        <button
+                          key={i}
+                          onClick={() => setActiveImg(img)}
+                          className={`w-14 h-14 shrink-0 border overflow-hidden transition-all ${
+                            activeImg === img ? 'border-white' : 'border-[#333] opacity-60 hover:opacity-100'
+                          }`}
+                        >
+                          <img src={img} alt="" className="w-full h-full object-cover" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Information */}
+                <div className="md:col-span-7 space-y-6">
+                  <div>
+                    <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-white leading-tight">
+                      {item.name}
+                    </h2>
+                    <div className="text-2xl font-black font-mono text-white mt-2">
+                      {formatPrice(item.price, item.currency)}
+                    </div>
+                  </div>
+
+                  {/* Description */}
+                  <div className="border-t border-[#1F1F1F] pt-4">
+                    <h4 className="text-[11px] font-mono uppercase tracking-wider text-[#707070] mb-1">
+                      Fabric & Silhouette Description
+                    </h4>
+                    <p className="text-xs text-[#CCCCCC] leading-relaxed whitespace-pre-line font-mono">
+                      {item.description || 'Exclusive underground collection garment. Premium heavy material designed with durable detailing.'}
+                    </p>
+                  </div>
+
+                  {/* Specifications */}
+                  <div className="bg-[#111111] border border-[#222222] p-4 space-y-2 text-xs font-mono text-[#A1A1A1]">
+                    <div className="flex items-center justify-between border-b border-[#1E1E1E] pb-1.5">
+                      <span className="text-[#666666] uppercase">Material</span>
+                      <span className="text-white font-semibold">100% Dense Combed Cotton</span>
+                    </div>
+                    <div className="flex items-center justify-between border-b border-[#1E1E1E] pb-1.5">
+                      <span className="text-[#666666] uppercase">Fabric Density</span>
+                      <span className="text-white font-semibold">380 - 450 GSM Heavyweight</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[#666666] uppercase">Cut & Fit</span>
+                      <span className="text-white font-semibold">Oversized Drop-Shoulder</span>
+                    </div>
+                  </div>
+
+                  {/* Sizes */}
+                  {item.sizes && item.sizes.length > 0 && (
+                    <div className="space-y-2 border-t border-[#1F1F1F] pt-4">
+                      <div className="flex items-center justify-between text-xs font-mono text-[#888888]">
+                        <span>SELECT SIZE</span>
+                        <span className="text-white font-bold">{selectedSize}</span>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {item.sizes.map(sz => (
+                          <button
+                            key={sz}
+                            onClick={() => setSelectedSize(sz)}
+                            className={`px-3 py-1.5 text-xs font-mono uppercase tracking-wider transition-all cursor-pointer ${
+                              selectedSize === sz
+                                ? 'bg-white text-black font-bold border border-white'
+                                : 'bg-[#141414] text-[#888] hover:text-white border border-[#2B2B2B]'
+                            }`}
+                          >
+                            {sz}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Actions */}
+                  <div className="space-y-2 pt-2">
+                    {item.inStock ? (
+                      <>
+                        <button
+                          onClick={handleWhatsApp}
+                          className="w-full bg-[#1A1A1A] hover:bg-[#252525] text-white border border-[#3A3A3A] hover:border-white py-3 px-4 text-xs uppercase font-bold tracking-wider transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                        >
+                          <MessageCircle className="w-4 h-4 text-[#25D366]" />
+                          <span>Order on WhatsApp (طلب مباشر عبر واتساب)</span>
+                        </button>
+                        {item.orderUrl && (
+                          <a
+                            href={item.orderUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full bg-white hover:bg-[#E5E5E5] text-black py-3 px-4 text-xs uppercase font-black tracking-wider transition-colors flex items-center justify-center gap-2"
+                          >
+                            <span>Go to Online Store</span>
+                            <ExternalLink className="w-4 h-4" />
+                          </a>
+                        )}
+                      </>
+                    ) : (
+                      <div className="p-3 bg-[#121212] border border-[#222] text-center text-xs font-mono text-[#666]">
+                        THIS ITEM IS CURRENTLY ARCHIVED / SOLD OUT
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
