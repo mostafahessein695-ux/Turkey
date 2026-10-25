@@ -653,7 +653,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                           className="w-full bg-[#1A1A1A] hover:bg-[#252525] text-white border border-[#3A3A3A] hover:border-white py-3 px-4 text-xs uppercase font-bold tracking-wider transition-colors flex items-center justify-center gap-2 cursor-pointer"
                         >
                           <MessageCircle className="w-4 h-4 text-[#25D366]" />
-                          <span>Order on WhatsApp (طلب مباشر عبر واتساب)</span>
+                          <span>Order on WhatsApp</span>
                         </button>
                         {item.orderUrl && (
                           <a

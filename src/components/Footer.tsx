@@ -76,10 +76,10 @@ export const Footer: React.FC<FooterProps> = ({
                 Artists & Profiles
               </button>
               <button
-                onClick={() => { onSelectTab('gallery'); scrollToTop(); }}
+                onClick={() => { onSelectTab('merch'); scrollToTop(); }}
                 className="text-left hover:text-[#F5F5F5] transition-colors"
               >
-                Visual Gallery
+                Store / Clothes
               </button>
             </div>
           </div>

@@ -36,7 +36,6 @@ import { MusicPage } from './pages/MusicPage';
 import { AlbumsPage } from './pages/AlbumsPage';
 import { ArtistsPage } from './pages/ArtistsPage';
 import { MerchPage } from './pages/MerchPage';
-import { GalleryPage } from './pages/GalleryPage';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { DetailModal } from './components/DetailModal';
 import { LightboxModal } from './components/LightboxModal';
@@ -219,14 +218,6 @@ const MainApp: React.FC = () => {
               {currentTab === 'merch' && (
                 <MerchPage
                   merch={merch}
-                  onOpenDetail={item => setDetailTarget({ type: 'merch', data: item })}
-                />
-              )}
-
-              {currentTab === 'gallery' && (
-                <GalleryPage
-                  gallery={gallery}
-                  onOpenLightbox={item => setLightboxItem(item)}
                 />
               )}
 

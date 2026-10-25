@@ -85,9 +85,6 @@ export const HomePage: React.FC<HomePageProps> = ({
   // 3. Current favorites (rating >= 9.5 or featured)
   const favoriteSongs = songs.filter(s => s.personalRating >= 9.5 || s.isFeatured).slice(0, 4);
 
-  // 4. Visual moodboard items
-  const moodboardItems = gallery.slice(0, 6);
-
   return (
     <div className="w-full space-y-24">
       
@@ -606,54 +603,6 @@ export const HomePage: React.FC<HomePageProps> = ({
             </div>
           )}
         </div>
-      </section>
-
-      {/* VISUAL MOODBOARD */}
-      <section className="max-w-7xl mx-auto px-6">
-        <div className="flex items-end justify-between mb-8 pb-4 border-b border-[#242424]">
-          <div>
-            <span className="text-xs uppercase tracking-widest text-[#707070] block mb-1">
-              Visual Universe
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#F5F5F5] uppercase">
-              Aesthetic Moodboard & Imagery
-            </h2>
-          </div>
-          <button
-            onClick={() => onSelectTab('gallery')}
-            className="text-xs uppercase tracking-wider text-[#A1A1A1] hover:text-[#F5F5F5] transition-colors flex items-center gap-1.5 cursor-pointer py-1"
-          >
-            <span>Full Gallery</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        {moodboardItems.length === 0 ? (
-          <div className="py-16 text-center border border-[#242424] bg-[#0B0B0B] text-xs text-[#707070]">
-            Visual gallery items in curation.
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-            {moodboardItems.map(item => (
-              <div
-                key={item.id}
-                onClick={() => onOpenLightbox(item)}
-                className="aspect-square bg-[#111111] border border-[#242424] hover:border-[#707070] cursor-pointer overflow-hidden transition-all group relative hover-luxury-lift"
-              >
-                <img
-                  src={item.imageUrl}
-                  alt={item.title}
-                  referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 filter grayscale contrast-110"
-                />
-                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity p-3 flex flex-col justify-end">
-                  <p className="text-[11px] font-medium text-[#F5F5F5] truncate">{item.title}</p>
-                  <p className="text-[10px] text-[#A1A1A1] truncate">{item.category}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
       </section>
 
     </div>

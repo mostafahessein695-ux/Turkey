@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { MerchItem } from '../types';
 import { 
   ShoppingBag, 
@@ -9,15 +9,15 @@ import {
   Check, 
   X, 
   Eye, 
-  Sparkles,
-  ShieldCheck,
-  Package,
-  Layers,
-  Ruler,
-  Info,
-  CheckCircle2,
-  Share2,
-  Copy
+  Sparkles, 
+  ShieldCheck, 
+  Package, 
+  Layers, 
+  Ruler, 
+  Info, 
+  CheckCircle2, 
+  Share2, 
+  Copy 
 } from 'lucide-react';
 
 interface MerchPageProps {
@@ -25,7 +25,7 @@ interface MerchPageProps {
   onOpenDetail?: (item: MerchItem) => void;
 }
 
-export const MerchPage: React.FC<MerchPageProps> = ({ merch, onOpenDetail }) => {
+export const MerchPage: React.FC<MerchPageProps> = ({ merch }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedSizes, setSelectedSizes] = useState<Record<string, string>>({});
@@ -33,6 +33,23 @@ export const MerchPage: React.FC<MerchPageProps> = ({ merch, onOpenDetail }) => 
   const [activeModalImage, setActiveModalImage] = useState<string>('');
   const [showSizeGuide, setShowSizeGuide] = useState<boolean>(false);
   const [copiedLink, setCopiedLink] = useState<boolean>(false);
+
+  // Close modal on Escape key press and prevent background scroll
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setModalItem(null);
+      }
+    };
+    if (modalItem) {
+      window.addEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'hidden';
+    }
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = '';
+    };
+  }, [modalItem]);
 
   // Extract unique categories
   const categories = useMemo(() => {
@@ -87,9 +104,6 @@ export const MerchPage: React.FC<MerchPageProps> = ({ merch, onOpenDetail }) => 
   };
 
   const openView = (item: MerchItem) => {
-    if (onOpenDetail) {
-      onOpenDetail(item);
-    }
     setModalItem(item);
     setActiveModalImage(item.coverImage || item.images?.[0] || '');
     setShowSizeGuide(false);
@@ -203,7 +217,7 @@ export const MerchPage: React.FC<MerchPageProps> = ({ merch, onOpenDetail }) => 
                 <div 
                   onClick={() => openView(item)}
                   className="relative aspect-square w-full overflow-hidden bg-[#111111] cursor-pointer"
-                  title="Click to view details / إضغط لمعاينة التفاصيل"
+                  title="Click to view garment details"
                 >
                   <img
                     src={item.coverImage}
@@ -405,11 +419,11 @@ export const MerchPage: React.FC<MerchPageProps> = ({ merch, onOpenDetail }) => 
                 </span>
                 {modalItem.inStock ? (
                   <span className="bg-[#122B15] text-[#4ADE80] border border-[#23582A] text-[10px] font-mono uppercase tracking-widest px-2.5 py-1 font-bold">
-                    IN STOCK · جاهز للتسليم
+                    IN STOCK
                   </span>
                 ) : (
                   <span className="bg-[#2B1212] text-[#F87171] border border-[#582323] text-[10px] font-mono uppercase tracking-widest px-2.5 py-1 font-bold">
-                    SOLD OUT · غير متوفر
+                    SOLD OUT
                   </span>
                 )}
                 {modalItem.isFeatured && (
@@ -448,7 +462,7 @@ export const MerchPage: React.FC<MerchPageProps> = ({ merch, onOpenDetail }) => 
                 {modalItem.images && modalItem.images.length > 1 && (
                   <div className="space-y-1">
                     <span className="text-[10px] font-mono uppercase tracking-wider text-[#707070] block">
-                      Image Angles / زوايا القطعة
+                      Image Angles
                     </span>
                     <div className="flex gap-2 overflow-x-auto pb-1">
                       {modalItem.images.map((img, idx) => (
@@ -488,7 +502,7 @@ export const MerchPage: React.FC<MerchPageProps> = ({ merch, onOpenDetail }) => 
                 <div className="border-t border-[#1F1F1F] pt-4 space-y-2">
                   <h4 className="text-[11px] font-mono uppercase tracking-wider text-[#707070] flex items-center gap-1.5">
                     <Info className="w-3.5 h-3.5 text-white" />
-                    <span>Piece Details & Description / تفاصيل القطعة</span>
+                    <span>Garment Details & Description</span>
                   </h4>
                   <p className="text-xs text-[#CCCCCC] leading-relaxed whitespace-pre-line font-mono">
                     {modalItem.description || 'Exclusive underground collection garment. Premium heavy material designed with durable detailing, reinforced stitching, and authentic street cuts.'}
@@ -519,7 +533,7 @@ export const MerchPage: React.FC<MerchPageProps> = ({ merch, onOpenDetail }) => 
                 {modalItem.sizes && modalItem.sizes.length > 0 && (
                   <div className="space-y-3 border-t border-[#1F1F1F] pt-4">
                     <div className="flex items-center justify-between text-xs font-mono">
-                      <span className="text-[#888888] uppercase">AVAILABLE SIZES / المقاسات المتوفرة</span>
+                      <span className="text-[#888888] uppercase">AVAILABLE SIZES</span>
                       <div className="flex items-center gap-3">
                         <span className="text-white font-bold uppercase">
                           Selected: {selectedSizes[modalItem.id] || modalItem.sizes[0]}
@@ -590,7 +604,7 @@ export const MerchPage: React.FC<MerchPageProps> = ({ merch, onOpenDetail }) => 
                         className="w-full bg-[#1A1A1A] hover:bg-[#252525] text-white border border-[#3A3A3A] hover:border-white py-3.5 px-4 text-xs uppercase font-bold tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg"
                       >
                         <MessageCircle className="w-4 h-4 text-[#25D366]" />
-                        <span>ORDER VIA WHATSAPP (طلب فوري على الواتساب)</span>
+                        <span>ORDER VIA WHATSAPP</span>
                       </button>
 
                       {modalItem.orderUrl && (

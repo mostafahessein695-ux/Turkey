@@ -6,7 +6,6 @@ import {
   Music, 
   Disc, 
   Mic, 
-  Images, 
   ShoppingBag,
   Shield, 
   Lock, 
@@ -39,7 +38,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'artists', label: 'Artists', icon: Mic },
     { id: 'merch', label: 'Store / Clothes', icon: ShoppingBag },
     { id: 'albums', label: 'Albums', icon: Disc },
-    { id: 'gallery', label: 'Gallery', icon: Images },
   ];
 
   const handleNavClick = (tab: NavTab) => {
