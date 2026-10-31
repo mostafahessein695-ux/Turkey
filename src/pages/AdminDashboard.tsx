@@ -63,6 +63,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   // EDIT STATE FOR MERCH
   const [editingMerch, setEditingMerch] = useState<Partial<MerchItem> | null>(null);
   const [merchSizeInput, setMerchSizeInput] = useState('');
+  const [merchColorInput, setMerchColorInput] = useState('');
   const [merchImageInput, setMerchImageInput] = useState('');
   const [editableSettings, setEditableSettings] = useState<SiteSettings>(settings);
 
@@ -138,6 +139,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     });
   };
 
+  // ADD / REMOVE COLOR HELPER
+  const handleAddColor = (colorToAdd?: string) => {
+    const c = (colorToAdd ?? merchColorInput).trim();
+    if (!c || !editingMerch) return;
+    const currentColors = editingMerch.colors ? [...editingMerch.colors] : [];
+    if (!currentColors.some(existing => existing.toLowerCase() === c.toLowerCase())) {
+      currentColors.push(c);
+    }
+    setEditingMerch({ ...editingMerch, colors: currentColors });
+    setMerchColorInput('');
+  };
+
+  const handleRemoveColor = (colorToRemove: string) => {
+    if (!editingMerch || !editingMerch.colors) return;
+    setEditingMerch({
+      ...editingMerch,
+      colors: editingMerch.colors.filter(c => c !== colorToRemove),
+    });
+  };
+
   // ADD / REMOVE EXTRA IMAGE HELPER
   const handleAddExtraImage = () => {
     const url = merchImageInput.trim();
@@ -181,6 +202,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         });
       }
 
+      // Colors & Color-Images Mapping
+      const color1 = editingMerch.colors?.[0] || 'Black';
+      const color2 = editingMerch.colors?.[1] || (secondImage.trim() ? 'White' : undefined);
+      
+      const resolvedColors = editingMerch.colors && editingMerch.colors.length > 0 
+        ? editingMerch.colors 
+        : [color1, ...(color2 ? [color2] : [])];
+
+      const colorImages: Record<string, string> = {
+        ...(editingMerch.colorImages || {})
+      };
+      if (editingMerch.coverImage) {
+        colorImages[resolvedColors[0] || 'Black'] = editingMerch.coverImage.trim();
+      }
+      if (secondImage.trim() && resolvedColors.length > 1) {
+        colorImages[resolvedColors[1] || 'White'] = secondImage.trim();
+      }
+
       const itemToSave: MerchItem = {
         id: editingMerch.id || `merch_${Date.now()}`,
         name: editingMerch.name.trim(),
@@ -191,6 +230,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         coverImage: editingMerch.coverImage.trim(),
         images: gatheredImages,
         sizes: editingMerch.sizes && editingMerch.sizes.length > 0 ? editingMerch.sizes : ['S', 'M', 'L', 'XL'],
+        colors: resolvedColors,
+        colorImages: colorImages,
         inStock: editingMerch.inStock ?? true,
         isFeatured: editingMerch.isFeatured ?? false,
         isPublished: editingMerch.isPublished ?? true,
@@ -460,12 +501,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           coverImage: '',
                           images: [],
                           sizes: ['S', 'M', 'L', 'XL'],
+                          colors: ['Washed Black', 'Vintage Grey'],
                           inStock: true,
                           isFeatured: true,
                           isPublished: true,
                           whatsappNumber: '+201000000000',
                           orderUrl: '',
                         });
+                        setMerchSizeInput('');
+                        setMerchColorInput('');
+                        setMerchImageInput('');
                       }}
                       className="px-4 py-2 bg-white text-black text-xs font-bold uppercase tracking-wider flex items-center gap-2 hover:bg-[#E5E5E5] cursor-pointer"
                     >
@@ -555,6 +600,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       coverImage: '',
                       images: [],
                       sizes: ['S', 'M', 'L', 'XL'],
+                      colors: ['Washed Black', 'Vintage Grey'],
                       inStock: true,
                       isFeatured: false,
                       isPublished: true,
@@ -562,6 +608,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       orderUrl: '',
                     });
                     setMerchSizeInput('');
+                    setMerchColorInput('');
                     setMerchImageInput('');
                   }}
                   className="px-4 py-2 bg-[#F5F5F5] text-[#050505] text-xs font-semibold uppercase tracking-wider flex items-center gap-2 hover:bg-white cursor-pointer shrink-0"
@@ -667,26 +714,58 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       </div>
                     </div>
 
-                    {/* 3. DUAL PRODUCT IMAGES (Front View & Back View) */}
+                    {/* 3. PRODUCT PHOTOS BY COLOR (Color 1: Black & Color 2: White) */}
                     <div className="space-y-3 pt-2">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 pb-1 border-b border-[#1C1C1C]">
-                        <label className="text-xs uppercase tracking-wider text-white font-mono font-bold flex items-center gap-2">
-                          <Tag className="w-4 h-4 text-emerald-400" />
-                          <span>Product Images (Image 1: Front & Image 2: Back)</span>
-                        </label>
-                        <span className="text-[11px] text-[#A1A1A1] font-mono">
-                          Upload 2 Photos: Front View & Back View
-                        </span>
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-[#1C1C1C]">
+                        <div>
+                          <label className="text-xs uppercase tracking-wider text-white font-mono font-bold flex items-center gap-2">
+                            <Tag className="w-4 h-4 text-emerald-400" />
+                            <span>Product Photos by Color / صور القطعة حسب اللون (أسود، أبيض، إلخ)</span>
+                          </label>
+                          <span className="text-[11px] text-[#A1A1A1] font-mono block mt-0.5">
+                            ارفع صورة للون الأول (مثلاً أسود) وصورة للون الثاني (مثلاً أبيض). عند اختيار العميل للون ستظهر صورته تلقائياً!
+                          </span>
+                        </div>
+
+                        {/* Quick Presets for Black & White */}
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const cur = editingMerch.colors ? [...editingMerch.colors] : [];
+                              const newCols = ['Black', 'White', ...cur.filter(c => c.toLowerCase() !== 'black' && c.toLowerCase() !== 'white')];
+                              setEditingMerch({ ...editingMerch, colors: newCols });
+                            }}
+                            className="px-2.5 py-1 bg-[#1A1A1A] hover:bg-[#252525] border border-emerald-500/50 text-[10px] font-mono text-emerald-300 uppercase tracking-wider flex items-center gap-1 cursor-pointer"
+                          >
+                            <span>+ Set: Black & White (أسود وأبيض)</span>
+                          </button>
+                        </div>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {/* CARD 1: IMAGE 1 (FRONT VIEW / COVER) */}
+                        {/* CARD 1: COLOR 1 PHOTO (PRIMARY / BLACK) */}
                         <div className="bg-[#111111] border border-[#262626] p-4 space-y-3">
                           <div className="flex items-center justify-between">
-                            <span className="text-xs font-mono uppercase text-white font-bold flex items-center gap-2">
-                              <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                              <span>Image 1: Front View *</span>
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+                              <span className="text-xs font-mono uppercase text-white font-bold">
+                                Photo 1 / اللون الأول:
+                              </span>
+                              <input
+                                type="text"
+                                value={editingMerch.colors?.[0] || 'Black'}
+                                onChange={e => {
+                                  const rest = (editingMerch.colors || []).slice(1);
+                                  setEditingMerch({
+                                    ...editingMerch,
+                                    colors: [e.target.value, ...rest],
+                                  });
+                                }}
+                                placeholder="Color name (e.g. Black)"
+                                className="bg-[#0B0B0B] border border-[#333] px-2 py-0.5 text-xs text-emerald-400 font-mono font-bold focus:outline-none focus:border-emerald-400 w-28 uppercase"
+                              />
+                            </div>
                             {editingMerch.coverImage && (
                               <button
                                 type="button"
@@ -703,18 +782,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             {editingMerch.coverImage ? (
                               <img
                                 src={editingMerch.coverImage}
-                                alt="Front View Preview"
+                                alt="Color 1 Photo"
                                 className="w-full h-full object-cover"
                               />
                             ) : (
                               <div className="text-center p-4 text-[#555555] space-y-2">
                                 <Upload className="w-6 h-6 mx-auto text-[#444444]" />
-                                <p className="text-[11px] font-mono text-[#888888]">Front Photo (Required)</p>
-                                <p className="text-[10px] font-mono text-[#555555]">Upload photo or paste image URL below</p>
+                                <p className="text-[11px] font-mono text-[#888888]">Photo 1 (Required)</p>
+                                <p className="text-[10px] font-mono text-[#555555]">صورة اللون الأول (مثلاً أسود)</p>
                               </div>
                             )}
-                            <div className="absolute top-2 left-2 bg-black/80 border border-[#333] px-2 py-0.5 text-[9px] font-mono text-emerald-400 uppercase">
-                              Front View (الواجهة الأمامية)
+                            <div className="absolute top-2 left-2 bg-black/90 border border-emerald-500/60 px-2 py-0.5 text-[10px] font-mono text-emerald-400 uppercase font-bold">
+                              Color 1: {editingMerch.colors?.[0] || 'Black'}
                             </div>
                           </div>
 
@@ -725,12 +804,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                               required
                               value={editingMerch.coverImage || ''}
                               onChange={e => setEditingMerch({ ...editingMerch, coverImage: e.target.value })}
-                              placeholder="Image 1 URL or use upload button..."
+                              placeholder="Photo 1 URL or use upload button..."
                               className="w-full bg-[#0B0B0B] border border-[#262626] px-3 py-2 text-xs text-[#F5F5F5] focus:outline-none focus:border-white font-mono"
                             />
                             <label className="w-full py-2.5 bg-[#161616] hover:bg-[#1E1E1E] border border-[#2D2D2D] hover:border-emerald-500/60 cursor-pointer text-xs text-white font-mono flex items-center justify-center gap-2 transition-colors">
                               <Upload className="w-3.5 h-3.5 text-emerald-400" />
-                              <span>Upload Image 1 (Front View)</span>
+                              <span>Upload Photo 1 ({editingMerch.colors?.[0] || 'Black'})</span>
                               <input
                                 type="file"
                                 accept="image/*"
@@ -741,13 +820,29 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           </div>
                         </div>
 
-                        {/* CARD 2: IMAGE 2 (BACK VIEW / SECONDARY) */}
+                        {/* CARD 2: COLOR 2 PHOTO (WHITE / SECONDARY) */}
                         <div className="bg-[#111111] border border-[#262626] p-4 space-y-3">
                           <div className="flex items-center justify-between">
-                            <span className="text-xs font-mono uppercase text-white font-bold flex items-center gap-2">
-                              <span className="w-2 h-2 rounded-full bg-blue-400" />
-                              <span>Image 2: Back View (Second Image)</span>
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="w-2.5 h-2.5 rounded-full bg-blue-400" />
+                              <span className="text-xs font-mono uppercase text-white font-bold">
+                                Photo 2 / اللون الثاني:
+                              </span>
+                              <input
+                                type="text"
+                                value={editingMerch.colors?.[1] || 'White'}
+                                onChange={e => {
+                                  const c1 = editingMerch.colors?.[0] || 'Black';
+                                  const rest = (editingMerch.colors || []).slice(2);
+                                  setEditingMerch({
+                                    ...editingMerch,
+                                    colors: [c1, e.target.value, ...rest],
+                                  });
+                                }}
+                                placeholder="Color name (e.g. White)"
+                                className="bg-[#0B0B0B] border border-[#333] px-2 py-0.5 text-xs text-blue-300 font-mono font-bold focus:outline-none focus:border-blue-400 w-28 uppercase"
+                              />
+                            </div>
                             {secondImage && (
                               <button
                                 type="button"
@@ -764,18 +859,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             {secondImage ? (
                               <img
                                 src={secondImage}
-                                alt="Back View Preview"
+                                alt="Color 2 Photo"
                                 className="w-full h-full object-cover"
                               />
                             ) : (
                               <div className="text-center p-4 text-[#555555] space-y-2">
                                 <Upload className="w-6 h-6 mx-auto text-[#444444]" />
-                                <p className="text-[11px] font-mono text-[#888888]">Back Photo (Second Image)</p>
-                                <p className="text-[10px] font-mono text-[#555555]">Upload photo or paste image URL below</p>
+                                <p className="text-[11px] font-mono text-[#888888]">Photo 2 (Second Color)</p>
+                                <p className="text-[10px] font-mono text-[#555555]">صورة اللون الثاني (مثلاً أبيض)</p>
                               </div>
                             )}
-                            <div className="absolute top-2 left-2 bg-black/80 border border-[#333] px-2 py-0.5 text-[9px] font-mono text-blue-400 uppercase">
-                              Back View (الواجهة الخلفية)
+                            <div className="absolute top-2 left-2 bg-black/90 border border-blue-500/60 px-2 py-0.5 text-[10px] font-mono text-blue-300 uppercase font-bold">
+                              Color 2: {editingMerch.colors?.[1] || 'White'}
                             </div>
                           </div>
 
@@ -785,12 +880,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                               type="text"
                               value={secondImage || ''}
                               onChange={e => handleSetSecondImage(e.target.value)}
-                              placeholder="Image 2 URL or use upload button..."
+                              placeholder="Photo 2 URL or use upload button..."
                               className="w-full bg-[#0B0B0B] border border-[#262626] px-3 py-2 text-xs text-[#F5F5F5] focus:outline-none focus:border-white font-mono"
                             />
                             <label className="w-full py-2.5 bg-[#161616] hover:bg-[#1E1E1E] border border-[#2D2D2D] hover:border-blue-500/60 cursor-pointer text-xs text-white font-mono flex items-center justify-center gap-2 transition-colors">
                               <Upload className="w-3.5 h-3.5 text-blue-400" />
-                              <span>Upload Image 2 (Back View)</span>
+                              <span>Upload Photo 2 ({editingMerch.colors?.[1] || 'White'})</span>
                               <input
                                 type="file"
                                 accept="image/*"
@@ -906,6 +1001,84 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                               type="button"
                               onClick={() => handleRemoveSize(size)}
                               className="text-[#707070] hover:text-red-400 cursor-pointer"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* 6. Available Colors (ألوان القطعة للطلب) */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-[11px] uppercase tracking-wider text-[#A1A1A1] font-mono">
+                          Available Colors / ألوان القطعة (يختار منها العميل عند الطلب)
+                        </label>
+                        <span className="text-[10px] text-[#707070] font-mono">
+                          {editingMerch.colors?.length || 0} Colors Selected
+                        </span>
+                      </div>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={merchColorInput}
+                          onChange={e => setMerchColorInput(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleAddColor();
+                            }
+                          }}
+                          placeholder="Type color (e.g. Washed Black, Vintage Grey, Sand, Bone White) and click Add"
+                          className="flex-1 bg-[#111111] border border-[#242424] px-3 py-2 text-xs text-[#F5F5F5] focus:outline-none focus:border-white font-mono"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleAddColor()}
+                          className="px-4 py-2 bg-[#1E1E1E] border border-[#333333] hover:border-[#707070] text-xs text-white uppercase font-mono cursor-pointer"
+                        >
+                          Add Color
+                        </button>
+                      </div>
+
+                      {/* Quick Presets */}
+                      <div className="pt-2 flex flex-wrap items-center gap-1.5">
+                        <span className="text-[10px] uppercase font-mono text-[#666666] mr-1">Presets:</span>
+                        {[
+                          'Washed Black', 
+                          'Vintage Grey', 
+                          'Bone White', 
+                          'Charcoal', 
+                          'Forest Green', 
+                          'Navy Blue', 
+                          'Earth Brown', 
+                          'Burgundy'
+                        ].map(c => (
+                          <button
+                            key={c}
+                            type="button"
+                            onClick={() => handleAddColor(c)}
+                            className="px-2 py-0.5 bg-[#141414] hover:bg-[#202020] border border-[#242424] hover:border-[#555] text-[10px] font-mono text-[#A1A1A1] hover:text-white cursor-pointer transition-colors"
+                          >
+                            + {c}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Active Colors Pills */}
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        {editingMerch.colors?.map(col => (
+                          <span
+                            key={col}
+                            className="bg-[#141414] border border-[#2D2D2D] px-2.5 py-1 text-xs font-mono text-white flex items-center gap-1.5"
+                          >
+                            <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                            <span>{col}</span>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveColor(col)}
+                              className="text-[#707070] hover:text-red-400 cursor-pointer ml-0.5"
                             >
                               <X className="w-3 h-3" />
                             </button>
@@ -1060,6 +1233,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             <span className="uppercase">{item.category}</span>
                             <span>·</span>
                             <span>Sizes: {item.sizes?.join(', ') || 'N/A'}</span>
+                            {item.colors && item.colors.length > 0 && (
+                              <>
+                                <span>·</span>
+                                <span className="text-emerald-400">Colors: {item.colors.join(', ')}</span>
+                              </>
+                            )}
                           </div>
                         </div>
                       </div>

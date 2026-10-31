@@ -29,6 +29,7 @@ export const MerchPage: React.FC<MerchPageProps> = ({ merch }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedSizes, setSelectedSizes] = useState<Record<string, string>>({});
+  const [selectedColors, setSelectedColors] = useState<Record<string, string>>({});
   const [modalItem, setModalItem] = useState<MerchItem | null>(null);
   const [activeModalImage, setActiveModalImage] = useState<string>('');
   const [showSizeGuide, setShowSizeGuide] = useState<boolean>(false);
@@ -87,6 +88,24 @@ export const MerchPage: React.FC<MerchPageProps> = ({ merch }) => {
     return `${price.toLocaleString()} ${cur}`;
   };
 
+  const getItemImageForColor = (item: MerchItem, colorName?: string): string => {
+    if (!colorName) return item.coverImage;
+    if (item.colorImages && item.colorImages[colorName]) {
+      return item.colorImages[colorName];
+    }
+    const colors = item.colors && item.colors.length > 0 ? item.colors : ['Black', 'White'];
+    const idx = colors.indexOf(colorName);
+    if (idx === 0) return item.coverImage;
+    if (idx > 0 && item.images && item.images[idx - 1]) {
+      return item.images[idx - 1];
+    }
+    const lower = colorName.toLowerCase();
+    if ((lower.includes('white') || lower.includes('bone') || lower.includes('light') || lower.includes('grey') || lower.includes('gray')) && item.images?.[0]) {
+      return item.images[0];
+    }
+    return item.coverImage;
+  };
+
   const handleSelectSize = (itemId: string, size: string) => {
     setSelectedSizes(prev => ({
       ...prev,
@@ -94,18 +113,45 @@ export const MerchPage: React.FC<MerchPageProps> = ({ merch }) => {
     }));
   };
 
-  const handleWhatsAppOrder = (item: MerchItem, chosenSize?: string) => {
-    const size = chosenSize || selectedSizes[item.id] || item.sizes?.[0] || 'Default';
+  const handleSelectColor = (itemId: string, color: string) => {
+    setSelectedColors(prev => ({
+      ...prev,
+      [itemId]: color,
+    }));
+    if (modalItem && modalItem.id === itemId) {
+      const matchedImg = getItemImageForColor(modalItem, color);
+      if (matchedImg) {
+        setActiveModalImage(matchedImg);
+      }
+    }
+  };
+
+  const handleWhatsAppOrder = (item: MerchItem, chosenSize?: string, chosenColor?: string) => {
+    const defaultColor = (item.colors && item.colors.length > 0) ? item.colors[0] : 'Black';
+    const color = chosenColor || selectedColors[item.id] || defaultColor;
+    const defaultSize = (item.sizes && item.sizes.length > 0) ? item.sizes[0] : 'M';
+    const size = chosenSize || selectedSizes[item.id] || defaultSize;
     const phone = (item.whatsappNumber || '').replace(/[^\d+]/g, '') || '201000000000';
-    const message = encodeURIComponent(
-      `Hello! I would like to order "${item.name}" from MY WORLD Store.\nSize: ${size}\nPrice: ${formatPrice(item.price, item.currency)}`
-    );
+    
+    const lines = [
+      `Hello MY WORLD Store!`,
+      `I would like to order: ${item.name}`,
+      `---------------------------------`,
+      `Color (اللون): ${color}`,
+      `Size (المقاس): ${size}`,
+      `Price (السعر): ${formatPrice(item.price, item.currency)}`,
+      `---------------------------------`,
+      `Please confirm stock availability and shipping.`
+    ];
+    const message = encodeURIComponent(lines.join('\n'));
     window.open(`https://wa.me/${phone.replace('+', '')}?text=${message}`, '_blank');
   };
 
   const openView = (item: MerchItem) => {
     setModalItem(item);
-    setActiveModalImage(item.coverImage || item.images?.[0] || '');
+    const chosenColor = selectedColors[item.id] || (item.colors && item.colors.length > 0 ? item.colors[0] : 'Black');
+    const imgForColor = getItemImageForColor(item, chosenColor);
+    setActiveModalImage(imgForColor || item.coverImage || item.images?.[0] || '');
     setShowSizeGuide(false);
     setCopiedLink(false);
   };
@@ -207,6 +253,7 @@ export const MerchPage: React.FC<MerchPageProps> = ({ merch }) => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredMerch.map(item => {
             const currentSize = selectedSizes[item.id] || (item.sizes && item.sizes.length > 0 ? item.sizes[0] : '');
+            const currentColor = selectedColors[item.id] || (item.colors && item.colors.length > 0 ? item.colors[0] : '');
 
             return (
               <div
@@ -219,25 +266,13 @@ export const MerchPage: React.FC<MerchPageProps> = ({ merch }) => {
                   className="relative aspect-square w-full overflow-hidden bg-[#111111] cursor-pointer"
                   title="Click to view garment details and both photos"
                 >
-                  {/* Front View (Image 1) */}
+                  {/* Active Selected Color View */}
                   <img
-                    src={item.coverImage}
-                    alt={item.name}
-                    className={`w-full h-full object-cover grayscale contrast-125 brightness-95 transition-all duration-500 ease-out ${
-                      item.images?.[0] ? 'group-hover:opacity-0' : 'group-hover:scale-105 group-hover:grayscale-0'
-                    }`}
+                    src={getItemImageForColor(item, currentColor)}
+                    alt={`${item.name} - ${currentColor || 'Default'}`}
+                    className="w-full h-full object-cover contrast-125 brightness-95 group-hover:scale-105 transition-all duration-500 ease-out"
                     loading="lazy"
                   />
-
-                  {/* Back View (Image 2 - Revealed on Hover) */}
-                  {item.images?.[0] && (
-                    <img
-                      src={item.images[0]}
-                      alt={`${item.name} Back View`}
-                      className="absolute inset-0 w-full h-full object-cover contrast-125 brightness-95 opacity-0 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500 ease-out"
-                      loading="lazy"
-                    />
-                  )}
 
                   {/* Gradient shadow for text readability */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity pointer-events-none" />
@@ -296,7 +331,7 @@ export const MerchPage: React.FC<MerchPageProps> = ({ merch }) => {
                       onClick={() => openView(item)}
                       className="cursor-pointer group/title"
                     >
-                      <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-baseline justify-between gap-3">
                         <h3 className="text-sm font-bold uppercase tracking-wide text-[#F5F5F5] group-hover/title:text-white line-clamp-2 leading-tight">
                           {item.name}
                         </h3>
@@ -312,6 +347,39 @@ export const MerchPage: React.FC<MerchPageProps> = ({ merch }) => {
                       )}
                     </div>
                   </div>
+
+                  {/* Colors Selector on Card */}
+                  {item.colors && item.colors.length > 0 && (
+                    <div className="space-y-1.5 pt-2 border-t border-[#1C1C1C]">
+                      <div className="flex items-center justify-between text-[10px] font-mono text-[#707070] uppercase">
+                        <span>Color</span>
+                        <span className="text-emerald-400 font-bold">{currentColor || item.colors[0]}</span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {item.colors.map(col => {
+                          const isSelected = (currentColor || item.colors![0]) === col;
+                          return (
+                            <button
+                              key={col}
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleSelectColor(item.id, col);
+                              }}
+                              className={`px-2 py-0.5 text-[9px] font-mono uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1 ${
+                                isSelected
+                                  ? 'bg-emerald-400 text-black font-bold border border-emerald-400'
+                                  : 'bg-[#121212] text-[#999999] hover:text-white border border-[#2B2B2B] hover:border-[#666]'
+                              }`}
+                            >
+                              <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-black' : 'bg-emerald-400'}`} />
+                              <span>{col}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Sizes Selector on Card */}
                   {item.sizes && item.sizes.length > 0 && (
@@ -359,19 +427,19 @@ export const MerchPage: React.FC<MerchPageProps> = ({ merch }) => {
                         <span>View</span>
                       </button>
 
-                      {/* WhatsApp Order or Sold Out */}
+                      {/* WhatsApp Order with Color & Size */}
                       {item.inStock ? (
                         <button
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleWhatsAppOrder(item, currentSize);
+                            handleWhatsAppOrder(item, currentSize, currentColor);
                           }}
-                          className="w-full bg-[#1A1A1A] hover:bg-[#252525] text-white border border-[#333333] hover:border-[#25D366] py-2 px-3 text-xs uppercase font-bold tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                          title="Quick WhatsApp Order"
+                          className="w-full bg-[#1A1A1A] hover:bg-[#252525] text-white border border-[#333333] hover:border-[#25D366] py-2 px-2 text-[11px] uppercase font-bold tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                          title={`Order ${currentColor || item.colors?.[0] || 'Black'} on WhatsApp`}
                         >
                           <MessageCircle className="w-3.5 h-3.5 text-[#25D366]" />
-                          <span>Order</span>
+                          <span>Order ({currentColor || item.colors?.[0] || 'Black'})</span>
                         </button>
                       ) : (
                         <button
@@ -480,14 +548,19 @@ export const MerchPage: React.FC<MerchPageProps> = ({ merch }) => {
                   </div>
                 </div>
 
-                {/* Thumbnails: 01 Front & 02 Back */}
+                {/* Thumbnails: Color 1 (Black) & Color 2 (White) / Lookbook Views */}
                 {(() => {
+                  const colors = modalItem.colors && modalItem.colors.length > 0 ? modalItem.colors : ['Black', 'White'];
                   const photos = [
-                    { label: '01 FRONT', url: modalItem.coverImage },
-                    ...(modalItem.images || []).map((img, i) => ({
-                      label: i === 0 ? '02 BACK' : `0${i + 2} ANGLE`,
-                      url: img,
-                    })),
+                    { label: `01 ${colors[0] || 'Black'}`, url: modalItem.coverImage, color: colors[0] },
+                    ...(modalItem.images || []).map((img, i) => {
+                      const colorForImg = colors[i + 1] || colors[i];
+                      return {
+                        label: `0${i + 2} ${colorForImg || 'Color'}`,
+                        url: img,
+                        color: colorForImg,
+                      };
+                    }),
                   ].filter(p => p.url && p.url.trim() !== '');
 
                   if (photos.length <= 1) return null;
@@ -495,8 +568,8 @@ export const MerchPage: React.FC<MerchPageProps> = ({ merch }) => {
                   return (
                     <div className="space-y-2 pt-1">
                       <div className="flex items-center justify-between text-[10px] font-mono text-[#707070]">
-                        <span className="uppercase tracking-wider">Garment Views ({photos.length} Photos)</span>
-                        <span className="text-white">Click to switch angle</span>
+                        <span className="uppercase tracking-wider">Garment Colors & Views ({photos.length} Photos)</span>
+                        <span className="text-emerald-400 font-semibold">Click photo to select color</span>
                       </div>
                       <div className="flex gap-2 overflow-x-auto pb-1">
                         {photos.map((photo, idx) => {
@@ -504,10 +577,16 @@ export const MerchPage: React.FC<MerchPageProps> = ({ merch }) => {
                           return (
                             <button
                               key={idx}
-                              onClick={() => setActiveModalImage(photo.url)}
+                              type="button"
+                              onClick={() => {
+                                setActiveModalImage(photo.url);
+                                if (photo.color) {
+                                  handleSelectColor(modalItem.id, photo.color);
+                                }
+                              }}
                               className={`flex flex-col items-center gap-1 p-1 bg-[#111111] border transition-all cursor-pointer ${
                                 isCurrent
-                                  ? 'border-white text-white shadow-lg'
+                                  ? 'border-emerald-400 text-emerald-400 shadow-lg'
                                   : 'border-[#262626] text-[#707070] opacity-70 hover:opacity-100 hover:border-[#666666]'
                               }`}
                             >
@@ -574,11 +653,45 @@ export const MerchPage: React.FC<MerchPageProps> = ({ merch }) => {
                   </div>
                 </div>
 
+                {/* Color Selection in Modal */}
+                {modalItem.colors && modalItem.colors.length > 0 && (
+                  <div className="space-y-3 border-t border-[#1F1F1F] pt-4">
+                    <div className="flex items-center justify-between text-xs font-mono">
+                      <span className="text-[#888888] uppercase">CHOOSE COLOR / اللون</span>
+                      <span className="text-emerald-400 font-bold uppercase">
+                        Selected: {selectedColors[modalItem.id] || modalItem.colors[0]}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      {modalItem.colors.map(col => {
+                        const isSelected = (selectedColors[modalItem.id] || modalItem.colors![0]) === col;
+                        return (
+                          <button
+                            key={col}
+                            type="button"
+                            onClick={() => handleSelectColor(modalItem.id, col)}
+                            className={`px-4 py-2 text-xs font-mono uppercase tracking-wider transition-all cursor-pointer flex items-center gap-2 ${
+                              isSelected
+                                ? 'bg-emerald-400 text-black font-black border border-emerald-400 shadow-md'
+                                : 'bg-[#141414] text-[#888] hover:text-white border border-[#2B2B2B] hover:border-[#666]'
+                            }`}
+                          >
+                            <span className={`w-2 h-2 rounded-full ${isSelected ? 'bg-black' : 'bg-emerald-400'}`} />
+                            <span>{col}</span>
+                            {isSelected && <Check className="w-3 h-3 text-black stroke-[3]" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 {/* Size Selection */}
                 {modalItem.sizes && modalItem.sizes.length > 0 && (
                   <div className="space-y-3 border-t border-[#1F1F1F] pt-4">
                     <div className="flex items-center justify-between text-xs font-mono">
-                      <span className="text-[#888888] uppercase">AVAILABLE SIZES</span>
+                      <span className="text-[#888888] uppercase">AVAILABLE SIZES / المقاس</span>
                       <div className="flex items-center gap-3">
                         <span className="text-white font-bold uppercase">
                           Selected: {selectedSizes[modalItem.id] || modalItem.sizes[0]}
@@ -643,13 +756,27 @@ export const MerchPage: React.FC<MerchPageProps> = ({ merch }) => {
                 <div className="space-y-3 pt-4 border-t border-[#1F1F1F]">
                   {modalItem.inStock ? (
                     <>
+                      {/* Selection Summary */}
+                      <div className="p-3 bg-[#111111] border border-[#222] text-xs font-mono flex items-center justify-between">
+                        <span className="text-[#888888] uppercase">Selected Order:</span>
+                        <span className="text-white font-bold">
+                          {modalItem.colors && modalItem.colors.length > 0 && (
+                            <>
+                              Color: <span className="text-emerald-400">{selectedColors[modalItem.id] || modalItem.colors[0]}</span>
+                              <span className="text-[#555] mx-2">·</span>
+                            </>
+                          )}
+                          Size: <span className="text-white">{selectedSizes[modalItem.id] || modalItem.sizes?.[0] || 'Standard'}</span>
+                        </span>
+                      </div>
+
                       <button
                         type="button"
-                        onClick={() => handleWhatsAppOrder(modalItem)}
-                        className="w-full bg-[#1A1A1A] hover:bg-[#252525] text-white border border-[#3A3A3A] hover:border-white py-3.5 px-4 text-xs uppercase font-bold tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg"
+                        onClick={() => handleWhatsAppOrder(modalItem, selectedSizes[modalItem.id], selectedColors[modalItem.id])}
+                        className="w-full bg-[#1A1A1A] hover:bg-[#252525] text-white border border-[#3A3A3A] hover:border-[#25D366] py-3.5 px-4 text-xs uppercase font-bold tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg"
                       >
                         <MessageCircle className="w-4 h-4 text-[#25D366]" />
-                        <span>ORDER VIA WHATSAPP</span>
+                        <span>ORDER VIA WHATSAPP · COLOR: {(selectedColors[modalItem.id] || modalItem.colors?.[0] || 'Black').toUpperCase()}</span>
                       </button>
 
                       {modalItem.orderUrl && (

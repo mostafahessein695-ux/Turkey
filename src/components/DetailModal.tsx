@@ -512,8 +512,27 @@ export const DetailModal: React.FC<DetailModalProps> = ({
         {/* MERCH / CLOTHING DETAIL */}
         {type === 'merch' && (() => {
           const item = data as MerchItem;
+          const colors = item.colors && item.colors.length > 0 ? item.colors : ['Black', 'White'];
           const [selectedSize, setSelectedSize] = useState<string>(item.sizes?.[0] || 'M');
-          const [activeImg, setActiveImg] = useState<string>(item.coverImage || item.images?.[0] || '');
+          const [selectedColor, setSelectedColor] = useState<string>(colors[0]);
+
+          const getItemImageForColor = (colorName: string): string => {
+            if (item.colorImages && item.colorImages[colorName]) {
+              return item.colorImages[colorName];
+            }
+            const idx = colors.indexOf(colorName);
+            if (idx === 0) return item.coverImage;
+            if (idx > 0 && item.images && item.images[idx - 1]) {
+              return item.images[idx - 1];
+            }
+            const lower = colorName.toLowerCase();
+            if ((lower.includes('white') || lower.includes('bone') || lower.includes('grey') || lower.includes('gray') || lower.includes('light')) && item.images?.[0]) {
+              return item.images[0];
+            }
+            return item.coverImage;
+          };
+
+          const [activeImg, setActiveImg] = useState<string>(getItemImageForColor(colors[0]) || item.coverImage || '');
 
           const formatPrice = (price: number, currency?: string) => {
             const cur = currency?.trim() || 'EGP';
@@ -523,12 +542,25 @@ export const DetailModal: React.FC<DetailModalProps> = ({
             return `${price.toLocaleString()} ${cur}`;
           };
 
+          const handleColorChange = (col: string) => {
+            setSelectedColor(col);
+            const matched = getItemImageForColor(col);
+            if (matched) setActiveImg(matched);
+          };
+
           const handleWhatsApp = () => {
             const phone = (item.whatsappNumber || '').replace(/[^\d+]/g, '') || '201000000000';
-            const msg = encodeURIComponent(
-              `Hello! I want to order "${item.name}" from MY WORLD.\nSize: ${selectedSize}\nPrice: ${formatPrice(item.price, item.currency)}`
-            );
-            window.open(`https://wa.me/${phone.replace('+', '')}?text=${msg}`, '_blank');
+            const lines = [
+              `Hello MY WORLD Store!`,
+              `I would like to order: ${item.name}`,
+              `---------------------------------`,
+              `Color (اللون): ${selectedColor}`,
+              `Size (المقاس): ${selectedSize}`,
+              `Price (السعر): ${formatPrice(item.price, item.currency)}`,
+              `---------------------------------`,
+              `Please confirm stock availability and shipping.`
+            ];
+            window.open(`https://wa.me/${phone.replace('+', '')}?text=${encodeURIComponent(lines.join('\n'))}`, '_blank');
           };
 
           return (
@@ -561,36 +593,47 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                     <img
                       src={activeImg || item.coverImage}
                       alt={item.name}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover transition-all duration-300"
                     />
                   </div>
 
-                  {/* Dual Photos Selector (01 Front & 02 Back) */}
+                  {/* Dual Photos Selector (Color 1 & Color 2) */}
                   {(() => {
                     const photos = [
-                      { label: '01 FRONT', url: item.coverImage },
-                      ...(item.images || []).map((img, i) => ({
-                        label: i === 0 ? '02 BACK' : `0${i + 2} ANGLE`,
-                        url: img,
-                      })),
+                      { label: `01 ${colors[0] || 'Black'}`, url: item.coverImage, color: colors[0] },
+                      ...(item.images || []).map((img, i) => {
+                        const colorForImg = colors[i + 1] || colors[i];
+                        return {
+                          label: `0${i + 2} ${colorForImg || 'Color'}`,
+                          url: img,
+                          color: colorForImg,
+                        };
+                      }),
                     ].filter(p => p.url && p.url.trim() !== '');
 
                     if (photos.length <= 1) return null;
 
                     return (
                       <div className="space-y-1.5 pt-1">
-                        <span className="text-[10px] font-mono uppercase tracking-wider text-[#707070] block">
-                          Garment Views ({photos.length} Photos)
-                        </span>
+                        <div className="flex items-center justify-between text-[10px] font-mono text-[#707070]">
+                          <span className="uppercase tracking-wider">Garment Photos ({photos.length} Colors/Views)</span>
+                          <span className="text-emerald-400 font-semibold">Click photo to select color</span>
+                        </div>
                         <div className="flex gap-2 overflow-x-auto pb-1">
                           {photos.map((photo, i) => {
                             const isSelected = (activeImg || item.coverImage) === photo.url;
                             return (
                               <button
                                 key={i}
-                                onClick={() => setActiveImg(photo.url)}
+                                type="button"
+                                onClick={() => {
+                                  setActiveImg(photo.url);
+                                  if (photo.color) {
+                                    setSelectedColor(photo.color);
+                                  }
+                                }}
                                 className={`flex flex-col items-center gap-1 p-1 bg-[#111111] border transition-all cursor-pointer ${
-                                  isSelected ? 'border-white text-white' : 'border-[#262626] text-[#707070] opacity-70 hover:opacity-100 hover:border-[#555]'
+                                  isSelected ? 'border-emerald-400 text-emerald-400' : 'border-[#262626] text-[#707070] opacity-70 hover:opacity-100 hover:border-[#555]'
                                 }`}
                               >
                                 <img src={photo.url} alt={photo.label} className="w-14 h-14 object-cover" />
@@ -643,11 +686,40 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                     </div>
                   </div>
 
+                  {/* Colors */}
+                  <div className="space-y-2 border-t border-[#1F1F1F] pt-4">
+                    <div className="flex items-center justify-between text-xs font-mono text-[#888888]">
+                      <span className="uppercase">CHOOSE COLOR / اختر اللون</span>
+                      <span className="text-emerald-400 font-bold">{selectedColor}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {colors.map(col => {
+                        const isSelected = selectedColor === col;
+                        return (
+                          <button
+                            key={col}
+                            type="button"
+                            onClick={() => handleColorChange(col)}
+                            className={`px-3 py-1.5 text-xs font-mono uppercase tracking-wider transition-all cursor-pointer flex items-center gap-2 ${
+                              isSelected
+                                ? 'bg-emerald-400 text-black font-bold border border-emerald-400 shadow-md'
+                                : 'bg-[#141414] text-[#888] hover:text-white border border-[#2B2B2B]'
+                            }`}
+                          >
+                            <span className={`w-2 h-2 rounded-full ${isSelected ? 'bg-black' : 'bg-emerald-400'}`} />
+                            <span>{col}</span>
+                            {isSelected && <Check className="w-3 h-3 text-black stroke-[3]" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
                   {/* Sizes */}
                   {item.sizes && item.sizes.length > 0 && (
                     <div className="space-y-2 border-t border-[#1F1F1F] pt-4">
                       <div className="flex items-center justify-between text-xs font-mono text-[#888888]">
-                        <span>SELECT SIZE</span>
+                        <span>SELECT SIZE / المقاس</span>
                         <span className="text-white font-bold">{selectedSize}</span>
                       </div>
                       <div className="flex flex-wrap gap-2">
@@ -668,16 +740,26 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                     </div>
                   )}
 
+                  {/* Order Summary Line */}
+                  <div className="p-2.5 bg-[#121212] border border-[#222222] text-xs font-mono flex items-center justify-between">
+                    <span className="text-[#707070] uppercase">Selected Order:</span>
+                    <span className="text-white font-bold">
+                      Color: <span className="text-emerald-400">{selectedColor}</span>
+                      <span className="text-[#555] mx-2">·</span>
+                      Size: <span className="text-white">{selectedSize}</span>
+                    </span>
+                  </div>
+
                   {/* Actions */}
                   <div className="space-y-2 pt-2">
                     {item.inStock ? (
                       <>
                         <button
                           onClick={handleWhatsApp}
-                          className="w-full bg-[#1A1A1A] hover:bg-[#252525] text-white border border-[#3A3A3A] hover:border-white py-3 px-4 text-xs uppercase font-bold tracking-wider transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                          className="w-full bg-[#1A1A1A] hover:bg-[#252525] text-white border border-[#3A3A3A] hover:border-[#25D366] py-3.5 px-4 text-xs uppercase font-bold tracking-wider transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-lg"
                         >
                           <MessageCircle className="w-4 h-4 text-[#25D366]" />
-                          <span>Order on WhatsApp</span>
+                          <span>ORDER ON WHATSAPP · COLOR: {selectedColor.toUpperCase()}</span>
                         </button>
                         {item.orderUrl && (
                           <a

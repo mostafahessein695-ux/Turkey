@@ -44,6 +44,8 @@ export const HomePage: React.FC<HomePageProps> = ({
   onOpenAdminAuth,
 }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedColors, setSelectedColors] = useState<Record<string, string>>({});
+  const [selectedSizes, setSelectedSizes] = useState<Record<string, string>>({});
 
   const scrollToStore = () => {
     const el = document.getElementById('store-section');
@@ -69,11 +71,56 @@ export const HomePage: React.FC<HomePageProps> = ({
 
   const featuredDrops = merch.filter(m => m.isFeatured && m.isPublished);
 
+  const getColorSwatch = (name: string) => {
+    const n = name.toLowerCase();
+    if (n.includes('black')) return '#141414';
+    if (n.includes('bone') || n.includes('white') || n.includes('cream')) return '#EFEAE2';
+    if (n.includes('grey') || n.includes('gray')) return '#666666';
+    if (n.includes('olive') || n.includes('green') || n.includes('moss')) return '#485340';
+    if (n.includes('sand') || n.includes('beige') || n.includes('tan')) return '#C2B69D';
+    if (n.includes('brown') || n.includes('earth') || n.includes('espresso')) return '#4A3525';
+    if (n.includes('navy') || n.includes('blue')) return '#1E293B';
+    if (n.includes('red') || n.includes('burgundy') || n.includes('maroon')) return '#6A1A24';
+    return '#333333';
+  };
+
+  const getItemImageForColor = (item: MerchItem, colorName?: string): string => {
+    if (!colorName) return item.coverImage;
+    if (item.colorImages && item.colorImages[colorName]) {
+      return item.colorImages[colorName];
+    }
+    const colors = item.colors && item.colors.length > 0 ? item.colors : ['Black', 'White'];
+    const idx = colors.indexOf(colorName);
+    if (idx === 0) return item.coverImage;
+    if (idx > 0 && item.images && item.images[idx - 1]) {
+      return item.images[idx - 1];
+    }
+    const lower = colorName.toLowerCase();
+    if ((lower.includes('white') || lower.includes('bone') || lower.includes('light') || lower.includes('grey') || lower.includes('gray')) && item.images?.[0]) {
+      return item.images[0];
+    }
+    return item.coverImage;
+  };
+
   const handleWhatsAppOrder = (item: MerchItem, e: React.MouseEvent) => {
     e.stopPropagation();
     const phone = item.whatsappNumber?.replace(/[^0-9]/g, '') || '201000000000';
-    const text = `Hello MY WORLD, I would like to order: ${item.name} (${item.price} ${item.currency || 'EGP'}). Please confirm availability.`;
-    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
+    const chosenColor = selectedColors[item.id] || (item.colors && item.colors.length > 0 ? item.colors[0] : 'Black');
+    const chosenSize = selectedSizes[item.id] || (item.sizes && item.sizes.length > 0 ? item.sizes[0] : 'M');
+    const cur = item.currency?.trim() || 'EGP';
+
+    const lines = [
+      `Hello MY WORLD Store!`,
+      `I would like to order: ${item.name}`,
+      `---------------------------------`,
+      `Color (اللون): ${chosenColor}`,
+      `Size (المقاس): ${chosenSize}`,
+      `Price (السعر): ${item.price.toLocaleString()} ${cur}`,
+      `---------------------------------`,
+      `Please confirm stock availability and shipping.`
+    ];
+
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(lines.join('\n'))}`, '_blank');
   };
 
   return (
@@ -173,6 +220,12 @@ export const HomePage: React.FC<HomePageProps> = ({
                       <span>Sizes: {featuredDrops[0].sizes?.join(', ') || 'All Sizes'}</span>
                       <span className="text-emerald-400">Quick View →</span>
                     </div>
+                    {featuredDrops[0].colors && featuredDrops[0].colors.length > 0 && (
+                      <div className="text-[10px] text-[#A1A1A1] font-mono truncate pt-0.5 flex items-center gap-1.5">
+                        <span className="text-[#666666]">Colors:</span>
+                        <span>{featuredDrops[0].colors.join(' · ')}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               ) : (
@@ -284,25 +337,13 @@ export const HomePage: React.FC<HomePageProps> = ({
                 onClick={() => onOpenMerchDetail(item)}
                 className="group bg-[#0B0B0B] border border-[#242424] hover:border-[#707070] transition-all cursor-pointer flex flex-col justify-between overflow-hidden hover-luxury-lift"
               >
-                {/* Product Photo with Front & Back Hover */}
+                {/* Product Photo - reflects selected color */}
                 <div className="aspect-[4/5] relative overflow-hidden bg-[#111111]">
-                  {/* Front View */}
                   <img
-                    src={item.coverImage}
+                    src={getItemImageForColor(item, selectedColors[item.id] || item.colors?.[0])}
                     alt={item.name}
-                    className={`w-full h-full object-cover transition-all duration-500 ease-out ${
-                      item.images?.[0] ? 'group-hover:opacity-0' : 'group-hover:scale-105'
-                    }`}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500 ease-out"
                   />
-
-                  {/* Back View (Revealed on Hover) */}
-                  {item.images?.[0] && (
-                    <img
-                      src={item.images[0]}
-                      alt={`${item.name} Back View`}
-                      className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500 ease-out"
-                    />
-                  )}
                   
                   {/* Category Pill */}
                   <div className="absolute top-3 left-3 bg-[#050505]/90 border border-[#242424] px-2.5 py-1 text-[10px] uppercase font-mono tracking-wider text-[#F5F5F5] z-10">
@@ -355,17 +396,81 @@ export const HomePage: React.FC<HomePageProps> = ({
                     </p>
                   )}
 
+                  {/* Colors Selector */}
+                  {(() => {
+                    const colors = item.colors && item.colors.length > 0 ? item.colors : ['Black', 'White'];
+                    const activeColor = selectedColors[item.id] || colors[0];
+                    return (
+                      <div className="space-y-1.5 pt-1" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center justify-between text-[10px] uppercase font-mono text-[#707070]">
+                          <span>Color / اللون:</span>
+                          <span className="text-emerald-400 font-bold">
+                            {activeColor}
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {colors.map(col => {
+                            const isSelected = activeColor === col;
+                            return (
+                              <button
+                                key={col}
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedColors(prev => ({ ...prev, [item.id]: col }));
+                                }}
+                                className={`px-2 py-1 text-[10px] font-mono uppercase tracking-wider flex items-center gap-1.5 border transition-all cursor-pointer ${
+                                  isSelected
+                                    ? 'bg-[#1C1C1C] text-emerald-400 border-emerald-400 font-bold shadow-sm'
+                                    : 'bg-[#121212] text-[#888888] border-[#262626] hover:text-white hover:border-[#555555]'
+                                }`}
+                              >
+                                <span
+                                  className="w-2 h-2 rounded-full border border-black/50"
+                                  style={{ backgroundColor: getColorSwatch(col) }}
+                                />
+                                <span>{col}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
                   {/* Sizes Available */}
-                  <div className="flex items-center gap-1.5 pt-1">
-                    <span className="text-[10px] uppercase font-mono text-[#666666]">Sizes:</span>
-                    <div className="flex flex-wrap gap-1">
-                      {item.sizes?.map(sz => (
-                        <span key={sz} className="text-[10px] font-mono bg-[#161616] border border-[#242424] px-1.5 py-0.5 text-[#CCCCCC]">
-                          {sz}
+                  {item.sizes && item.sizes.length > 0 && (
+                    <div className="space-y-1.5 pt-1" onClick={e => e.stopPropagation()}>
+                      <div className="flex items-center justify-between text-[10px] uppercase font-mono text-[#707070]">
+                        <span>Size:</span>
+                        <span className="text-[#E0E0E0] font-semibold">
+                          {selectedSizes[item.id] || item.sizes[0]}
                         </span>
-                      ))}
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {item.sizes.map(sz => {
+                          const isSelected = (selectedSizes[item.id] || item.sizes![0]) === sz;
+                          return (
+                            <button
+                              key={sz}
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedSizes(prev => ({ ...prev, [item.id]: sz }));
+                              }}
+                              className={`px-2 py-0.5 text-[10px] font-mono border transition-all cursor-pointer ${
+                                isSelected
+                                  ? 'bg-white text-black border-white font-bold'
+                                  : 'bg-[#141414] text-[#A1A1A1] border-[#242424] hover:text-white hover:border-[#555]'
+                              }`}
+                            >
+                              {sz}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Order Actions */}
                   <div className="pt-3 border-t border-[#1C1C1C] flex items-center justify-between gap-3">
@@ -375,7 +480,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                       className="flex-1 py-2.5 bg-[#161616] hover:bg-emerald-950/60 border border-[#262626] hover:border-emerald-500/60 text-xs font-mono font-semibold uppercase tracking-wider text-white hover:text-emerald-300 flex items-center justify-center gap-2 transition-all cursor-pointer"
                     >
                       <PhoneCall className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>Order on WhatsApp</span>
+                      <span>Order ({selectedColors[item.id] || item.colors?.[0] || 'Black'})</span>
                     </button>
 
                     <button

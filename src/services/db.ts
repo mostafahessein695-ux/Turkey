@@ -464,6 +464,7 @@ export const DEFAULT_MERCH: MerchItem[] = [
       'https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=1000&q=80'
     ],
     sizes: ['S', 'M', 'L', 'XL', 'XXL'],
+    colors: ['Washed Black', 'Vintage Grey', 'Off-White'],
     inStock: true,
     isFeatured: true,
     isPublished: true,
@@ -484,6 +485,7 @@ export const DEFAULT_MERCH: MerchItem[] = [
       'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=1000&q=80'
     ],
     sizes: ['M', 'L', 'XL', 'XXL'],
+    colors: ['Charcoal Black', 'Vintage Olive', 'Bone White'],
     inStock: true,
     isFeatured: true,
     isPublished: true,
@@ -504,6 +506,7 @@ export const DEFAULT_MERCH: MerchItem[] = [
       'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?auto=format&fit=crop&w=1000&q=80'
     ],
     sizes: ['S', 'M', 'L', 'XL'],
+    colors: ['Onyx Black', 'Dark Sand'],
     inStock: true,
     isFeatured: false,
     isPublished: true,
@@ -524,6 +527,7 @@ export const DEFAULT_MERCH: MerchItem[] = [
       'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=1000&q=80'
     ],
     sizes: ['One Size (Adjustable)'],
+    colors: ['All Black', 'Black / White', 'Forest Green'],
     inStock: true,
     isFeatured: true,
     isPublished: true,
@@ -544,6 +548,7 @@ export const DEFAULT_MERCH: MerchItem[] = [
       'https://images.unsplash.com/photo-1576871337632-b9aef4c17ab9?auto=format&fit=crop&w=1000&q=80'
     ],
     sizes: ['One Size Fits All'],
+    colors: ['Jet Black', 'Charcoal Grey', 'Coffee Brown'],
     inStock: true,
     isFeatured: false,
     isPublished: true,
@@ -1286,17 +1291,30 @@ export function subscribeToPublishedCollection<T>(
 // ==========================================
 // MERCH & CLOTHING STORE API
 // ==========================================
+const normalizeMerchItem = (item: MerchItem): MerchItem => {
+  // Ensure colors are never undefined or empty
+  let colors = item.colors;
+  if (!colors || colors.length === 0) {
+    colors = item.images && item.images.length > 0 ? ['Black', 'White'] : ['Black'];
+  }
+  return {
+    ...item,
+    colors,
+    colorImages: item.colorImages || {},
+  };
+};
+
 export async function fetchPublishedMerch(): Promise<MerchItem[]> {
   try {
     const q = query(collection(db, MERCH_COLL), where('isPublished', '==', true));
     const snap = await getDocs(q);
     if (snap.docs.length > 0) {
-      return snap.docs.map(d => ({ id: d.id, ...d.data() } as MerchItem));
+      return snap.docs.map(d => normalizeMerchItem({ id: d.id, ...d.data() } as MerchItem));
     }
-    return DEFAULT_MERCH;
+    return DEFAULT_MERCH.map(normalizeMerchItem);
   } catch (err) {
     console.warn('Using curated starter merch:', err);
-    return DEFAULT_MERCH;
+    return DEFAULT_MERCH.map(normalizeMerchItem);
   }
 }
 
@@ -1304,18 +1322,25 @@ export async function fetchAllMerch(): Promise<MerchItem[]> {
   try {
     const snap = await getDocs(collection(db, MERCH_COLL));
     if (snap.docs.length > 0) {
-      return snap.docs.map(d => ({ id: d.id, ...d.data() } as MerchItem));
+      return snap.docs.map(d => normalizeMerchItem({ id: d.id, ...d.data() } as MerchItem));
     }
-    return DEFAULT_MERCH;
+    return DEFAULT_MERCH.map(normalizeMerchItem);
   } catch (err) {
     console.warn('Using curated starter merch:', err);
-    return DEFAULT_MERCH;
+    return DEFAULT_MERCH.map(normalizeMerchItem);
   }
 }
 
 export async function saveMerchItem(item: Partial<MerchItem> & { id?: string }): Promise<string> {
   const merchId = item.id || `merch_${Date.now()}`;
   const now = new Date().toISOString();
+  
+  // Resolve colors: default to Black & White if 2 photos are provided, or Black
+  let resolvedColors = item.colors && item.colors.length > 0 ? item.colors : [];
+  if (resolvedColors.length === 0) {
+    resolvedColors = item.images && item.images.length > 0 ? ['Black', 'White'] : ['Black'];
+  }
+
   const payload: MerchItem = {
     id: merchId,
     name: item.name || 'Untitled Garment',
@@ -1325,7 +1350,9 @@ export async function saveMerchItem(item: Partial<MerchItem> & { id?: string }):
     category: item.category || 'hoodies',
     coverImage: item.coverImage || 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=1000&q=80',
     images: item.images && item.images.length > 0 ? item.images : [item.coverImage || 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=1000&q=80'],
-    sizes: item.sizes && item.sizes.length > 0 ? item.sizes : ['M', 'L', 'XL'],
+    sizes: item.sizes && item.sizes.length > 0 ? item.sizes : ['S', 'M', 'L', 'XL'],
+    colors: resolvedColors,
+    colorImages: item.colorImages || {},
     inStock: item.inStock ?? true,
     isFeatured: item.isFeatured ?? false,
     isPublished: item.isPublished ?? true,

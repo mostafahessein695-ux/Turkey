@@ -142,6 +142,8 @@ export interface MerchItem {
   coverImage: string;
   images?: string[];
   sizes: string[]; // e.g. ['S', 'M', 'L', 'XL', 'XXL']
+  colors?: string[]; // e.g. ['Black', 'White', 'Washed Grey']
+  colorImages?: Record<string, string>; // Maps color name to its image URL (e.g. { 'Black': url1, 'White': url2 })
   inStock: boolean;
   isFeatured: boolean;
   isPublished: boolean;
