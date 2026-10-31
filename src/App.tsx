@@ -177,15 +177,9 @@ const MainApp: React.FC = () => {
               {currentTab === 'home' && (
                 <HomePage
                   settings={settings}
-                  songs={songs}
-                  artists={artists}
-                  albums={albums}
-                  collections={collections}
-                  gallery={gallery}
-                  quotes={quotes}
+                  merch={merch}
                   onSelectTab={setCurrentTab}
-                  onOpenDetail={(type, data) => setDetailTarget({ type, data })}
-                  onOpenLightbox={item => setLightboxItem(item)}
+                  onOpenMerchDetail={item => setDetailTarget({ type: 'merch', data: item })}
                   onOpenAdminAuth={() => setAdminAuthOpen(true)}
                 />
               )}
@@ -199,12 +193,6 @@ const MainApp: React.FC = () => {
               {currentTab === 'admin' && (
                 isAdmin ? (
                   <AdminDashboard
-                    songs={songs}
-                    artists={artists}
-                    albums={albums}
-                    collections={collections}
-                    gallery={gallery}
-                    quotes={quotes}
                     merch={merch}
                     settings={settings}
                     onRefreshData={loadData}

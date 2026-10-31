@@ -1,118 +1,108 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
-  Song, 
-  Artist, 
-  Album, 
-  Collection, 
-  GalleryItem, 
-  Quote, 
+  MerchItem, 
   SiteSettings, 
-  NavTab,
-  formatInstagramUrl,
-  formatInstagramHandle
+  NavTab 
 } from '../types';
 import { 
   ArrowDown, 
   ArrowRight, 
-  Disc, 
+  ShoppingBag, 
   Star, 
   ExternalLink, 
-  Play, 
   Sparkles,
-  Mic,
-  Radio,
-  Volume2,
-  Music,
-  Users,
-  Instagram,
-  ShoppingBag
+  PhoneCall,
+  Eye,
+  CheckCircle,
+  Truck,
+  ShieldCheck,
+  Scissors
 } from 'lucide-react';
-import { isArtistOnSong } from '../services/db';
 
 interface HomePageProps {
   settings: SiteSettings;
-  songs: Song[];
-  artists: Artist[];
-  albums: Album[];
-  collections: Collection[];
-  gallery: GalleryItem[];
-  quotes: Quote[];
+  merch: MerchItem[];
   onSelectTab: (tab: NavTab) => void;
-  onOpenDetail: (type: 'song' | 'artist' | 'album' | 'collection', data: any) => void;
-  onOpenLightbox: (item: GalleryItem) => void;
+  onOpenMerchDetail: (item: MerchItem) => void;
   onOpenAdminAuth?: () => void;
+  // Optional for backward compatibility
+  songs?: any[];
+  artists?: any[];
+  albums?: any[];
+  collections?: any[];
+  gallery?: any[];
+  quotes?: any[];
+  onOpenDetail?: (type: any, data: any) => void;
+  onOpenLightbox?: (item: any) => void;
 }
 
 export const HomePage: React.FC<HomePageProps> = ({
   settings,
-  songs,
-  artists,
-  albums,
-  collections,
-  gallery,
-  quotes,
+  merch,
   onSelectTab,
-  onOpenDetail,
-  onOpenLightbox,
+  onOpenMerchDetail,
   onOpenAdminAuth,
 }) => {
-  const scrollToFeatured = () => {
-    const el = document.getElementById('featured-section');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+
+  const scrollToStore = () => {
+    const el = document.getElementById('store-section');
     if (el) {
       el.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
-  // 1. Featured content & user-added songs for Sound & Vision
-  const featuredSongs = songs.filter(s => s.isFeatured);
-  const userAddedSongs = [...songs].sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  );
-  // Guarantee every song the user adds is displayed in Featured Sound & Vision
-  const displaySoundAndVisionSongs = Array.from(
-    new Map([...featuredSongs, ...userAddedSongs].map(s => [s.id, s])).values()
-  ).slice(0, 6);
+  const categories = [
+    { id: 'all', label: 'All Garments' },
+    { id: 'hoodies', label: 'Hoodies' },
+    { id: 'tees', label: 'T-Shirts' },
+    { id: 'outerwear', label: 'Outerwear' },
+    { id: 'pants', label: 'Pants' },
+    { id: 'headwear', label: 'Headwear' },
+  ];
 
-  const featuredArtists = artists.filter(a => a.isFeatured);
-  const homeArtists = featuredArtists.length > 0 
-    ? [...featuredArtists, ...artists.filter(a => !a.isFeatured)].slice(0, 6)
-    : artists.slice(0, 6);
+  const filteredMerch = merch.filter(item => {
+    if (!item.isPublished) return false;
+    if (selectedCategory === 'all') return true;
+    return item.category?.toLowerCase() === selectedCategory.toLowerCase();
+  });
 
-  // 2. Recently added
-  const recentItems = [...songs].sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  ).slice(0, 4);
+  const featuredDrops = merch.filter(m => m.isFeatured && m.isPublished);
 
-  // 3. Current favorites (rating >= 9.5 or featured)
-  const favoriteSongs = songs.filter(s => s.personalRating >= 9.5 || s.isFeatured).slice(0, 4);
+  const handleWhatsAppOrder = (item: MerchItem, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const phone = item.whatsappNumber?.replace(/[^0-9]/g, '') || '201000000000';
+    const text = `Hello MY WORLD, I would like to order: ${item.name} (${item.price} ${item.currency || 'EGP'}). Please confirm availability.`;
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
+  };
 
   return (
     <div className="w-full space-y-24">
       
-      {/* 1. HERO SECTION WITH HARDWARE-ACCELERATED VINYL ROTATION & EQUALIZER */}
+      {/* 1. HERO SECTION: STREETWEAR BRAND DROP */}
       <section className="relative min-h-[85vh] flex flex-col justify-between border-b border-[#242424] overflow-hidden">
         {/* Background image overlay */}
         {settings.heroImage && (
           <div className="absolute inset-0 z-0">
             <img
               src={settings.heroImage}
-              alt="Hero Backdrop"
-              className="w-full h-full object-cover opacity-20 filter grayscale contrast-125 brightness-50"
+              alt="Brand Lookbook Backdrop"
+              className="w-full h-full object-cover opacity-25 filter grayscale contrast-125 brightness-75"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/75 to-[#050505]/50" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/80 to-[#050505]/40" />
           </div>
         )}
 
-        <div className="relative z-10 max-w-7xl mx-auto px-6 pt-20 sm:pt-28 pb-16 w-full flex-1 flex flex-col justify-center">
+        <div className="relative z-10 max-w-7xl mx-auto px-6 pt-24 sm:pt-32 pb-16 w-full flex-1 flex flex-col justify-center">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             
             {/* Left Column: Headlines & Call to Actions */}
-            <div className="lg:col-span-7 space-y-8">
-              <div className="text-xs uppercase tracking-[0.3em] text-[#A1A1A1] flex items-center gap-3">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ambient-pulse" />
-                <span>Personal Sonic & Aesthetic Universe</span>
-                <span className="hidden sm:inline-block text-[#555555]">·</span>
-                <span className="hidden sm:inline-block text-[#707070] font-mono">33⅓ RPM</span>
+            <div className="lg:col-span-8 space-y-8">
+              <div className="text-xs uppercase tracking-[0.3em] text-[#A1A1A1] flex items-center gap-3 font-mono">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ambient-pulse" />
+                <span className="text-white font-semibold">MY WORLD APPAREL</span>
+                <span className="text-[#555555]">·</span>
+                <span className="text-[#A1A1A1]">NEW CAPSULE DROP IS LIVE</span>
               </div>
 
               <h1 
@@ -120,401 +110,261 @@ export const HomePage: React.FC<HomePageProps> = ({
                 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight text-[#F5F5F5] uppercase leading-[0.95] cursor-pointer hover:text-white transition-colors"
                 title="MY WORLD"
               >
-                {settings.heroHeadline || 'MY WORLD. MY RULES.'}
+                {settings.heroHeadline || 'MY WORLD. HEAVYWEIGHT STREETWEAR.'}
               </h1>
 
               <p className="text-base sm:text-xl text-[#A1A1A1] max-w-2xl font-light leading-relaxed">
-                {settings.heroSubhead || 'A collection of sounds, people, moments, and things that mean something to me.'}
+                {settings.heroSubhead || 'Bespoke cuts, heavyweight knits, and limited capsule drops designed for everyday movement.'}
               </p>
 
               <div className="pt-2 flex flex-wrap items-center gap-4">
                 <button
-                  onClick={scrollToFeatured}
-                  className="px-8 py-4 bg-[#F5F5F5] hover:bg-white text-[#050505] text-xs font-bold uppercase tracking-widest transition-all flex items-center gap-3 shadow-lg hover:shadow-white/10 hover-luxury-lift cursor-pointer"
+                  onClick={scrollToStore}
+                  className="px-8 py-4 bg-[#F5F5F5] hover:bg-white text-[#050505] text-xs font-bold uppercase tracking-widest transition-all flex items-center gap-3 shadow-lg hover:shadow-white/10 hover-luxury-lift cursor-pointer font-mono"
                 >
-                  <span>EXPLORE MY WORLD</span>
-                  <ArrowDown className="w-4 h-4" />
+                  <ShoppingBag className="w-4 h-4 text-black" />
+                  <span>EXPLORE STORE</span>
+                  <ArrowDown className="w-4 h-4 text-black" />
                 </button>
 
                 <button
                   onClick={() => onSelectTab('merch')}
-                  className="px-6 py-4 bg-[#111111]/80 hover:bg-[#111111] border border-[#242424] hover:border-[#707070] text-[#F5F5F5] text-xs font-medium uppercase tracking-widest transition-colors flex items-center gap-2 hover-luxury-lift cursor-pointer"
+                  className="px-6 py-4 bg-[#111111]/80 hover:bg-[#111111] border border-[#242424] hover:border-[#707070] text-[#F5F5F5] text-xs font-medium uppercase tracking-widest transition-colors flex items-center gap-2 hover-luxury-lift cursor-pointer font-mono"
                 >
-                  <ShoppingBag className="w-3.5 h-3.5 text-white" />
-                  <span>Store / Clothes</span>
+                  <span>FULL COLLECTION</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
 
-            {/* Right Column: Real-time Interactive Vinyl Turntable Display */}
-            <div className="lg:col-span-5 hidden lg:flex justify-end">
-              <div className="relative p-7 bg-[#0B0B0B]/90 border border-[#242424] shadow-2xl space-y-5 max-w-sm w-full hover-luxury-lift">
-                
-                {/* Turntable Header */}
-                <div className="flex items-center justify-between pb-3 border-b border-[#1C1C1C]">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ambient-pulse" />
-                    <span className="text-[10px] uppercase font-mono tracking-widest text-[#CCCCCC]">
-                      CURATORIAL DECK
+            {/* Right Column: Hero Spotlight Card */}
+            <div className="lg:col-span-4 hidden lg:flex justify-end">
+              {featuredDrops[0] ? (
+                <div 
+                  onClick={() => onOpenMerchDetail(featuredDrops[0])}
+                  className="relative p-5 bg-[#0B0B0B]/90 border border-[#242424] shadow-2xl space-y-4 max-w-xs w-full hover-luxury-lift cursor-pointer group"
+                >
+                  <div className="flex items-center justify-between pb-2 border-b border-[#1C1C1C]">
+                    <span className="text-[10px] uppercase font-mono tracking-widest text-emerald-400 flex items-center gap-1.5">
+                      <Sparkles className="w-3 h-3" />
+                      FEATURED PIECE
+                    </span>
+                    <span className="text-[10px] uppercase font-mono text-[#888888]">
+                      {featuredDrops[0].category}
                     </span>
                   </div>
-                  
-                  {/* Realtime Equalizer animation (60fps CSS GPU) */}
-                  <div className="flex items-end gap-1 h-4">
-                    <span className="w-1 bg-white bar-anim-1 rounded-none h-full" />
-                    <span className="w-1 bg-[#888888] bar-anim-2 rounded-none h-full" />
-                    <span className="w-1 bg-white bar-anim-3 rounded-none h-full" />
-                    <span className="w-1 bg-[#888888] bar-anim-4 rounded-none h-full" />
-                  </div>
-                </div>
 
-                {/* Vinyl Disc with authentic grooves & center label */}
-                <div className="relative aspect-square flex items-center justify-center p-3">
-                  <div className="w-full h-full rounded-full bg-gradient-to-br from-[#181818] via-[#0D0D0D] to-[#141414] border border-[#333333] shadow-[0_0_30px_rgba(0,0,0,0.9)] flex items-center justify-center animate-spin-slow relative">
-                    
-                    {/* Vinyl Groove Rings */}
-                    <div className="absolute inset-3 rounded-full border border-white/[0.04]" />
-                    <div className="absolute inset-7 rounded-full border border-white/[0.05]" />
-                    <div className="absolute inset-12 rounded-full border border-white/[0.04]" />
-                    <div className="absolute inset-16 rounded-full border border-white/[0.05]" />
-                    
-                    {/* Vinyl Center Label */}
-                    <div className="w-20 h-20 rounded-full bg-[#1A1A1A] border-2 border-[#333333] flex flex-col items-center justify-center p-2 text-center shadow-inner relative z-10">
-                      <span className="text-[7px] font-black tracking-widest uppercase text-white font-mono">
-                        MY WORLD
-                      </span>
-                      <span className="text-[6px] tracking-wider text-[#888888] font-mono mt-0.5">
-                        SIDE A · STEREO
-                      </span>
-                      <div className="w-2.5 h-2.5 rounded-full bg-[#050505] border border-[#555555] mt-1" />
+                  <div className="aspect-square relative overflow-hidden bg-[#161616]">
+                    <img
+                      src={featuredDrops[0].coverImage}
+                      alt={featuredDrops[0].name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute bottom-2 left-2 bg-black/90 px-2 py-1 text-[11px] font-mono font-bold text-white">
+                      {featuredDrops[0].price} {featuredDrops[0].currency || 'EGP'}
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-bold text-white uppercase truncate">
+                      {featuredDrops[0].name}
+                    </h3>
+                    <div className="flex items-center justify-between text-[11px] text-[#888888] font-mono">
+                      <span>Sizes: {featuredDrops[0].sizes?.join(', ') || 'All Sizes'}</span>
+                      <span className="text-emerald-400">Quick View →</span>
                     </div>
                   </div>
                 </div>
-
-                {/* Turntable Footer Info */}
-                <div className="pt-2 flex items-center justify-between text-[11px] text-[#707070] font-mono">
-                  <span>{songs.length} Tracks in rotation</span>
-                  <span>{artists.length} Visionaries</span>
+              ) : (
+                <div className="p-8 bg-[#0B0B0B]/90 border border-[#242424] text-center space-y-3 max-w-xs w-full font-mono">
+                  <ShoppingBag className="w-8 h-8 text-white mx-auto" />
+                  <p className="text-xs uppercase tracking-wider text-white font-bold">LIMITED CAPSULE 01</p>
+                  <p className="text-[11px] text-[#707070]">Exclusive garments handcrafted with premium heavyweight textiles.</p>
                 </div>
-              </div>
+              )}
             </div>
 
           </div>
         </div>
 
-        {/* Continuous Fluid Ticker Marquee (Zero-Lag GPU Animation) */}
-        <div className="relative z-10 w-full bg-[#080808] border-y border-[#242424] py-3 overflow-hidden select-none">
+        {/* Continuous Fluid Ticker Marquee */}
+        <div className="relative z-10 w-full bg-[#080808] border-y border-[#242424] py-3.5 overflow-hidden select-none">
           <div className="animate-marquee whitespace-nowrap text-xs uppercase tracking-[0.25em] text-[#888888] font-mono flex items-center gap-8">
-            <span className="text-[#F5F5F5] font-semibold">MY WORLD ARCHIVE</span>
+            <span className="text-[#F5F5F5] font-bold">MY WORLD STORE</span>
             <span>·</span>
-            <span>BURIAL</span>
+            <span>HEAVYWEIGHT HOODIES 450 GSM</span>
             <span>·</span>
-            <span>APHEX TWIN</span>
+            <span>ACID WASH OVERSIZED TEES</span>
             <span>·</span>
-            <span>MASSIVE ATTACK</span>
+            <span>DIRECT WHATSAPP ORDERING</span>
             <span>·</span>
-            <span>KELLY LEE OWENS</span>
+            <span>FAST SHIPPING ACROSS EGYPT & WORLDWIDE</span>
             <span>·</span>
-            <span>UK DUBSTEP & AMBIENT</span>
+            <span>PRICES IN EGP</span>
             <span>·</span>
-            <span>BRUTALIST ARCHITECTURE</span>
+            <span>LIMITED PRODUCTION RUNS</span>
             <span>·</span>
-            <span>33⅓ RPM VINYL CULTURE</span>
+            <span className="text-[#F5F5F5] font-bold">MY WORLD STORE</span>
             <span>·</span>
-            <span>PERSONAL SENSORY SANCTUARY</span>
+            <span>HEAVYWEIGHT HOODIES 450 GSM</span>
             <span>·</span>
-            <span>LONDON / BERLIN / TOKYO SOUNDSCAPES</span>
+            <span>ACID WASH OVERSIZED TEES</span>
             <span>·</span>
-            <span className="text-[#F5F5F5] font-semibold">MY WORLD ARCHIVE</span>
+            <span>DIRECT WHATSAPP ORDERING</span>
             <span>·</span>
-            <span>BURIAL</span>
+            <span>FAST SHIPPING ACROSS EGYPT & WORLDWIDE</span>
             <span>·</span>
-            <span>APHEX TWIN</span>
-            <span>·</span>
-            <span>MASSIVE ATTACK</span>
-            <span>·</span>
-            <span>KELLY LEE OWENS</span>
-            <span>·</span>
-            <span>UK DUBSTEP & AMBIENT</span>
-            <span>·</span>
-            <span>BRUTALIST ARCHITECTURE</span>
-            <span>·</span>
-            <span>33⅓ RPM VINYL CULTURE</span>
-            <span>·</span>
-            <span>PERSONAL SENSORY SANCTUARY</span>
-            <span>·</span>
-            <span>LONDON / BERLIN / TOKYO SOUNDSCAPES</span>
+            <span>PRICES IN EGP</span>
           </div>
         </div>
 
-        {/* Hero bottom metadata ribbon */}
-        <div className="relative z-10 max-w-7xl mx-auto px-6 py-6 w-full flex flex-wrap items-center justify-between gap-4 text-xs text-[#707070]">
-          <div className="flex items-center gap-6">
-            <span>{songs.length} Tracks In Library</span>
+        {/* Hero Bottom Metadata Ribbon */}
+        <div className="relative z-10 max-w-7xl mx-auto px-6 py-5 w-full flex flex-wrap items-center justify-between gap-4 text-xs text-[#707070] font-mono">
+          <div className="flex items-center gap-4">
+            <span className="text-white font-bold">{merch.length} Garments in Catalog</span>
             <span>·</span>
-            <span className="text-[#F5F5F5] font-medium">{artists.length} Profiled Artists</span>
+            <span className="text-emerald-400">{merch.filter(m => m.inStock).length} Available In Stock</span>
             <span>·</span>
-            <span>{albums.length} Curated Records</span>
+            <span>Currency: EGP</span>
           </div>
-          <div className="hidden sm:block uppercase tracking-wider text-[11px]">
-            London / Berlin / Tokyo / Underground Soundscapes
+          <div className="hidden sm:flex items-center gap-2 text-[11px] text-[#A1A1A1]">
+            <Truck className="w-3.5 h-3.5 text-white" />
+            <span>Fast Cairo & Regional Delivery</span>
           </div>
         </div>
       </section>
 
-      {/* 2. PROFILED ARTISTS & VISIONARIES SECTION (FEATURED OUTSIDE ON HOME) */}
-      <section className="max-w-7xl mx-auto px-6">
-        <div className="flex items-end justify-between mb-8 pb-4 border-b border-[#242424]">
+      {/* 2. THE STORE SECTION (سفخقث) — FEATURED GARMENTS GRID */}
+      <section id="store-section" className="max-w-7xl mx-auto px-6 scroll-mt-24 space-y-8">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-4 border-b border-[#242424]">
           <div>
-            <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-[#707070] mb-1">
-              <Mic className="w-3.5 h-3.5 text-[#E5B555]" />
-              <span>Sonic Architects & Influences</span>
+            <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-[#707070] mb-1 font-mono">
+              <ShoppingBag className="w-3.5 h-3.5 text-white" />
+              <span>Available Drops & Apparel</span>
             </div>
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-[#F5F5F5] uppercase">
-              Profiled Artists
+              The Store Collection
             </h2>
           </div>
-          <button
-            onClick={() => onSelectTab('artists')}
-            className="text-xs uppercase tracking-wider text-[#A1A1A1] hover:text-[#F5F5F5] transition-colors flex items-center gap-1.5 cursor-pointer py-1"
-          >
-            <span>Explore All Artists ({artists.length})</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
 
-        {homeArtists.length === 0 ? (
-          <div className="py-16 text-center border border-[#242424] bg-[#0B0B0B] text-xs text-[#707070]">
-            No artists featured yet. Add or profile artists from the administrator dashboard.
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {homeArtists.map(artist => {
-              const artistSongsCount = songs.filter(
-                s => isArtistOnSong(s, artist.name)
-              ).length;
-              const artistAlbumsCount = albums.filter(
-                a => a.artist.toLowerCase() === artist.name.toLowerCase()
-              ).length;
-
-              return (
-                <div
-                  key={artist.id}
-                  onClick={() => onOpenDetail('artist', artist)}
-                  className="group bg-[#0B0B0B] border border-[#242424] hover:border-[#707070] transition-all cursor-pointer flex flex-col justify-between overflow-hidden hover-luxury-lift"
-                >
-                  {/* Photo Container with Monochrome-to-Crisp Transition */}
-                  <div className="aspect-[16/11] relative overflow-hidden bg-[#111111]">
-                    <img
-                      src={artist.profileImage}
-                      alt={artist.name}
-                      referrerPolicy="no-referrer"
-                      className="w-full h-full object-cover filter grayscale contrast-110 group-hover:scale-105 group-hover:contrast-125 transition-transform duration-500"
-                    />
-                    
-                    {/* Origin / Country Pill */}
-                    {artist.country && (
-                      <div className="absolute top-3 left-3 bg-[#050505]/90 border border-[#242424] px-2.5 py-1 text-[10px] uppercase tracking-wider text-[#F5F5F5] font-mono">
-                        {artist.country}
-                      </div>
-                    )}
-
-                    {/* Featured Star Badge */}
-                    {artist.isFeatured && (
-                      <div className="absolute top-3 right-3 bg-[#050505]/90 border border-[#333333] px-2 py-1 text-[10px] uppercase tracking-wider text-[#F5F5F5] flex items-center gap-1 font-mono">
-                        <Star className="w-3 h-3 fill-white text-white" />
-                        <span className="hidden sm:inline">Featured</span>
-                      </div>
-                    )}
-
-                    {/* Instagram Handle Badge */}
-                    {artist.instagramUrl && (
-                      <a
-                        href={formatInstagramUrl(artist.instagramUrl)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={e => e.stopPropagation()}
-                        className={`absolute ${artist.isFeatured ? 'top-10' : 'top-3'} right-3 bg-black/90 hover:bg-[#180a14] border border-pink-700/60 hover:border-pink-500 px-2 py-1 text-[10px] text-pink-300 hover:text-white flex items-center gap-1.5 transition-all shadow-lg font-mono z-10`}
-                        title={`Visit ${artist.name} on Instagram`}
-                      >
-                        <Instagram className="w-3 h-3 text-pink-400" />
-                        <span className="font-semibold">{formatInstagramHandle(artist.instagramUrl)}</span>
-                      </a>
-                    )}
-
-                    {/* Subtle Audio Waveform on Hover */}
-                    <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity bg-black/80 backdrop-blur-sm px-2.5 py-1 border border-[#333333] flex items-center gap-1.5 text-[10px] text-white">
-                      <Volume2 className="w-3 h-3 text-emerald-400" />
-                      <span>View Profile</span>
-                    </div>
-                  </div>
-
-                  {/* Body Content */}
-                  <div className="p-6 space-y-3">
-                    <div className="flex items-center justify-between text-[11px] uppercase tracking-wider text-[#707070]">
-                      <div className="flex items-center gap-2">
-                        {artist.genres && artist.genres.length > 0 ? (
-                          <span className="text-[#A1A1A1]">{artist.genres.slice(0, 2).join(' · ')}</span>
-                        ) : (
-                          <span>Visionary</span>
-                        )}
-                      </div>
-                      <span className="font-mono text-[10px] text-[#707070]">
-                        {artistSongsCount > 0 ? `${artistSongsCount} Tracks` : ''}
-                        {artistSongsCount > 0 && artistAlbumsCount > 0 ? ' · ' : ''}
-                        {artistAlbumsCount > 0 ? `${artistAlbumsCount} Albums` : ''}
-                      </span>
-                    </div>
-
-                    <h3 className="text-xl font-bold text-[#F5F5F5] group-hover:text-white transition-colors">
-                      {artist.name}
-                    </h3>
-
-                    {artist.bio && (
-                      <p className="text-xs text-[#888888] line-clamp-2 leading-relaxed font-light">
-                        {artist.bio}
-                      </p>
-                    )}
-
-                    {artist.personalThoughts && (
-                      <p className="text-[11px] text-[#A1A1A1] italic pt-1 border-t border-[#1C1C1C] line-clamp-1">
-                        "{artist.personalThoughts}"
-                      </p>
-                    )}
-
-                    <div className="pt-2 flex items-center justify-between text-xs text-[#A1A1A1] group-hover:text-white transition-colors">
-                      <span className="text-[11px] uppercase tracking-wider">Explore Discography</span>
-                      <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </section>
-
-      {/* 3. FEATURED TRACKS & SOUND ROTATION */}
-      <section id="featured-section" className="max-w-7xl mx-auto px-6 scroll-mt-24">
-        <div className="flex items-end justify-between mb-8 pb-4 border-b border-[#242424]">
-          <div>
-            <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-[#707070] mb-1">
-              <Disc className="w-3.5 h-3.5 text-white" />
-              <span>Curated Rotation</span>
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#F5F5F5] uppercase">
-              Featured Sound & Vision
-            </h2>
+          {/* Category Filter Pills */}
+          <div className="flex flex-wrap items-center gap-2">
+            {categories.map(cat => (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`px-3 py-1.5 text-xs font-mono uppercase tracking-wider transition-colors cursor-pointer border ${
+                  selectedCategory === cat.id
+                    ? 'bg-white text-black font-bold border-white'
+                    : 'bg-[#0B0B0B] text-[#A1A1A1] border-[#242424] hover:text-white hover:border-[#666666]'
+                }`}
+              >
+                {cat.label}
+              </button>
+            ))}
           </div>
         </div>
 
-        {displaySoundAndVisionSongs.length === 0 ? (
-          <div className="py-12 text-center border border-[#242424] bg-[#0B0B0B] text-xs text-[#707070]">
-            No tracks in library yet. Add your favorite tracks from the dashboard.
+        {filteredMerch.length === 0 ? (
+          <div className="py-20 text-center border border-[#242424] bg-[#0B0B0B] text-xs font-mono text-[#707070] space-y-3">
+            <ShoppingBag className="w-8 h-8 text-[#555555] mx-auto" />
+            <p>No garments found in this category.</p>
+            <button
+              onClick={() => setSelectedCategory('all')}
+              className="text-white underline hover:no-underline cursor-pointer"
+            >
+              View all garments
+            </button>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {displaySoundAndVisionSongs.map(song => (
-              <div
-                key={song.id}
-                onClick={() => onOpenDetail('song', song)}
-                className="group bg-[#0B0B0B] border border-[#242424] hover:border-[#707070] transition-all cursor-pointer flex flex-col justify-between overflow-hidden hover-luxury-lift"
-              >
-                <div className="aspect-square relative overflow-hidden bg-[#111111]">
-                  <img
-                    src={song.coverUrl}
-                    alt={song.title}
-                    referrerPolicy="no-referrer"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute top-3 left-3 bg-[#050505]/90 border border-[#242424] px-2.5 py-1 text-[10px] uppercase tracking-wider text-[#F5F5F5]">
-                    {song.genre}
-                  </div>
-
-                  {song.isFeatured && (
-                    <div className="absolute top-3 right-3 bg-[#050505]/90 border border-[#333333] px-2 py-0.5 text-[10px] font-mono uppercase text-[#F5F5F5] flex items-center gap-1">
-                      <Star className="w-3 h-3 fill-white text-white" />
-                      <span>Featured</span>
-                    </div>
-                  )}
-                  
-                  {/* Subtle Vinyl Peek-Out on Hover */}
-                  <div className="absolute -right-16 top-1/2 -translate-y-1/2 w-28 h-28 rounded-full bg-[#111111] border-2 border-[#242424] vinyl-peek pointer-events-none opacity-0 group-hover:opacity-100 flex items-center justify-center shadow-2xl">
-                    <div className="w-8 h-8 rounded-full bg-[#050505] border border-[#444444]" />
-                  </div>
-                </div>
-
-                <div className="p-5 space-y-2">
-                  <div className="text-[11px] uppercase tracking-wider text-[#707070] flex items-center justify-between">
-                    <span>{song.releaseYear || 'Track'}</span>
-                    <span className="tabular-nums font-mono text-[#F5F5F5]">{song.personalRating}/10</span>
-                  </div>
-                  <h3 className="text-base font-bold text-[#F5F5F5] group-hover:text-white transition-colors truncate">
-                    {song.title}
-                  </h3>
-                  <p className="text-xs text-[#A1A1A1] truncate">
-                    {song.artists && song.artists.length > 0 ? song.artists.join(' · ') : song.artist} {song.album ? `— ${song.album}` : ''}
-                  </p>
-                  {song.personalNotes && (
-                    <p className="text-xs text-[#707070] line-clamp-2 pt-1 font-light italic">
-                      "{song.personalNotes}"
-                    </p>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* 4. RECENTLY ADDED */}
-      <section className="max-w-7xl mx-auto px-6">
-        <div className="flex items-end justify-between mb-8 pb-4 border-b border-[#242424]">
-          <div>
-            <span className="text-xs uppercase tracking-widest text-[#707070] block mb-1">
-              Fresh Additions
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#F5F5F5] uppercase">
-              Recently Added to Library
-            </h2>
-          </div>
-        </div>
-
-        {recentItems.length === 0 ? (
-          <div className="py-16 text-center border border-[#242424] bg-[#0B0B0B] text-xs text-[#707070]">
-            No recent tracks published yet.
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {recentItems.map(item => (
+            {filteredMerch.map(item => (
               <div
                 key={item.id}
-                onClick={() => onOpenDetail('song', item)}
-                className="group cursor-pointer space-y-3 hover-luxury-lift p-2 -m-2"
+                onClick={() => onOpenMerchDetail(item)}
+                className="group bg-[#0B0B0B] border border-[#242424] hover:border-[#707070] transition-all cursor-pointer flex flex-col justify-between overflow-hidden hover-luxury-lift"
               >
-                <div className="aspect-square bg-[#111111] border border-[#242424] group-hover:border-[#707070] overflow-hidden transition-colors">
+                {/* Product Photo */}
+                <div className="aspect-[4/5] relative overflow-hidden bg-[#111111]">
                   <img
-                    src={item.coverUrl}
-                    alt={item.title}
-                    referrerPolicy="no-referrer"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    src={item.coverImage}
+                    alt={item.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
-                </div>
-                <div>
-                  <h4 className="text-xs sm:text-sm font-semibold text-[#F5F5F5] group-hover:text-white transition-colors truncate">
-                    {item.title}
-                  </h4>
-                  <p className="text-xs text-[#A1A1A1] truncate">
-                    {item.artist}
-                  </p>
-                  <div className="text-[11px] text-[#707070] mt-1 flex items-center gap-2">
-                    <span>{item.genre}</span>
-                    {item.releaseYear && (
-                      <>
-                        <span>·</span>
-                        <span>{item.releaseYear}</span>
-                      </>
+                  
+                  {/* Category Pill */}
+                  <div className="absolute top-3 left-3 bg-[#050505]/90 border border-[#242424] px-2.5 py-1 text-[10px] uppercase font-mono tracking-wider text-[#F5F5F5]">
+                    {item.category}
+                  </div>
+
+                  {/* Stock Status Badge */}
+                  <div className="absolute top-3 right-3">
+                    {item.inStock ? (
+                      <span className="bg-emerald-950/80 border border-emerald-600/80 text-emerald-400 px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider">
+                        In Stock
+                      </span>
+                    ) : (
+                      <span className="bg-red-950/80 border border-red-800 text-red-400 px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider">
+                        Sold Out
+                      </span>
                     )}
+                  </div>
+
+                  {/* Quick View Hover Indicator */}
+                  <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity bg-black/85 backdrop-blur-sm px-3 py-1.5 border border-[#333333] flex items-center gap-1.5 text-xs text-white font-mono">
+                    <Eye className="w-3.5 h-3.5" />
+                    <span>Inspect Garment</span>
+                  </div>
+                </div>
+
+                {/* Details Footer */}
+                <div className="p-5 space-y-3">
+                  <div className="flex items-baseline justify-between">
+                    <h3 className="text-base font-bold text-white uppercase group-hover:text-emerald-400 transition-colors truncate">
+                      {item.name}
+                    </h3>
+                    <span className="text-base font-mono font-bold text-white shrink-0 ml-2">
+                      {item.price} {item.currency || 'EGP'}
+                    </span>
+                  </div>
+
+                  {item.description && (
+                    <p className="text-xs text-[#888888] font-light line-clamp-2 leading-relaxed">
+                      {item.description}
+                    </p>
+                  )}
+
+                  {/* Sizes Available */}
+                  <div className="flex items-center gap-1.5 pt-1">
+                    <span className="text-[10px] uppercase font-mono text-[#666666]">Sizes:</span>
+                    <div className="flex flex-wrap gap-1">
+                      {item.sizes?.map(sz => (
+                        <span key={sz} className="text-[10px] font-mono bg-[#161616] border border-[#242424] px-1.5 py-0.5 text-[#CCCCCC]">
+                          {sz}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Order Actions */}
+                  <div className="pt-3 border-t border-[#1C1C1C] flex items-center justify-between gap-3">
+                    <button
+                      type="button"
+                      onClick={(e) => handleWhatsAppOrder(item, e)}
+                      className="flex-1 py-2.5 bg-[#161616] hover:bg-emerald-950/60 border border-[#262626] hover:border-emerald-500/60 text-xs font-mono font-semibold uppercase tracking-wider text-white hover:text-emerald-300 flex items-center justify-center gap-2 transition-all cursor-pointer"
+                    >
+                      <PhoneCall className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Order on WhatsApp</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => onOpenMerchDetail(item)}
+                      className="p-2.5 bg-[#111111] border border-[#242424] hover:border-white text-white transition-colors cursor-pointer"
+                      title="View garment details"
+                    >
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
               </div>
@@ -523,64 +373,78 @@ export const HomePage: React.FC<HomePageProps> = ({
         )}
       </section>
 
-      {/* 5. CURRENT FAVORITES */}
+      {/* 3. BRAND CRAFTSMANSHIP & SPECIFICATIONS */}
       <section className="max-w-7xl mx-auto px-6">
-        <div className="bg-[#0B0B0B] border border-[#242424] p-8 sm:p-12 hover-luxury-lift">
-          <div className="max-w-2xl mb-8">
-            <span className="text-xs uppercase tracking-widest text-[#707070] block mb-1">
-              Hall of Fame
+        <div className="bg-[#0B0B0B] border border-[#242424] p-8 sm:p-12 hover-luxury-lift space-y-8">
+          <div>
+            <span className="text-xs uppercase tracking-widest text-[#707070] font-mono block mb-1">
+              Garment Architecture
             </span>
-            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#F5F5F5] uppercase">
-              Current Favorites & Permanent Rotation
+            <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-[#F5F5F5]">
+              Craftsmanship & Production Standards
             </h2>
-            <p className="text-xs text-[#A1A1A1] mt-2">
-              The seminal records and tracks that remain permanently in heavy rotation.
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-4 border-t border-[#1C1C1C]">
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-white">
+                <Scissors className="w-5 h-5 text-white" />
+                <h3 className="text-sm font-bold uppercase tracking-wider font-mono">450 GSM Heavyweight</h3>
+              </div>
+              <p className="text-xs text-[#888888] font-light leading-relaxed">
+                Milled from high-density Egyptian cotton French Terry. Substantial hand feel, structural drape, and tailored durability designed to last seasons.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-white">
+                <ShieldCheck className="w-5 h-5 text-emerald-400" />
+                <h3 className="text-sm font-bold uppercase tracking-wider font-mono">Boxy Architectural Cut</h3>
+              </div>
+              <p className="text-xs text-[#888888] font-light leading-relaxed">
+                Relaxed dropped shoulders, widened body silhouette, and ribbed hem tension calibrated for perfect proportion over any trousers.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-white">
+                <Truck className="w-5 h-5 text-white" />
+                <h3 className="text-sm font-bold uppercase tracking-wider font-mono">Fast Direct Delivery</h3>
+              </div>
+              <p className="text-xs text-[#888888] font-light leading-relaxed">
+                Direct dispatch from Cairo across all Egyptian governorates with tracked courier delivery and straightforward WhatsApp customer service.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 4. FULL STORE BANNER CALL TO ACTION */}
+      <section className="max-w-7xl mx-auto px-6">
+        <div className="relative bg-gradient-to-r from-[#111111] via-[#0D0D0D] to-[#141414] border border-[#2A2A2A] p-8 sm:p-14 overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8">
+          <div className="space-y-3 max-w-xl">
+            <span className="text-xs uppercase font-mono tracking-widest text-emerald-400 block">
+              MY WORLD APPAREL
+            </span>
+            <h2 className="text-2xl sm:text-4xl font-black uppercase text-white tracking-tight">
+              Looking for our complete lookbook & drop archives?
+            </h2>
+            <p className="text-xs sm:text-sm text-[#A1A1A1] font-light leading-relaxed">
+              Explore the dedicated Store page with detailed garment specifications, zoom galleries, and direct checkout inquiries.
             </p>
           </div>
 
-          {favoriteSongs.length === 0 ? (
-            <div className="py-8 text-center text-xs text-[#707070]">
-              Favorites being curated.
-            </div>
-          ) : (
-            <div className="divide-y divide-[#1C1C1C]">
-              {favoriteSongs.map((fav, idx) => (
-                <div
-                  key={fav.id}
-                  onClick={() => onOpenDetail('song', fav)}
-                  className="py-4 flex items-center justify-between gap-4 cursor-pointer group hover:bg-[#111111] px-4 -mx-4 transition-colors"
-                >
-                  <div className="flex items-center gap-4 min-w-0">
-                    <span className="text-xs font-mono text-[#707070] w-6 text-right tabular-nums">
-                      0{idx + 1}
-                    </span>
-                    <img
-                      src={fav.coverUrl}
-                      alt={fav.title}
-                      className="w-12 h-12 object-cover bg-black border border-[#242424] shrink-0"
-                    />
-                    <div className="min-w-0">
-                      <h4 className="text-sm font-bold text-[#F5F5F5] group-hover:text-white truncate">
-                        {fav.title}
-                      </h4>
-                      <p className="text-xs text-[#A1A1A1] truncate">
-                        {fav.artist} {fav.album ? `— ${fav.album}` : ''}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-6 shrink-0">
-                    <span className="hidden sm:inline-block text-xs text-[#707070]">
-                      {fav.genre}
-                    </span>
-                    <span className="text-xs font-mono tabular-nums text-[#F5F5F5] bg-[#161616] border border-[#242424] px-2.5 py-1">
-                      {fav.personalRating}/10
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          <button
+            onClick={() => {
+              onSelectTab('merch');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            className="px-8 py-4 bg-white hover:bg-[#E5E5E5] text-black text-xs font-bold uppercase tracking-widest transition-all shrink-0 font-mono flex items-center gap-3 cursor-pointer shadow-xl hover-luxury-lift"
+          >
+            <ShoppingBag className="w-4 h-4 text-black" />
+            <span>ENTER FULL STORE</span>
+            <ArrowRight className="w-4 h-4 text-black" />
+          </button>
         </div>
       </section>
 

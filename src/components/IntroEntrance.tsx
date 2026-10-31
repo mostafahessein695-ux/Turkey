@@ -280,9 +280,9 @@ export const IntroEntrance: React.FC<IntroEntranceProps> = ({
         <div className={`pt-6 flex items-center justify-center gap-4 text-[10px] font-mono tracking-[0.25em] uppercase transition-colors duration-500 ${
           invertWolf ? 'text-[#666666]' : 'text-[#444444]'
         }`}>
-          <span>CURATED RAP VAULT</span>
+          <span>STREETWEAR ARCHIVE</span>
           <span>·</span>
-          <span>HIGH-FIDELITY AUDIO</span>
+          <span>CAPSULE COLLECTION</span>
         </div>
 
       </div>

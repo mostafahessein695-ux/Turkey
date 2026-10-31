@@ -60,7 +60,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               MY WORLD
             </span>
             <span className="text-[10px] tracking-widest text-[#707070] group-hover:text-[#A1A1A1] uppercase mt-1 block transition-colors">
-              Music & Lifestyle
+              Streetwear & Apparel
             </span>
           </button>
         </div>

@@ -34,14 +34,14 @@ export const Footer: React.FC<FooterProps> = ({
               MY WORLD
             </h3>
             <p className="text-sm text-[#A1A1A1] leading-relaxed max-w-sm">
-              {settings.heroSubhead || 'A curated universe of sounds, underground music culture, architectural aesthetics, and personal artifacts.'}
+              {settings.heroSubhead || 'Bespoke cuts, heavyweight knits, and limited capsule drops designed for everyday movement.'}
             </p>
             <div className="pt-2 text-xs text-[#707070]">
-              <span>Personal Archive</span>
+              <span>Streetwear Brand</span>
               <span className="mx-2">·</span>
-              <span>Non-Commercial</span>
+              <span>Heavyweight Knits</span>
               <span className="mx-2">·</span>
-              <span>Sound & Form</span>
+              <span>Limited Runs</span>
             </div>
           </div>
 
