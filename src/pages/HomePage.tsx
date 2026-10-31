@@ -284,21 +284,33 @@ export const HomePage: React.FC<HomePageProps> = ({
                 onClick={() => onOpenMerchDetail(item)}
                 className="group bg-[#0B0B0B] border border-[#242424] hover:border-[#707070] transition-all cursor-pointer flex flex-col justify-between overflow-hidden hover-luxury-lift"
               >
-                {/* Product Photo */}
+                {/* Product Photo with Front & Back Hover */}
                 <div className="aspect-[4/5] relative overflow-hidden bg-[#111111]">
+                  {/* Front View */}
                   <img
                     src={item.coverImage}
                     alt={item.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    className={`w-full h-full object-cover transition-all duration-500 ease-out ${
+                      item.images?.[0] ? 'group-hover:opacity-0' : 'group-hover:scale-105'
+                    }`}
                   />
+
+                  {/* Back View (Revealed on Hover) */}
+                  {item.images?.[0] && (
+                    <img
+                      src={item.images[0]}
+                      alt={`${item.name} Back View`}
+                      className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500 ease-out"
+                    />
+                  )}
                   
                   {/* Category Pill */}
-                  <div className="absolute top-3 left-3 bg-[#050505]/90 border border-[#242424] px-2.5 py-1 text-[10px] uppercase font-mono tracking-wider text-[#F5F5F5]">
+                  <div className="absolute top-3 left-3 bg-[#050505]/90 border border-[#242424] px-2.5 py-1 text-[10px] uppercase font-mono tracking-wider text-[#F5F5F5] z-10">
                     {item.category}
                   </div>
 
                   {/* Stock Status Badge */}
-                  <div className="absolute top-3 right-3">
+                  <div className="absolute top-3 right-3 z-10">
                     {item.inStock ? (
                       <span className="bg-emerald-950/80 border border-emerald-600/80 text-emerald-400 px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider">
                         In Stock
@@ -310,10 +322,19 @@ export const HomePage: React.FC<HomePageProps> = ({
                     )}
                   </div>
 
+                  {/* 2 Photos Indicator Badge */}
+                  {item.images?.[0] && (
+                    <div className="absolute bottom-3 left-3 z-10 pointer-events-none group-hover:opacity-0 transition-opacity">
+                      <span className="bg-black/85 backdrop-blur-sm border border-[#333] text-[9px] font-mono text-[#CCCCCC] uppercase px-2 py-0.5">
+                        2 Photos (Front / Back)
+                      </span>
+                    </div>
+                  )}
+
                   {/* Quick View Hover Indicator */}
-                  <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity bg-black/85 backdrop-blur-sm px-3 py-1.5 border border-[#333333] flex items-center gap-1.5 text-xs text-white font-mono">
+                  <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity bg-black/85 backdrop-blur-sm px-3 py-1.5 border border-[#333333] flex items-center gap-1.5 text-xs text-white font-mono z-10">
                     <Eye className="w-3.5 h-3.5" />
-                    <span>Inspect Garment</span>
+                    <span>{item.images?.[0] ? 'Back View · Inspect' : 'Inspect Garment'}</span>
                   </div>
                 </div>
 

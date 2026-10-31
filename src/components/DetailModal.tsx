@@ -540,11 +540,11 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                 </span>
                 {item.inStock ? (
                   <span className="bg-[#122B15] text-[#4ADE80] border border-[#23582A] text-[10px] font-mono uppercase tracking-widest px-2.5 py-1 font-bold">
-                    IN STOCK · متوفر
+                    IN STOCK
                   </span>
                 ) : (
                   <span className="bg-[#2B1212] text-[#F87171] border border-[#582323] text-[10px] font-mono uppercase tracking-widest px-2.5 py-1 font-bold">
-                    SOLD OUT · غير متوفر
+                    SOLD OUT
                   </span>
                 )}
                 {item.isFeatured && (
@@ -565,21 +565,45 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                     />
                   </div>
 
-                  {item.images && item.images.length > 1 && (
-                    <div className="flex gap-2 overflow-x-auto pb-1">
-                      {item.images.map((img, i) => (
-                        <button
-                          key={i}
-                          onClick={() => setActiveImg(img)}
-                          className={`w-14 h-14 shrink-0 border overflow-hidden transition-all ${
-                            activeImg === img ? 'border-white' : 'border-[#333] opacity-60 hover:opacity-100'
-                          }`}
-                        >
-                          <img src={img} alt="" className="w-full h-full object-cover" />
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                  {/* Dual Photos Selector (01 Front & 02 Back) */}
+                  {(() => {
+                    const photos = [
+                      { label: '01 FRONT', url: item.coverImage },
+                      ...(item.images || []).map((img, i) => ({
+                        label: i === 0 ? '02 BACK' : `0${i + 2} ANGLE`,
+                        url: img,
+                      })),
+                    ].filter(p => p.url && p.url.trim() !== '');
+
+                    if (photos.length <= 1) return null;
+
+                    return (
+                      <div className="space-y-1.5 pt-1">
+                        <span className="text-[10px] font-mono uppercase tracking-wider text-[#707070] block">
+                          Garment Views ({photos.length} Photos)
+                        </span>
+                        <div className="flex gap-2 overflow-x-auto pb-1">
+                          {photos.map((photo, i) => {
+                            const isSelected = (activeImg || item.coverImage) === photo.url;
+                            return (
+                              <button
+                                key={i}
+                                onClick={() => setActiveImg(photo.url)}
+                                className={`flex flex-col items-center gap-1 p-1 bg-[#111111] border transition-all cursor-pointer ${
+                                  isSelected ? 'border-white text-white' : 'border-[#262626] text-[#707070] opacity-70 hover:opacity-100 hover:border-[#555]'
+                                }`}
+                              >
+                                <img src={photo.url} alt={photo.label} className="w-14 h-14 object-cover" />
+                                <span className="text-[8px] font-mono uppercase font-bold tracking-wider">
+                                  {photo.label}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* Information */}

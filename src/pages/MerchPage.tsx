@@ -213,18 +213,31 @@ export const MerchPage: React.FC<MerchPageProps> = ({ merch }) => {
                 key={item.id}
                 className="group bg-[#0A0A0A] border border-[#242424] hover:border-[#777777] transition-all flex flex-col justify-between overflow-hidden shadow-lg"
               >
-                {/* 1. Clickable Image Container */}
+                {/* 1. Clickable Image Container with Front & Back Hover */}
                 <div 
                   onClick={() => openView(item)}
                   className="relative aspect-square w-full overflow-hidden bg-[#111111] cursor-pointer"
-                  title="Click to view garment details"
+                  title="Click to view garment details and both photos"
                 >
+                  {/* Front View (Image 1) */}
                   <img
                     src={item.coverImage}
                     alt={item.name}
-                    className="w-full h-full object-cover grayscale contrast-125 brightness-95 group-hover:scale-105 group-hover:grayscale-0 transition-all duration-500 ease-out"
+                    className={`w-full h-full object-cover grayscale contrast-125 brightness-95 transition-all duration-500 ease-out ${
+                      item.images?.[0] ? 'group-hover:opacity-0' : 'group-hover:scale-105 group-hover:grayscale-0'
+                    }`}
                     loading="lazy"
                   />
+
+                  {/* Back View (Image 2 - Revealed on Hover) */}
+                  {item.images?.[0] && (
+                    <img
+                      src={item.images[0]}
+                      alt={`${item.name} Back View`}
+                      className="absolute inset-0 w-full h-full object-cover contrast-125 brightness-95 opacity-0 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500 ease-out"
+                      loading="lazy"
+                    />
+                  )}
 
                   {/* Gradient shadow for text readability */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity pointer-events-none" />
@@ -254,14 +267,23 @@ export const MerchPage: React.FC<MerchPageProps> = ({ merch }) => {
                     )}
                   </div>
 
+                  {/* 2 Photos indicator badge */}
+                  {item.images?.[0] && (
+                    <div className="absolute bottom-3 left-3 z-10 pointer-events-none opacity-80 group-hover:opacity-0 transition-opacity">
+                      <span className="bg-black/80 backdrop-blur-sm border border-[#333] text-[9px] font-mono text-[#CCCCCC] uppercase px-2 py-0.5">
+                        2 Photos (Front / Back)
+                      </span>
+                    </div>
+                  )}
+
                   {/* Prominent Overlay on Hover */}
-                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 p-4 text-center z-10">
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 p-4 text-center z-10">
                     <span className="px-4 py-2 bg-white text-black text-xs font-black uppercase tracking-wider flex items-center gap-2 shadow-2xl">
                       <Eye className="w-4 h-4 text-black" />
-                      <span>VIEW DETAILS & SIZES</span>
+                      <span>VIEW BOTH PHOTOS & SIZES</span>
                     </span>
                     <span className="text-[10px] font-mono text-[#CCCCCC] tracking-wider">
-                      Click to open full piece inspect
+                      {item.images?.[0] ? 'Showing Back View · Click to inspect' : 'Click to inspect'}
                     </span>
                   </div>
                 </div>
@@ -458,27 +480,50 @@ export const MerchPage: React.FC<MerchPageProps> = ({ merch }) => {
                   </div>
                 </div>
 
-                {/* Thumbnails if multiple images exist */}
-                {modalItem.images && modalItem.images.length > 1 && (
-                  <div className="space-y-1">
-                    <span className="text-[10px] font-mono uppercase tracking-wider text-[#707070] block">
-                      Image Angles
-                    </span>
-                    <div className="flex gap-2 overflow-x-auto pb-1">
-                      {modalItem.images.map((img, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => setActiveModalImage(img)}
-                          className={`w-16 h-16 shrink-0 border overflow-hidden transition-all cursor-pointer ${
-                            activeModalImage === img ? 'border-white' : 'border-[#333] opacity-60 hover:opacity-100'
-                          }`}
-                        >
-                          <img src={img} alt="" className="w-full h-full object-cover" />
-                        </button>
-                      ))}
+                {/* Thumbnails: 01 Front & 02 Back */}
+                {(() => {
+                  const photos = [
+                    { label: '01 FRONT', url: modalItem.coverImage },
+                    ...(modalItem.images || []).map((img, i) => ({
+                      label: i === 0 ? '02 BACK' : `0${i + 2} ANGLE`,
+                      url: img,
+                    })),
+                  ].filter(p => p.url && p.url.trim() !== '');
+
+                  if (photos.length <= 1) return null;
+
+                  return (
+                    <div className="space-y-2 pt-1">
+                      <div className="flex items-center justify-between text-[10px] font-mono text-[#707070]">
+                        <span className="uppercase tracking-wider">Garment Views ({photos.length} Photos)</span>
+                        <span className="text-white">Click to switch angle</span>
+                      </div>
+                      <div className="flex gap-2 overflow-x-auto pb-1">
+                        {photos.map((photo, idx) => {
+                          const isCurrent = (activeModalImage || modalItem.coverImage) === photo.url;
+                          return (
+                            <button
+                              key={idx}
+                              onClick={() => setActiveModalImage(photo.url)}
+                              className={`flex flex-col items-center gap-1 p-1 bg-[#111111] border transition-all cursor-pointer ${
+                                isCurrent
+                                  ? 'border-white text-white shadow-lg'
+                                  : 'border-[#262626] text-[#707070] opacity-70 hover:opacity-100 hover:border-[#666666]'
+                              }`}
+                            >
+                              <div className="w-16 h-16 bg-[#080808] overflow-hidden">
+                                <img src={photo.url} alt={photo.label} className="w-full h-full object-cover" />
+                              </div>
+                              <span className="text-[9px] font-mono uppercase font-bold tracking-wider">
+                                {photo.label}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
               </div>
 
               {/* Right Column: Garment Information & Specs */}

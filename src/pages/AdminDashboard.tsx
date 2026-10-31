@@ -100,6 +100,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     reader.readAsDataURL(file);
   };
 
+  const secondImage = editingMerch?.images?.[0] || '';
+  const handleSetSecondImage = (url: string) => {
+    if (!editingMerch) return;
+    const remaining = (editingMerch.images || []).slice(1);
+    const trimmed = url;
+    if (trimmed) {
+      setEditingMerch({
+        ...editingMerch,
+        images: [trimmed, ...remaining],
+      });
+    } else {
+      setEditingMerch({
+        ...editingMerch,
+        images: remaining,
+      });
+    }
+  };
+
   // ADD / REMOVE SIZE HELPER
   const handleAddSize = () => {
     const s = merchSizeInput.trim().toUpperCase();
@@ -144,12 +162,25 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const handleSaveMerch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingMerch || !editingMerch.name || !editingMerch.coverImage) {
-      showNotification('Garment name and image are required', 'error');
+      showNotification('Garment name and front cover image are required', 'error');
       return;
     }
 
     setSaving(true);
     try {
+      // Gather images: Image 2 first, then any extra angles
+      const gatheredImages: string[] = [];
+      if (secondImage.trim()) {
+        gatheredImages.push(secondImage.trim());
+      }
+      if (editingMerch.images && editingMerch.images.length > 1) {
+        editingMerch.images.slice(1).forEach(img => {
+          if (img && img.trim() && !gatheredImages.includes(img.trim())) {
+            gatheredImages.push(img.trim());
+          }
+        });
+      }
+
       const itemToSave: MerchItem = {
         id: editingMerch.id || `merch_${Date.now()}`,
         name: editingMerch.name.trim(),
@@ -158,7 +189,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         category: editingMerch.category || 'hoodies',
         description: editingMerch.description || '',
         coverImage: editingMerch.coverImage.trim(),
-        images: editingMerch.images || [],
+        images: gatheredImages,
         sizes: editingMerch.sizes && editingMerch.sizes.length > 0 ? editingMerch.sizes : ['S', 'M', 'L', 'XL'],
         inStock: editingMerch.inStock ?? true,
         isFeatured: editingMerch.isFeatured ?? false,
@@ -426,7 +457,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           currency: 'EGP',
                           category: 'hoodies',
                           description: 'Heavyweight French Terry cotton. Relaxed boxy fit.',
-                          coverImage: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=1000&q=80',
+                          coverImage: '',
                           images: [],
                           sizes: ['S', 'M', 'L', 'XL'],
                           inStock: true,
@@ -521,7 +552,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       currency: 'EGP',
                       category: 'hoodies',
                       description: '450 GSM Heavyweight Terry Cotton. Boxy fit.',
-                      coverImage: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=1000&q=80',
+                      coverImage: '',
                       images: [],
                       sizes: ['S', 'M', 'L', 'XL'],
                       inStock: true,
@@ -636,38 +667,152 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       </div>
                     </div>
 
-                    {/* 3. Cover Image & Upload */}
-                    <div>
-                      <label className="block text-[11px] uppercase tracking-wider text-[#A1A1A1] mb-1 font-mono">
-                        Main Product Image (URL or Local Upload) *
-                      </label>
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          required
-                          value={editingMerch.coverImage || ''}
-                          onChange={e => setEditingMerch({ ...editingMerch, coverImage: e.target.value })}
-                          placeholder="https://... or upload photo"
-                          className="flex-1 bg-[#111111] border border-[#242424] px-3 py-2 text-xs text-[#F5F5F5] focus:outline-none focus:border-white font-mono"
-                        />
-                        <label className="px-3 py-2 bg-[#161616] border border-[#242424] hover:border-[#707070] cursor-pointer text-xs text-[#A1A1A1] flex items-center gap-1.5 shrink-0">
-                          <Upload className="w-3.5 h-3.5" />
-                          <span>Upload</span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={e => handleImageFileUpload(e, base64 => setEditingMerch({ ...editingMerch, coverImage: base64 }))}
-                          />
+                    {/* 3. DUAL PRODUCT IMAGES (Front View & Back View) */}
+                    <div className="space-y-3 pt-2">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 pb-1 border-b border-[#1C1C1C]">
+                        <label className="text-xs uppercase tracking-wider text-white font-mono font-bold flex items-center gap-2">
+                          <Tag className="w-4 h-4 text-emerald-400" />
+                          <span>Product Images (Image 1: Front & Image 2: Back)</span>
                         </label>
+                        <span className="text-[11px] text-[#A1A1A1] font-mono">
+                          Upload 2 Photos: Front View & Back View
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* CARD 1: IMAGE 1 (FRONT VIEW / COVER) */}
+                        <div className="bg-[#111111] border border-[#262626] p-4 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-mono uppercase text-white font-bold flex items-center gap-2">
+                              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                              <span>Image 1: Front View *</span>
+                            </span>
+                            {editingMerch.coverImage && (
+                              <button
+                                type="button"
+                                onClick={() => setEditingMerch({ ...editingMerch, coverImage: '' })}
+                                className="text-[10px] text-red-400 hover:text-red-300 font-mono uppercase cursor-pointer"
+                              >
+                                Remove
+                              </button>
+                            )}
+                          </div>
+
+                          {/* Image 1 Preview */}
+                          <div className="aspect-[4/3] bg-[#0A0A0A] border border-[#222222] relative overflow-hidden flex items-center justify-center">
+                            {editingMerch.coverImage ? (
+                              <img
+                                src={editingMerch.coverImage}
+                                alt="Front View Preview"
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="text-center p-4 text-[#555555] space-y-2">
+                                <Upload className="w-6 h-6 mx-auto text-[#444444]" />
+                                <p className="text-[11px] font-mono text-[#888888]">Front Photo (Required)</p>
+                                <p className="text-[10px] font-mono text-[#555555]">Upload photo or paste image URL below</p>
+                              </div>
+                            )}
+                            <div className="absolute top-2 left-2 bg-black/80 border border-[#333] px-2 py-0.5 text-[9px] font-mono text-emerald-400 uppercase">
+                              Front View (الواجهة الأمامية)
+                            </div>
+                          </div>
+
+                          {/* Image 1 Inputs */}
+                          <div className="space-y-2">
+                            <input
+                              type="text"
+                              required
+                              value={editingMerch.coverImage || ''}
+                              onChange={e => setEditingMerch({ ...editingMerch, coverImage: e.target.value })}
+                              placeholder="Image 1 URL or use upload button..."
+                              className="w-full bg-[#0B0B0B] border border-[#262626] px-3 py-2 text-xs text-[#F5F5F5] focus:outline-none focus:border-white font-mono"
+                            />
+                            <label className="w-full py-2.5 bg-[#161616] hover:bg-[#1E1E1E] border border-[#2D2D2D] hover:border-emerald-500/60 cursor-pointer text-xs text-white font-mono flex items-center justify-center gap-2 transition-colors">
+                              <Upload className="w-3.5 h-3.5 text-emerald-400" />
+                              <span>Upload Image 1 (Front View)</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={e => handleImageFileUpload(e, base64 => setEditingMerch({ ...editingMerch, coverImage: base64 }))}
+                              />
+                            </label>
+                          </div>
+                        </div>
+
+                        {/* CARD 2: IMAGE 2 (BACK VIEW / SECONDARY) */}
+                        <div className="bg-[#111111] border border-[#262626] p-4 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-mono uppercase text-white font-bold flex items-center gap-2">
+                              <span className="w-2 h-2 rounded-full bg-blue-400" />
+                              <span>Image 2: Back View (Second Image)</span>
+                            </span>
+                            {secondImage && (
+                              <button
+                                type="button"
+                                onClick={() => handleSetSecondImage('')}
+                                className="text-[10px] text-red-400 hover:text-red-300 font-mono uppercase cursor-pointer"
+                              >
+                                Remove
+                              </button>
+                            )}
+                          </div>
+
+                          {/* Image 2 Preview */}
+                          <div className="aspect-[4/3] bg-[#0A0A0A] border border-[#222222] relative overflow-hidden flex items-center justify-center">
+                            {secondImage ? (
+                              <img
+                                src={secondImage}
+                                alt="Back View Preview"
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="text-center p-4 text-[#555555] space-y-2">
+                                <Upload className="w-6 h-6 mx-auto text-[#444444]" />
+                                <p className="text-[11px] font-mono text-[#888888]">Back Photo (Second Image)</p>
+                                <p className="text-[10px] font-mono text-[#555555]">Upload photo or paste image URL below</p>
+                              </div>
+                            )}
+                            <div className="absolute top-2 left-2 bg-black/80 border border-[#333] px-2 py-0.5 text-[9px] font-mono text-blue-400 uppercase">
+                              Back View (الواجهة الخلفية)
+                            </div>
+                          </div>
+
+                          {/* Image 2 Inputs */}
+                          <div className="space-y-2">
+                            <input
+                              type="text"
+                              value={secondImage || ''}
+                              onChange={e => handleSetSecondImage(e.target.value)}
+                              placeholder="Image 2 URL or use upload button..."
+                              className="w-full bg-[#0B0B0B] border border-[#262626] px-3 py-2 text-xs text-[#F5F5F5] focus:outline-none focus:border-white font-mono"
+                            />
+                            <label className="w-full py-2.5 bg-[#161616] hover:bg-[#1E1E1E] border border-[#2D2D2D] hover:border-blue-500/60 cursor-pointer text-xs text-white font-mono flex items-center justify-center gap-2 transition-colors">
+                              <Upload className="w-3.5 h-3.5 text-blue-400" />
+                              <span>Upload Image 2 (Back View)</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={e => handleImageFileUpload(e, base64 => handleSetSecondImage(base64))}
+                              />
+                            </label>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
-                    {/* 4. Extra Lookbook Images */}
-                    <div>
-                      <label className="block text-[11px] uppercase tracking-wider text-[#A1A1A1] mb-1 font-mono">
-                        Additional Lookbook Angles / Photos
-                      </label>
+                    {/* 4. Extra Lookbook Angles / Photos (Optional 3rd & 4th photos) */}
+                    <div className="space-y-2 pt-2 border-t border-[#1C1C1C]">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[11px] uppercase tracking-wider text-[#A1A1A1] font-mono">
+                          Additional Lookbook Photos / Angles (Optional)
+                        </label>
+                        <span className="text-[10px] text-[#707070] font-mono">
+                          {editingMerch.images && editingMerch.images.length > 1 ? `${editingMerch.images.length - 1} Extra Angles` : '0 Extra'}
+                        </span>
+                      </div>
                       <div className="flex gap-2">
                         <input
                           type="text"
@@ -679,7 +824,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                               handleAddExtraImage();
                             }
                           }}
-                          placeholder="Image URL or upload angle"
+                          placeholder="Extra angle URL or upload photo..."
                           className="flex-1 bg-[#111111] border border-[#242424] px-3 py-2 text-xs text-[#F5F5F5] focus:outline-none focus:border-white font-mono"
                         />
                         <button
@@ -691,7 +836,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         </button>
                         <label className="px-3 py-2 bg-[#161616] border border-[#242424] hover:border-[#707070] cursor-pointer text-xs text-[#A1A1A1] flex items-center gap-1.5 shrink-0">
                           <Upload className="w-3.5 h-3.5" />
-                          <span>Upload</span>
+                          <span>Upload Angle</span>
                           <input
                             type="file"
                             accept="image/*"
@@ -704,14 +849,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         </label>
                       </div>
 
-                      {editingMerch.images && editingMerch.images.length > 0 && (
+                      {editingMerch.images && editingMerch.images.length > 1 && (
                         <div className="flex flex-wrap gap-2 mt-2">
-                          {editingMerch.images.map((img, idx) => (
-                            <div key={idx} className="relative w-16 h-16 border border-[#242424] group">
+                          {editingMerch.images.slice(1).map((img, idx) => (
+                            <div key={idx + 1} className="relative w-16 h-16 border border-[#242424] group">
                               <img src={img} alt="Angle" className="w-full h-full object-cover" />
                               <button
                                 type="button"
-                                onClick={() => handleRemoveExtraImage(idx)}
+                                onClick={() => handleRemoveExtraImage(idx + 1)}
                                 className="absolute -top-1 -right-1 bg-red-600 text-white rounded-full p-0.5 opacity-90 hover:opacity-100 cursor-pointer"
                               >
                                 <X className="w-3 h-3" />
@@ -865,11 +1010,39 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:bg-[#111111] transition-colors"
                     >
                       <div className="flex items-center gap-4 min-w-0">
-                        <img
-                          src={item.coverImage}
-                          alt={item.name}
-                          className="w-14 h-14 object-cover border border-[#242424] shrink-0 bg-[#161616]"
-                        />
+                        {/* Two Image Thumbnails (Front & Back) */}
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {/* Image 1: Front */}
+                          <div className="relative group/thumb" title="Front Photo">
+                            <img
+                              src={item.coverImage}
+                              alt={item.name}
+                              className="w-12 h-12 object-cover border border-[#242424] bg-[#161616]"
+                            />
+                            <span className="absolute bottom-0 inset-x-0 bg-black/85 text-[7px] font-mono text-center text-emerald-400 uppercase leading-tight">
+                              Front
+                            </span>
+                          </div>
+
+                          {/* Image 2: Back */}
+                          {item.images?.[0] ? (
+                            <div className="relative group/thumb" title="Back Photo">
+                              <img
+                                src={item.images[0]}
+                                alt={`${item.name} Back`}
+                                className="w-12 h-12 object-cover border border-[#242424] bg-[#161616]"
+                              />
+                              <span className="absolute bottom-0 inset-x-0 bg-black/85 text-[7px] font-mono text-center text-blue-400 uppercase leading-tight">
+                                Back
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="w-12 h-12 border border-dashed border-[#242424] bg-[#0E0E0E] flex flex-col items-center justify-center text-[7px] font-mono text-[#555555] uppercase text-center p-0.5 leading-tight" title="No back photo">
+                              <span>No Back</span>
+                              <span>Photo</span>
+                            </div>
+                          )}
+                        </div>
                         <div className="min-w-0 space-y-1">
                           <div className="flex items-center gap-2">
                             <span className="text-xs font-bold text-white uppercase tracking-wider truncate">
