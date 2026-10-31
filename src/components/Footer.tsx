@@ -58,24 +58,6 @@ export const Footer: React.FC<FooterProps> = ({
                 Home
               </button>
               <button
-                onClick={() => { onSelectTab('music'); scrollToTop(); }}
-                className="text-left hover:text-[#F5F5F5] transition-colors"
-              >
-                Music Library
-              </button>
-              <button
-                onClick={() => { onSelectTab('albums'); scrollToTop(); }}
-                className="text-left hover:text-[#F5F5F5] transition-colors"
-              >
-                Curated Albums
-              </button>
-              <button
-                onClick={() => { onSelectTab('artists'); scrollToTop(); }}
-                className="text-left hover:text-[#F5F5F5] transition-colors"
-              >
-                Artists & Profiles
-              </button>
-              <button
                 onClick={() => { onSelectTab('merch'); scrollToTop(); }}
                 className="text-left hover:text-[#F5F5F5] transition-colors"
               >

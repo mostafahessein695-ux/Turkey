@@ -3,9 +3,6 @@ import { NavTab, SiteSettings } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { 
   Home, 
-  Music, 
-  Disc, 
-  Mic, 
   ShoppingBag,
   Shield, 
   Lock, 
@@ -31,13 +28,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const { user, isAdmin, logout, adminEmail } = useAuth();
 
-  // Navigation items: Merch/Store tab placed adjacent to Songs and Artists as requested
+  // Navigation items: Home and Store / Clothes
   const navItems: { id: NavTab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
     { id: 'home', label: 'Home', icon: Home },
-    { id: 'music', label: 'Songs', icon: Music },
-    { id: 'artists', label: 'Artists', icon: Mic },
     { id: 'merch', label: 'Store / Clothes', icon: ShoppingBag },
-    { id: 'albums', label: 'Albums', icon: Disc },
   ];
 
   const handleNavClick = (tab: NavTab) => {

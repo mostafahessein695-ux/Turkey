@@ -32,9 +32,6 @@ import {
 import { Sidebar } from './components/Sidebar';
 import { Footer } from './components/Footer';
 import { HomePage } from './pages/HomePage';
-import { MusicPage } from './pages/MusicPage';
-import { AlbumsPage } from './pages/AlbumsPage';
-import { ArtistsPage } from './pages/ArtistsPage';
 import { MerchPage } from './pages/MerchPage';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { DetailModal } from './components/DetailModal';
@@ -190,28 +187,6 @@ const MainApp: React.FC = () => {
                   onOpenDetail={(type, data) => setDetailTarget({ type, data })}
                   onOpenLightbox={item => setLightboxItem(item)}
                   onOpenAdminAuth={() => setAdminAuthOpen(true)}
-                />
-              )}
-
-              {currentTab === 'music' && (
-                <MusicPage
-                  songs={songs}
-                  onOpenDetail={song => setDetailTarget({ type: 'song', data: song })}
-                />
-              )}
-
-              {currentTab === 'albums' && (
-                <AlbumsPage
-                  albums={albums}
-                  onOpenDetail={album => setDetailTarget({ type: 'album', data: album })}
-                />
-              )}
-
-              {currentTab === 'artists' && (
-                <ArtistsPage
-                  artists={artists}
-                  songs={songs}
-                  onOpenDetail={artist => setDetailTarget({ type: 'artist', data: artist })}
                 />
               )}
 

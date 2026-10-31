@@ -24,7 +24,8 @@ import {
   Volume2,
   Music,
   Users,
-  Instagram
+  Instagram,
+  ShoppingBag
 } from 'lucide-react';
 import { isArtistOnSong } from '../services/db';
 
@@ -136,19 +137,11 @@ export const HomePage: React.FC<HomePageProps> = ({
                 </button>
 
                 <button
-                  onClick={() => onSelectTab('artists')}
+                  onClick={() => onSelectTab('merch')}
                   className="px-6 py-4 bg-[#111111]/80 hover:bg-[#111111] border border-[#242424] hover:border-[#707070] text-[#F5F5F5] text-xs font-medium uppercase tracking-widest transition-colors flex items-center gap-2 hover-luxury-lift cursor-pointer"
                 >
-                  <Mic className="w-3.5 h-3.5 text-[#A1A1A1]" />
-                  <span>Profiled Artists</span>
-                </button>
-
-                <button
-                  onClick={() => onSelectTab('albums')}
-                  className="px-6 py-4 bg-transparent hover:bg-[#111111]/40 border border-[#242424] hover:border-[#707070] text-[#A1A1A1] hover:text-white text-xs font-medium uppercase tracking-widest transition-colors flex items-center gap-2 cursor-pointer"
-                >
-                  <Disc className="w-3.5 h-3.5 text-[#A1A1A1]" />
-                  <span>Curated Albums</span>
+                  <ShoppingBag className="w-3.5 h-3.5 text-white" />
+                  <span>Store / Clothes</span>
                 </button>
               </div>
             </div>
@@ -413,13 +406,6 @@ export const HomePage: React.FC<HomePageProps> = ({
               Featured Sound & Vision
             </h2>
           </div>
-          <button
-            onClick={() => onSelectTab('music')}
-            className="text-xs uppercase tracking-wider text-[#A1A1A1] hover:text-[#F5F5F5] transition-colors flex items-center gap-1.5 cursor-pointer py-1"
-          >
-            <span>View All Tracks</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
         </div>
 
         {displaySoundAndVisionSongs.length === 0 ? (
@@ -492,13 +478,6 @@ export const HomePage: React.FC<HomePageProps> = ({
               Recently Added to Library
             </h2>
           </div>
-          <button
-            onClick={() => onSelectTab('music')}
-            className="text-xs uppercase tracking-wider text-[#A1A1A1] hover:text-[#F5F5F5] transition-colors flex items-center gap-1.5 cursor-pointer py-1"
-          >
-            <span>Explore Library</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
         </div>
 
         {recentItems.length === 0 ? (
