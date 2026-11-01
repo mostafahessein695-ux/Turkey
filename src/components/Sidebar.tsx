@@ -54,10 +54,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
               }
             }}
             className="text-left group cursor-pointer block w-full"
-            title={isAdmin ? "MY WORLD - Home" : "MY WORLD"}
+            title={isAdmin ? "TURVEX - Home" : "TURVEX"}
           >
             <span className="text-lg font-black tracking-[0.25em] text-[#F5F5F5] group-hover:text-white uppercase block leading-none transition-colors">
-              MY WORLD
+              TURVEX
             </span>
             <span className="text-[10px] tracking-widest text-[#707070] group-hover:text-[#A1A1A1] uppercase mt-1 block transition-colors">
               Streetwear & Apparel
@@ -184,10 +184,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
             }
           }}
           className="text-left cursor-pointer group"
-          title={isAdmin ? "Home" : "MY WORLD"}
+          title={isAdmin ? "Home" : "TURVEX"}
         >
           <span className="text-base font-black tracking-[0.25em] text-[#F5F5F5] group-hover:text-white uppercase transition-colors">
-            MY WORLD
+            TURVEX
           </span>
         </button>
 

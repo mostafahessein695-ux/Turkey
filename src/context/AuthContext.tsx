@@ -37,6 +37,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAdmin, setIsAdmin] = useState<boolean>(() => {
     try {
       return (
+        sessionStorage.getItem('turvex_admin_authenticated') === 'true' ||
+        localStorage.getItem('turvex_admin_authenticated') === 'true' ||
         sessionStorage.getItem('myworld_admin_authenticated') === 'true' ||
         localStorage.getItem('myworld_admin_authenticated') === 'true'
       );
@@ -56,6 +58,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const isVerifiedAdmin = await verifyAndProvisionServerAdmin(currentUser);
         if (isVerifiedAdmin) {
           try {
+            sessionStorage.setItem('turvex_admin_authenticated', 'true');
+            localStorage.setItem('turvex_admin_authenticated', 'true');
             sessionStorage.setItem('myworld_admin_authenticated', 'true');
             localStorage.setItem('myworld_admin_authenticated', 'true');
           } catch {}
@@ -65,6 +69,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else {
         try {
           const isStoredAdmin = (
+            sessionStorage.getItem('turvex_admin_authenticated') === 'true' ||
+            localStorage.getItem('turvex_admin_authenticated') === 'true' ||
             sessionStorage.getItem('myworld_admin_authenticated') === 'true' ||
             localStorage.getItem('myworld_admin_authenticated') === 'true'
           );
@@ -85,6 +91,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const isVerifiedAdmin = await verifyAndProvisionServerAdmin(loggedUser);
       if (isVerifiedAdmin) {
         try {
+          sessionStorage.setItem('turvex_admin_authenticated', 'true');
+          localStorage.setItem('turvex_admin_authenticated', 'true');
           sessionStorage.setItem('myworld_admin_authenticated', 'true');
           localStorage.setItem('myworld_admin_authenticated', 'true');
         } catch {}
@@ -101,6 +109,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const isValid = verifyAdminSecret(secret);
     if (isValid) {
       try {
+        sessionStorage.setItem('turvex_admin_authenticated', 'true');
+        localStorage.setItem('turvex_admin_authenticated', 'true');
         sessionStorage.setItem('myworld_admin_authenticated', 'true');
         localStorage.setItem('myworld_admin_authenticated', 'true');
       } catch {}
@@ -112,6 +122,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const handleLogout = async () => {
     try {
+      sessionStorage.removeItem('turvex_admin_authenticated');
+      localStorage.removeItem('turvex_admin_authenticated');
       sessionStorage.removeItem('myworld_admin_authenticated');
       localStorage.removeItem('myworld_admin_authenticated');
     } catch {}

@@ -65,16 +65,16 @@ const MainApp: React.FC = () => {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [merch, setMerch] = useState<MerchItem[]>([]);
   const [settings, setSettings] = useState<SiteSettings>({
-    heroHeadline: 'MY WORLD. MY RULES.',
-    heroSubhead: 'A collection of sounds, people, moments, and things that mean something to me.',
+    heroHeadline: 'TURVEX. HEAVYWEIGHT STREETWEAR.',
+    heroSubhead: 'Bespoke cuts, heavyweight knits, and limited capsule drops designed for everyday movement.',
     heroImage: ASSET_IMAGES.heroVinyl,
-    aboutBio: 'MY WORLD is a personal sensory sanctuary and digital archive. It was conceived as an antidote to algorithmic feeds and passive consumption.',
+    aboutBio: 'TURVEX is an independent streetwear archive and garment studio focused on custom heavyweight cotton silhouettes, washed tones, and durable minimalism.',
     aboutPhoto: ASSET_IMAGES.artistPortrait,
     socialLinks: [
-      { platform: 'Spotify', url: 'https://open.spotify.com', handle: '@myworld' },
-      { platform: 'SoundCloud', url: 'https://soundcloud.com', handle: 'myworld-archives' },
-      { platform: 'Bandcamp', url: 'https://bandcamp.com', handle: 'myworld' },
-      { platform: 'Instagram', url: 'https://instagram.com', handle: '@myworld.journal' },
+      { platform: 'Spotify', url: 'https://open.spotify.com', handle: '@turvex' },
+      { platform: 'SoundCloud', url: 'https://soundcloud.com', handle: 'turvex-archives' },
+      { platform: 'Bandcamp', url: 'https://bandcamp.com', handle: 'turvex' },
+      { platform: 'Instagram', url: 'https://instagram.com', handle: '@turvex.studio' },
     ],
     featuredCollectionId: 'col_late_night',
   });
@@ -169,7 +169,7 @@ const MainApp: React.FC = () => {
             <div className="max-w-7xl mx-auto px-6 py-32 flex flex-col items-center justify-center space-y-4">
               <div className="w-8 h-8 border border-[#404040] border-t-white animate-spin" />
               <p className="text-xs uppercase tracking-widest text-[#707070]">
-                Connecting to MY WORLD...
+                Connecting to TURVEX...
               </p>
             </div>
           ) : (
@@ -231,8 +231,8 @@ const MainApp: React.FC = () => {
       {showIntro && (
         <IntroEntrance
           onEnter={handleIntroComplete}
-          siteName="MY WORLD"
-          tagline={settings.heroSubhead || "A SENSORY SANCTUARY & DIGITAL SOUND ARCHIVE"}
+          siteName="TURVEX"
+          tagline={settings.heroSubhead || "HEAVYWEIGHT STREETWEAR & CAPSULE DROP ARCHIVE"}
         />
       )}
 

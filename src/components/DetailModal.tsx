@@ -551,7 +551,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({
           const handleWhatsApp = () => {
             const phone = (item.whatsappNumber || '').replace(/[^\d+]/g, '') || '201000000000';
             const lines = [
-              `Hello MY WORLD Store!`,
+              `Hello TURVEX Store!`,
               `I would like to order: ${item.name}`,
               `---------------------------------`,
               `Color (اللون): ${selectedColor}`,

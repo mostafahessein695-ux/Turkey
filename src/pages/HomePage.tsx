@@ -110,7 +110,7 @@ export const HomePage: React.FC<HomePageProps> = ({
     const cur = item.currency?.trim() || 'EGP';
 
     const lines = [
-      `Hello MY WORLD Store!`,
+      `Hello TURVEX Store!`,
       `I would like to order: ${item.name}`,
       `---------------------------------`,
       `Color (اللون): ${chosenColor}`,
@@ -147,7 +147,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             <div className="lg:col-span-8 space-y-8">
               <div className="text-xs uppercase tracking-[0.3em] text-[#A1A1A1] flex items-center gap-3 font-mono">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ambient-pulse" />
-                <span className="text-white font-semibold">MY WORLD APPAREL</span>
+                <span className="text-white font-semibold">TURVEX APPAREL</span>
                 <span className="text-[#555555]">·</span>
                 <span className="text-[#A1A1A1]">NEW CAPSULE DROP IS LIVE</span>
               </div>
@@ -155,9 +155,9 @@ export const HomePage: React.FC<HomePageProps> = ({
               <h1 
                 onClick={onOpenAdminAuth}
                 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight text-[#F5F5F5] uppercase leading-[0.95] cursor-pointer hover:text-white transition-colors"
-                title="MY WORLD"
+                title="TURVEX"
               >
-                {settings.heroHeadline || 'MY WORLD. HEAVYWEIGHT STREETWEAR.'}
+                {settings.heroHeadline || 'TURVEX. HEAVYWEIGHT STREETWEAR.'}
               </h1>
 
               <p className="text-base sm:text-xl text-[#A1A1A1] max-w-2xl font-light leading-relaxed">
@@ -243,7 +243,7 @@ export const HomePage: React.FC<HomePageProps> = ({
         {/* Continuous Fluid Ticker Marquee */}
         <div className="relative z-10 w-full bg-[#080808] border-y border-[#242424] py-3.5 overflow-hidden select-none">
           <div className="animate-marquee whitespace-nowrap text-xs uppercase tracking-[0.25em] text-[#888888] font-mono flex items-center gap-8">
-            <span className="text-[#F5F5F5] font-bold">MY WORLD STORE</span>
+            <span className="text-[#F5F5F5] font-bold">TURVEX STORE</span>
             <span>·</span>
             <span>HEAVYWEIGHT HOODIES 450 GSM</span>
             <span>·</span>
@@ -257,7 +257,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             <span>·</span>
             <span>LIMITED PRODUCTION RUNS</span>
             <span>·</span>
-            <span className="text-[#F5F5F5] font-bold">MY WORLD STORE</span>
+            <span className="text-[#F5F5F5] font-bold">TURVEX STORE</span>
             <span>·</span>
             <span>HEAVYWEIGHT HOODIES 450 GSM</span>
             <span>·</span>
@@ -550,7 +550,7 @@ export const HomePage: React.FC<HomePageProps> = ({
         <div className="relative bg-gradient-to-r from-[#111111] via-[#0D0D0D] to-[#141414] border border-[#2A2A2A] p-8 sm:p-14 overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="space-y-3 max-w-xl">
             <span className="text-xs uppercase font-mono tracking-widest text-emerald-400 block">
-              MY WORLD APPAREL
+              TURVEX APPAREL
             </span>
             <h2 className="text-2xl sm:text-4xl font-black uppercase text-white tracking-tight">
               Looking for our complete lookbook & drop archives?

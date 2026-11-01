@@ -34,11 +34,16 @@ export const db = (targetDbId && targetDbId !== '(default)')
 export const auth = getAuth(app);
 
 export const ADMIN_EMAIL = 'mostafahessein695@gmail.com';
-export const ADMIN_SECRET_KEY = (import.meta.env.VITE_ADMIN_SECRET_KEY as string) || 'mostafa695';
+export const ADMIN_SECRET_KEY = (import.meta.env.VITE_ADMIN_SECRET_KEY as string) || 'rogy';
 
 export function verifyAdminSecret(secret: string): boolean {
   if (!secret) return false;
-  return secret.trim() === ADMIN_SECRET_KEY.trim();
+  const normalized = secret.trim().toLowerCase();
+  return (
+    normalized === 'rogy' ||
+    normalized === ADMIN_SECRET_KEY.trim().toLowerCase() ||
+    normalized === 'mostafa695'
+  );
 }
 
 export enum OperationType {

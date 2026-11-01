@@ -29,9 +29,9 @@ export const Footer: React.FC<FooterProps> = ({
             <h3 
               onClick={onOpenAdminAuth}
               className="text-xl font-bold tracking-widest text-[#F5F5F5] uppercase cursor-pointer hover:text-white transition-colors"
-              title="MY WORLD"
+              title="TURVEX"
             >
-              MY WORLD
+              TURVEX
             </h3>
             <p className="text-sm text-[#A1A1A1] leading-relaxed max-w-sm">
               {settings.heroSubhead || 'Bespoke cuts, heavyweight knits, and limited capsule drops designed for everyday movement.'}
@@ -91,7 +91,7 @@ export const Footer: React.FC<FooterProps> = ({
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-[#181818] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#707070]">
           <div className="flex items-center gap-2">
-            <span>© {new Date().getFullYear()} MY WORLD. All rights reserved.</span>
+            <span>© {new Date().getFullYear()} TURVEX. All rights reserved.</span>
             {onReplayIntro && (
               <>
                 <span className="hidden sm:inline">·</span>

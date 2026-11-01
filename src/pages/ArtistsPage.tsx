@@ -46,7 +46,7 @@ export const ArtistsPage: React.FC<ArtistsPageProps> = ({ artists, songs = [], o
           Profiled Artists
         </h1>
         <p className="text-sm text-[#A1A1A1] leading-relaxed font-light">
-          Visionaries, underground producers, reclusive composers, and sonic innovators shaping the philosophy of MY WORLD.
+          Visionaries, underground producers, reclusive composers, and sonic innovators shaping the philosophy of TURVEX.
         </p>
       </div>
 

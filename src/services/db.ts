@@ -38,16 +38,16 @@ const MERCH_COLL = 'merch';
 // CURATED STARTER DATA (DEFAULT / FALLBACK)
 // ==========================================
 export const DEFAULT_SETTINGS: SiteSettings = {
-  heroHeadline: 'MY WORLD. MY RULES.',
-  heroSubhead: 'A collection of sounds, people, moments, and things that mean something to me.',
+  heroHeadline: 'TURVEX. HEAVYWEIGHT STREETWEAR.',
+  heroSubhead: 'Bespoke cuts, heavyweight knits, and limited capsule drops designed for everyday movement.',
   heroImage: ASSET_IMAGES.heroVinyl,
-  aboutBio: 'MY WORLD is a personal sensory sanctuary and digital archive. It was conceived as an antidote to algorithmic feeds and passive consumption—a curated space where underground electronic records, late-night club artifacts, brutalist visual geometry, and personal philosophies converge. Here, sound is treated not as disposable background noise, but as emotional architecture.',
+  aboutBio: 'TURVEX is an independent streetwear archive and garment studio. We curate heavyweight cotton silhouettes, washed tones, and durable minimalist pieces.',
   aboutPhoto: ASSET_IMAGES.artistPortrait,
   socialLinks: [
-    { platform: 'Spotify', url: 'https://open.spotify.com', handle: '@myworld' },
-    { platform: 'SoundCloud', url: 'https://soundcloud.com', handle: 'myworld-archives' },
-    { platform: 'Bandcamp', url: 'https://bandcamp.com', handle: 'myworld' },
-    { platform: 'Instagram', url: 'https://instagram.com', handle: '@myworld.journal' },
+    { platform: 'Spotify', url: 'https://open.spotify.com', handle: '@turvex' },
+    { platform: 'SoundCloud', url: 'https://soundcloud.com', handle: 'turvex-archives' },
+    { platform: 'Bandcamp', url: 'https://bandcamp.com', handle: 'turvex' },
+    { platform: 'Instagram', url: 'https://instagram.com', handle: '@turvex.studio' },
   ],
   featuredCollectionId: 'col_late_night',
 };
@@ -453,7 +453,7 @@ export const DEFAULT_QUOTES: Quote[] = [
 export const DEFAULT_MERCH: MerchItem[] = [
   {
     id: 'merch_distressed_wolf_hoodie',
-    name: 'MY WORLD — Distressed Wolf Heavyweight Hoodie',
+    name: 'TURVEX — Distressed Wolf Heavyweight Hoodie',
     price: 1250,
     currency: 'EGP',
     description: '460 GSM organic French terry cotton. Screenprinted distressed wolf artwork on back with vintage puff typography on chest. Drop shoulder oversized boxy fit. Heavyweight ribbed cuffs and hem.',
@@ -517,7 +517,7 @@ export const DEFAULT_MERCH: MerchItem[] = [
   },
   {
     id: 'merch_archive_trucker_cap',
-    name: 'MY WORLD ARCHIVE — 3D Embroidered Trucker Cap',
+    name: 'TURVEX ARCHIVE — 3D Embroidered Trucker Cap',
     price: 450,
     currency: 'EGP',
     description: 'Foam-structured mesh back trucker cap with distressed brim, silver snapback closure, and raised 3D tonal embroidery. Vintage underground club aesthetic.',
@@ -813,7 +813,7 @@ export async function autoSyncArtistsForSong(song: Song): Promise<string[]> {
           profileImage: song.coverUrl && song.coverUrl !== ASSET_IMAGES.albumCover 
             ? song.coverUrl 
             : ASSET_IMAGES.artistPortrait,
-          bio: `Artist cataloged in MY WORLD archive. Featured on track: "${song.title}".`,
+          bio: `Artist cataloged in TURVEX archive. Featured on track: "${song.title}".`,
           genres: song.genre ? [song.genre] : [],
           country: '',
           favoriteAlbums: song.album ? [song.album] : [],

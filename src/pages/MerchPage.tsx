@@ -134,7 +134,7 @@ export const MerchPage: React.FC<MerchPageProps> = ({ merch }) => {
     const phone = (item.whatsappNumber || '').replace(/[^\d+]/g, '') || '201000000000';
     
     const lines = [
-      `Hello MY WORLD Store!`,
+      `Hello TURVEX Store!`,
       `I would like to order: ${item.name}`,
       `---------------------------------`,
       `Color (اللون): ${color}`,
@@ -544,7 +544,7 @@ export const MerchPage: React.FC<MerchPageProps> = ({ merch }) => {
                     className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
                   <div className="absolute bottom-2 left-2 bg-black/75 px-2 py-1 text-[9px] font-mono text-[#A1A1A1] pointer-events-none">
-                    MY WORLD ARCHIVE
+                    TURVEX ARCHIVE
                   </div>
                 </div>
 
@@ -799,7 +799,7 @@ export const MerchPage: React.FC<MerchPageProps> = ({ merch }) => {
 
                   {/* Share button */}
                   <div className="flex items-center justify-between pt-2 text-[11px] font-mono text-[#666666]">
-                    <span>Official MY WORLD Piece</span>
+                    <span>Official TURVEX Piece</span>
                     <button
                       onClick={handleCopyLink}
                       className="hover:text-white flex items-center gap-1 transition-colors cursor-pointer"

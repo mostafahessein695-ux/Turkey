@@ -10,7 +10,7 @@ interface IntroEntranceProps {
 
 export const IntroEntrance: React.FC<IntroEntranceProps> = ({
   onEnter,
-  siteName = 'MY WORLD',
+  siteName = 'TURVEX',
   tagline = 'CLICK OR PRESS ENTER TO ENTER',
 }) => {
   const [isStarting, setIsStarting] = useState(false);

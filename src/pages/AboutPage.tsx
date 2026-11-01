@@ -16,7 +16,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ settings }) => {
           Manifesto & Background
         </span>
         <h1 className="text-3xl sm:text-5xl font-black uppercase tracking-tight text-[#F5F5F5]">
-          About MY WORLD
+          About TURVEX
         </h1>
         <p className="text-sm text-[#A1A1A1] leading-relaxed font-light">
           A personal universe dedicated to uncompromising sound, underground record culture, brutalist architecture, and sensory discernment.
@@ -31,7 +31,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ settings }) => {
           <div className="aspect-[3/4] bg-[#111111] border border-[#242424] overflow-hidden sticky top-24">
             <img
               src={settings.aboutPhoto || settings.heroImage}
-              alt="About MY WORLD"
+              alt="About TURVEX"
               referrerPolicy="no-referrer"
               className="w-full h-full object-cover filter grayscale contrast-125"
             />

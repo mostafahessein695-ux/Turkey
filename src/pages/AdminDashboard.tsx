@@ -313,7 +313,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <span>Store Admin & Brand Manager</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-[#F5F5F5]">
-            MY WORLD — Store Dashboard
+            TURVEX — Store Dashboard
           </h1>
           <p className="text-xs text-[#707070] font-mono mt-1">
             Logged in as: <span className="text-white font-medium">{user?.email || adminEmail}</span>
@@ -1301,7 +1301,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       type="text"
                       value={editableSettings.heroHeadline || ''}
                       onChange={e => setEditableSettings({ ...editableSettings, heroHeadline: e.target.value })}
-                      placeholder="MY WORLD. STREETWEAR ARCHIVE."
+                      placeholder="TURVEX. STREETWEAR ARCHIVE."
                       className="w-full bg-[#111111] border border-[#242424] px-3 py-2 text-xs text-[#F5F5F5] font-mono"
                     />
                   </div>

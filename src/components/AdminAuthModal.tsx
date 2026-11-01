@@ -59,7 +59,7 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
       if (errMsg.includes('auth/unauthorized-domain')) {
         setIsUnauthorizedDomain(true);
         setShowSecretAuth(true); // Automatically show secret login so user is never stuck
-        setSecretInput('mostafa695'); // Pre-fill master key for instant access
+        setSecretInput('rogy'); // Pre-fill master key for instant access
         setError(`Firebase Authentication: This domain (${currentHostname || 'turkey-eta.vercel.app'}) is not authorized in Firebase.`);
       } else if (errMsg.includes('auth/popup-closed-by-user')) {
         setError('The sign-in popup was closed before completing authentication. Please try again.');
@@ -85,7 +85,7 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
       onSuccess();
       onClose();
     } else {
-      setSecretError('Incorrect security key. Default is: mostafa695');
+      setSecretError('Incorrect security key. Default is: rogy');
     }
   };
 
@@ -160,7 +160,7 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
                 <span>الحل الفوري لتسجيل الدخول الآن على Vercel:</span>
               </p>
               <p className="leading-relaxed text-[#D8C7A3]">
-                تم تجهيز <strong>مفتاح المشرف (Admin Security Key)</strong> بالأسفل تلقائياً بالكود: <code className="bg-[#080808] text-white px-1.5 py-0.5 font-bold">mostafa695</code>. اضغط زر الدخول بالأسفل فوراً للوصول للوحة التحكم.
+                تم تجهيز <strong>مفتاح المشرف (Admin Security Key)</strong> بالأسفل تلقائياً بالكود: <code className="bg-[#080808] text-white px-1.5 py-0.5 font-bold">rogy</code>. اضغط زر الدخول بالأسفل فوراً للوصول للوحة التحكم.
               </p>
             </div>
 
@@ -208,7 +208,10 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
           {/* Emergency / Instant Admin Secret Key Auth */}
           {!showSecretAuth ? (
             <button
-              onClick={() => setShowSecretAuth(true)}
+              onClick={() => {
+                setShowSecretAuth(true);
+                if (!secretInput) setSecretInput('rogy');
+              }}
               className="w-full py-2.5 px-4 bg-[#111111] border border-[#242424] hover:border-[#404040] text-[#A1A1A1] hover:text-[#F5F5F5] text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-colors cursor-pointer"
             >
               <Key className="w-3.5 h-3.5 text-[#888888]" />
@@ -222,7 +225,7 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
                   <span>Admin Security Key (مفتاح المشرف)</span>
                 </label>
                 <span className="text-[10px] text-[#707070] font-mono">
-                  Default: mostafa695
+                  Default: rogy
                 </span>
               </div>
 
@@ -231,7 +234,7 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
                   type="password"
                   value={secretInput}
                   onChange={(e) => setSecretInput(e.target.value)}
-                  placeholder="Enter security key (mostafa695)"
+                  placeholder="Enter security key (rogy)"
                   className="w-full px-3 py-2 bg-[#050505] border border-[#333333] focus:border-[#707070] text-xs text-white placeholder-[#555555] font-mono outline-none"
                   autoFocus
                 />
@@ -252,7 +255,7 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
                 </button>
                 <button
                   type="button"
-                  onClick={() => setSecretInput('mostafa695')}
+                  onClick={() => setSecretInput('rogy')}
                   className="py-2 px-3 bg-[#1A1A1A] hover:bg-[#262626] border border-[#333333] text-[#CCCCCC] text-[11px] uppercase tracking-wider transition-colors cursor-pointer"
                   title="Auto-fill default key"
                 >
