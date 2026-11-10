@@ -47,6 +47,11 @@ service cloud.firestore {
       allow write: if isValidId(merchId);
     }
 
+    match /orders/{orderId} {
+      allow create: if isValidId(orderId);
+      allow read, update, delete: if true;
+    }
+
     match /admins/{adminId} {
       allow read, write: if true;
     }

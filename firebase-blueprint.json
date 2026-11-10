@@ -140,15 +140,43 @@
         "coverImage": { "type": "string", "maxLength": 1000 },
         "images": { "type": "array" },
         "sizes": { "type": "array" },
+        "colors": { "type": "array" },
         "inStock": { "type": "boolean" },
         "isFeatured": { "type": "boolean" },
         "isPublished": { "type": "boolean" },
+        "isNewArrival": { "type": "boolean" },
+        "isBestSeller": { "type": "boolean" },
+        "stockCount": { "type": "number" },
         "orderUrl": { "type": "string", "maxLength": 1000 },
         "whatsappNumber": { "type": "string", "maxLength": 100 },
         "createdAt": { "type": "string" },
         "updatedAt": { "type": "string" }
       },
       "required": ["name", "price", "isPublished"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Customer order placed through checkout",
+      "type": "object",
+      "properties": {
+        "orderNumber": { "type": "string", "maxLength": 50 },
+        "customerName": { "type": "string", "maxLength": 200 },
+        "customerEmail": { "type": "string", "maxLength": 200 },
+        "customerPhone": { "type": "string", "maxLength": 50 },
+        "governorate": { "type": "string", "maxLength": 100 },
+        "city": { "type": "string", "maxLength": 100 },
+        "address": { "type": "string", "maxLength": 500 },
+        "notes": { "type": "string", "maxLength": 1000 },
+        "items": { "type": "array" },
+        "subtotal": { "type": "number" },
+        "deliveryFee": { "type": "number" },
+        "total": { "type": "number" },
+        "paymentMethod": { "type": "string", "maxLength": 50 },
+        "status": { "type": "string", "enum": ["pending", "confirmed", "shipped", "delivered", "cancelled"] },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["orderNumber", "customerName", "customerPhone", "address", "total"]
     }
   },
   "firestore": {
@@ -183,6 +211,10 @@
     "/merch/{merchId}": {
       "schema": "MerchItem",
       "description": "Merch and clothing garments for sale"
+    },
+    "/orders/{orderId}": {
+      "schema": "Order",
+      "description": "Customer e-commerce orders"
     },
     "/admins/{adminId}": {
       "schema": { "$ref": "admins" },

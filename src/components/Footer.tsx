@@ -58,10 +58,28 @@ export const Footer: React.FC<FooterProps> = ({
                 Home
               </button>
               <button
-                onClick={() => { onSelectTab('merch'); scrollToTop(); }}
+                onClick={() => { onSelectTab('shop'); scrollToTop(); }}
                 className="text-left hover:text-[#F5F5F5] transition-colors"
               >
-                Store / Clothes
+                Shop All Garments
+              </button>
+              <button
+                onClick={() => { onSelectTab('collections'); scrollToTop(); }}
+                className="text-left hover:text-[#F5F5F5] transition-colors"
+              >
+                Capsule Collections
+              </button>
+              <button
+                onClick={() => { onSelectTab('about'); scrollToTop(); }}
+                className="text-left hover:text-[#F5F5F5] transition-colors"
+              >
+                About &amp; Manifesto
+              </button>
+              <button
+                onClick={() => { onOpenAdminAuth(); scrollToTop(); }}
+                className="text-left text-[#707070] hover:text-[#F5F5F5] transition-colors flex items-center gap-1.5 pt-2"
+              >
+                <span>Admin Login (rogy)</span>
               </button>
             </div>
           </div>

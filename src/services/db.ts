@@ -20,7 +20,8 @@ import {
   GalleryItem, 
   Quote, 
   SiteSettings,
-  MerchItem
+  MerchItem,
+  CustomerOrder
 } from '../types';
 import { ASSET_IMAGES } from '../assets/images';
 
@@ -33,6 +34,7 @@ const GALLERY_COLL = 'gallery';
 const QUOTES_COLL = 'quotes';
 const SETTINGS_COLL = 'settings';
 const MERCH_COLL = 'merch';
+const ORDERS_COLL = 'orders';
 
 // ==========================================
 // CURATED STARTER DATA (DEFAULT / FALLBACK)
@@ -452,22 +454,37 @@ export const DEFAULT_QUOTES: Quote[] = [
 
 export const DEFAULT_MERCH: MerchItem[] = [
   {
-    id: 'merch_distressed_wolf_hoodie',
-    name: 'TURVEX — Distressed Wolf Heavyweight Hoodie',
+    id: 'merch_boxy_heavyweight_hoodie',
+    name: 'TURVEX — 480GSM Boxy Heavyweight Hoodie',
     price: 1250,
     currency: 'EGP',
-    description: '460 GSM organic French terry cotton. Screenprinted distressed wolf artwork on back with vintage puff typography on chest. Drop shoulder oversized boxy fit. Heavyweight ribbed cuffs and hem.',
+    description: 'Bespoke 480 GSM French Terry knit crafted from 100% combed organic cotton. Features dropped shoulders, an oversized boxy drape, double-layered hood without drawstrings, and seamless deep side pockets. Hand-distressed edge accents and pre-shrunk vintage enzyme treatment.',
     category: 'hoodies',
-    coverImage: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=1000&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=1200&q=85',
     images: [
-      'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=1000&q=80',
-      'https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=1000&q=80'
+      'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=1200&q=85',
+      'https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=1200&q=85',
+      'https://images.unsplash.com/photo-1578587018452-892bacefd3f2?auto=format&fit=crop&w=1200&q=85'
     ],
     sizes: ['S', 'M', 'L', 'XL', 'XXL'],
-    colors: ['Washed Black', 'Vintage Grey', 'Off-White'],
+    colors: ['Washed Black', 'Vintage Bone', 'Raw Clay'],
+    colorImages: {
+      'Washed Black': 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=1200&q=85',
+      'Vintage Bone': 'https://images.unsplash.com/photo-1578587018452-892bacefd3f2?auto=format&fit=crop&w=1200&q=85',
+      'Raw Clay': 'https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=1200&q=85'
+    },
     inStock: true,
+    stockCount: 42,
     isFeatured: true,
+    isNewArrival: true,
+    isBestSeller: true,
     isPublished: true,
+    details: [
+      '480 GSM ultra-heavyweight combed cotton',
+      'Drop-shoulder boxy streetwear cut',
+      'Double-lined hood with zero drawstrings',
+      'Enzyme-washed & pre-shrunk for life'
+    ],
     orderUrl: '',
     whatsappNumber: '+201000000000',
     createdAt: '2024-01-01T00:00:00.000Z',
@@ -475,20 +492,97 @@ export const DEFAULT_MERCH: MerchItem[] = [
   },
   {
     id: 'merch_underground_vintage_tee',
-    name: 'UNDERGROUND SOUND — Boxy Heavyweight Tee',
+    name: 'TURVEX — 280GSM Acid Wash Heavyweight Tee',
     price: 650,
     currency: 'EGP',
-    description: '280 GSM heavyweight combed cotton. Acid-washed charcoal finish with raw cut hems and cracked plastisol print. Relaxed streetwear silhouette made for concerts and street sessions.',
+    description: 'Dense 280 GSM combed jersey cotton treated with manual stone-acid washing for unique grey patina. Thick 1.2-inch ribbed collar that never sags, blind hem finishing, and minimalist micro-embossed TURVEX lettering at nape.',
     category: 'tees',
-    coverImage: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=1000&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=1200&q=85',
     images: [
-      'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=1000&q=80'
+      'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=1200&q=85',
+      'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?auto=format&fit=crop&w=1200&q=85'
     ],
-    sizes: ['M', 'L', 'XL', 'XXL'],
-    colors: ['Charcoal Black', 'Vintage Olive', 'Bone White'],
+    sizes: ['S', 'M', 'L', 'XL', 'XXL'],
+    colors: ['Mineral Charcoal', 'Faded Moss', 'Chalk White'],
+    colorImages: {
+      'Mineral Charcoal': 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=1200&q=85',
+      'Faded Moss': 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?auto=format&fit=crop&w=1200&q=85',
+      'Chalk White': 'https://images.unsplash.com/photo-1581655353564-df123a1eb820?auto=format&fit=crop&w=1200&q=85'
+    },
     inStock: true,
+    stockCount: 78,
     isFeatured: true,
+    isNewArrival: true,
+    isBestSeller: false,
     isPublished: true,
+    details: [
+      '280 GSM heavy combed jersey cotton',
+      'Hand-crafted stone acid wash wash',
+      'Reinforced tight ribbed collar',
+      'Relaxed wide streetwear torso'
+    ],
+    orderUrl: '',
+    whatsappNumber: '+201000000000',
+    createdAt: '2024-01-01T00:00:00.000Z',
+    updatedAt: '2024-01-01T00:00:00.000Z',
+  },
+  {
+    id: 'merch_tactical_sweatpants',
+    name: 'TURVEX — Wide-Leg Minimalist Sweatpants',
+    price: 1150,
+    currency: 'EGP',
+    description: '450 GSM brushed-back fleece designed with a wide, straight-leg pooling profile. Concealed bungee cord hem cinch system allows switching between stacked silhouette and wide trouser drop. Matte gunmetal hardware.',
+    category: 'pants',
+    coverImage: 'https://images.unsplash.com/photo-1552902865-b72c031ac5ea?auto=format&fit=crop&w=1200&q=85',
+    images: [
+      'https://images.unsplash.com/photo-1552902865-b72c031ac5ea?auto=format&fit=crop&w=1200&q=85',
+      'https://images.unsplash.com/photo-1517445312882-bc9910d016b7?auto=format&fit=crop&w=1200&q=85'
+    ],
+    sizes: ['S', 'M', 'L', 'XL'],
+    colors: ['Deep Obsidian', 'Dust Taupe', 'Heather Slate'],
+    inStock: true,
+    stockCount: 35,
+    isFeatured: true,
+    isNewArrival: false,
+    isBestSeller: true,
+    isPublished: true,
+    details: [
+      '450 GSM brushed interior fleece',
+      'Adjustable internal bungee ankle cords',
+      'Deep zippered security pockets',
+      'Relaxed straight silhouette'
+    ],
+    orderUrl: '',
+    whatsappNumber: '+201000000000',
+    createdAt: '2024-01-01T00:00:00.000Z',
+    updatedAt: '2024-01-01T00:00:00.000Z',
+  },
+  {
+    id: 'merch_metal_hardware_zip',
+    name: 'TURVEX — Two-Way Heavy Zipper Hoodie',
+    price: 1450,
+    currency: 'EGP',
+    description: '500 GSM loopback cotton with custom two-way brushed silver YKK zipper. Raglan sleeve cut provides unrestricted arm mobility while preserving the sharp architectural drop. Tonal embroidery on the cuff.',
+    category: 'hoodies',
+    coverImage: 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=1200&q=85',
+    images: [
+      'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=1200&q=85',
+      'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=1200&q=85'
+    ],
+    sizes: ['S', 'M', 'L', 'XL', 'XXL'],
+    colors: ['Jet Black', 'Washed Concrete'],
+    inStock: true,
+    stockCount: 22,
+    isFeatured: true,
+    isNewArrival: true,
+    isBestSeller: true,
+    isPublished: true,
+    details: [
+      '500 GSM loopback heavyweight cotton',
+      'Dual-way brushed silver YKK hardware',
+      'Structured double-layered hood',
+      'Raglan ergonomic sleeve construct'
+    ],
     orderUrl: '',
     whatsappNumber: '+201000000000',
     createdAt: '2024-01-01T00:00:00.000Z',
@@ -496,20 +590,29 @@ export const DEFAULT_MERCH: MerchItem[] = [
   },
   {
     id: 'merch_raw_ink_longsleeve',
-    name: 'SONIC VAULT — Raw Ink Longsleeve',
+    name: 'TURVEX — Raw Ink Heavyweight Longsleeve',
     price: 750,
     currency: 'EGP',
     description: '320 GSM dense knit black longsleeve. Sleeve print with catalog track coordinates and monochrome high-density ink print on the front. Pre-shrunk and garment dyed.',
     category: 'tees',
-    coverImage: 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?auto=format&fit=crop&w=1000&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?auto=format&fit=crop&w=1200&q=85',
     images: [
-      'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?auto=format&fit=crop&w=1000&q=80'
+      'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?auto=format&fit=crop&w=1200&q=85'
     ],
     sizes: ['S', 'M', 'L', 'XL'],
     colors: ['Onyx Black', 'Dark Sand'],
     inStock: true,
+    stockCount: 50,
     isFeatured: false,
+    isNewArrival: false,
+    isBestSeller: false,
     isPublished: true,
+    details: [
+      '320 GSM dense cotton jersey',
+      'High-density pigment ink',
+      'Ribbed stretch cuffs',
+      'Pre-shrunk finish'
+    ],
     orderUrl: '',
     whatsappNumber: '+201000000000',
     createdAt: '2024-01-01T00:00:00.000Z',
@@ -517,20 +620,29 @@ export const DEFAULT_MERCH: MerchItem[] = [
   },
   {
     id: 'merch_archive_trucker_cap',
-    name: 'TURVEX ARCHIVE — 3D Embroidered Trucker Cap',
+    name: 'TURVEX — 3D Sculpted Foam Trucker Cap',
     price: 450,
     currency: 'EGP',
-    description: 'Foam-structured mesh back trucker cap with distressed brim, silver snapback closure, and raised 3D tonal embroidery. Vintage underground club aesthetic.',
+    description: 'Structured curved-brim trucker silhouette featuring high-density 3D tonal embroidery on high-grade foam front. Breathable poly mesh rear with custom silver metal snap clasp.',
     category: 'headwear',
-    coverImage: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=1000&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=1200&q=85',
     images: [
-      'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=1000&q=80'
+      'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=1200&q=85'
     ],
     sizes: ['One Size (Adjustable)'],
-    colors: ['All Black', 'Black / White', 'Forest Green'],
+    colors: ['All Black', 'Black / Bone', 'Olive Drab'],
     inStock: true,
+    stockCount: 65,
     isFeatured: true,
+    isNewArrival: false,
+    isBestSeller: true,
     isPublished: true,
+    details: [
+      'Raised 3D satin embroidery',
+      'Ultra-dense front foam backing',
+      'Branded interior taping',
+      'Metallic custom snap closure'
+    ],
     orderUrl: '',
     whatsappNumber: '+201000000000',
     createdAt: '2024-01-01T00:00:00.000Z',
@@ -538,20 +650,59 @@ export const DEFAULT_MERCH: MerchItem[] = [
   },
   {
     id: 'merch_brutalist_beanie',
-    name: 'SUB-BASS — Chunky Ribbed Knit Beanie',
+    name: 'TURVEX — Chunky Ribbed Lambswool Beanie',
     price: 350,
     currency: 'EGP',
-    description: 'Deep black double-layered merino wool blend beanie with custom woven damask label. Form-fitting, ultra warm, and minimal street brutalist look.',
+    description: 'Double-layered chunky rib knit crafted from an ultra-soft merino lambswool and organic cotton blend. Finished with a minimal laser-engraved metal bar.',
     category: 'headwear',
-    coverImage: 'https://images.unsplash.com/photo-1576871337632-b9aef4c17ab9?auto=format&fit=crop&w=1000&q=80',
+    coverImage: 'https://images.unsplash.com/photo-1576871337632-b9aef4c17ab9?auto=format&fit=crop&w=1200&q=85',
     images: [
-      'https://images.unsplash.com/photo-1576871337632-b9aef4c17ab9?auto=format&fit=crop&w=1000&q=80'
+      'https://images.unsplash.com/photo-1576871337632-b9aef4c17ab9?auto=format&fit=crop&w=1200&q=85'
     ],
     sizes: ['One Size Fits All'],
     colors: ['Jet Black', 'Charcoal Grey', 'Coffee Brown'],
     inStock: true,
+    stockCount: 40,
     isFeatured: false,
+    isNewArrival: false,
+    isBestSeller: false,
     isPublished: true,
+    details: [
+      'Double-layer heavy rib weave',
+      'Merino wool & combed cotton blend',
+      'Laser-engraved matte metal bar',
+      'Snug comfortable thermal fit'
+    ],
+    orderUrl: '',
+    whatsappNumber: '+201000000000',
+    createdAt: '2024-01-01T00:00:00.000Z',
+    updatedAt: '2024-01-01T00:00:00.000Z',
+  },
+  {
+    id: 'merch_modular_crossbody',
+    name: 'TURVEX — Waterproof Cordura Utility Crossbody',
+    price: 850,
+    currency: 'EGP',
+    description: '1000D ballistic waterproof Cordura nylon with taped AquaGuard zippers, fidlock magnetic quick-release strap, and internal velvet-lined compartments for essentials.',
+    category: 'accessories',
+    coverImage: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=1200&q=85',
+    images: [
+      'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=1200&q=85'
+    ],
+    sizes: ['One Size (Adjustable Strap)'],
+    colors: ['Matte Black', 'Stealth Grey'],
+    inStock: true,
+    stockCount: 30,
+    isFeatured: true,
+    isNewArrival: true,
+    isBestSeller: false,
+    isPublished: true,
+    details: [
+      '1000D Ballistic Cordura nylon',
+      'AquaGuard weatherproof zip closure',
+      'German Fidlock magnetic buckle',
+      'Velvet padded phone compartment'
+    ],
     orderUrl: '',
     whatsappNumber: '+201000000000',
     createdAt: '2024-01-01T00:00:00.000Z',
@@ -1380,6 +1531,68 @@ export async function deleteMerchItem(id: string): Promise<void> {
   }
 }
 
+// ==========================================
+// ORDERS API
+// ==========================================
+export async function createCustomerOrder(
+  orderData: Omit<CustomerOrder, 'id' | 'createdAt' | 'updatedAt'>
+): Promise<CustomerOrder> {
+  const orderId = `order_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+  const now = new Date().toISOString();
+
+  const fullOrder: CustomerOrder = {
+    ...orderData,
+    id: orderId,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  try {
+    await setDoc(doc(db, ORDERS_COLL, orderId), fullOrder);
+    return fullOrder;
+  } catch (err) {
+    handleFirestoreError(err, OperationType.WRITE, `${ORDERS_COLL}/${orderId}`);
+    throw err;
+  }
+}
+
+export async function fetchAllOrders(): Promise<CustomerOrder[]> {
+  try {
+    const snap = await getDocs(collection(db, ORDERS_COLL));
+    if (snap.docs.length > 0) {
+      const orders = snap.docs.map(d => ({ id: d.id, ...d.data() } as CustomerOrder));
+      // Sort newest first
+      return orders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    }
+    return [];
+  } catch (err) {
+    console.warn('Could not fetch orders:', err);
+    return [];
+  }
+}
+
+export async function updateOrderStatus(orderId: string, status: CustomerOrder['status']): Promise<void> {
+  const now = new Date().toISOString();
+  try {
+    await updateDoc(doc(db, ORDERS_COLL, orderId), {
+      status,
+      updatedAt: now,
+    });
+  } catch (err) {
+    handleFirestoreError(err, OperationType.UPDATE, `${ORDERS_COLL}/${orderId}`);
+    throw err;
+  }
+}
+
+export async function deleteOrder(orderId: string): Promise<void> {
+  try {
+    await deleteDoc(doc(db, ORDERS_COLL, orderId));
+  } catch (err) {
+    handleFirestoreError(err, OperationType.DELETE, `${ORDERS_COLL}/${orderId}`);
+    throw err;
+  }
+}
+
 // SEED STARTER CONTENT
 export async function seedStarterContent(): Promise<void> {
   for (const s of DEFAULT_SONGS) {
@@ -1405,3 +1618,4 @@ export async function seedStarterContent(): Promise<void> {
   }
   await saveSiteSettings(DEFAULT_SETTINGS);
 }
+

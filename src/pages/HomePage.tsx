@@ -1,22 +1,16 @@
-import React, { useState } from 'react';
-import { 
-  MerchItem, 
-  SiteSettings, 
-  NavTab 
-} from '../types';
+import React from 'react';
+import { MerchItem, SiteSettings, NavTab } from '../types';
+import { ProductCard } from '../components/ProductCard';
 import { 
   ArrowDown, 
   ArrowRight, 
-  ShoppingBag, 
-  Star, 
-  ExternalLink, 
-  Sparkles,
-  PhoneCall,
-  Eye,
-  CheckCircle,
-  Truck,
-  ShieldCheck,
-  Scissors
+  Sparkles, 
+  ShieldCheck, 
+  Truck, 
+  RefreshCw,
+  Ruler,
+  Layers,
+  ChevronDown
 } from 'lucide-react';
 
 interface HomePageProps {
@@ -25,15 +19,7 @@ interface HomePageProps {
   onSelectTab: (tab: NavTab) => void;
   onOpenMerchDetail: (item: MerchItem) => void;
   onOpenAdminAuth?: () => void;
-  // Optional for backward compatibility
-  songs?: any[];
-  artists?: any[];
-  albums?: any[];
-  collections?: any[];
-  gallery?: any[];
-  quotes?: any[];
-  onOpenDetail?: (type: any, data: any) => void;
-  onOpenLightbox?: (item: any) => void;
+  onNavigateToShopWithCategory?: (category: string) => void;
 }
 
 export const HomePage: React.FC<HomePageProps> = ({
@@ -41,539 +27,403 @@ export const HomePage: React.FC<HomePageProps> = ({
   merch,
   onSelectTab,
   onOpenMerchDetail,
-  onOpenAdminAuth,
+  onNavigateToShopWithCategory,
 }) => {
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [selectedColors, setSelectedColors] = useState<Record<string, string>>({});
-  const [selectedSizes, setSelectedSizes] = useState<Record<string, string>>({});
+  const publishedMerch = merch.filter(m => m.isPublished);
 
-  const scrollToStore = () => {
-    const el = document.getElementById('store-section');
+  // New arrivals & Best sellers
+  const newArrivals = publishedMerch.filter(m => m.isNewArrival || m.isFeatured).slice(0, 4);
+  const bestSellers = publishedMerch.filter(m => m.isBestSeller).slice(0, 4);
+
+  const scrollToSection = (id: string) => {
+    const el = document.getElementById(id);
     if (el) {
       el.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
-  const categories = [
-    { id: 'all', label: 'All Garments' },
-    { id: 'hoodies', label: 'Hoodies' },
-    { id: 'tees', label: 'T-Shirts' },
-    { id: 'outerwear', label: 'Outerwear' },
-    { id: 'pants', label: 'Pants' },
-    { id: 'headwear', label: 'Headwear' },
-  ];
-
-  const filteredMerch = merch.filter(item => {
-    if (!item.isPublished) return false;
-    if (selectedCategory === 'all') return true;
-    return item.category?.toLowerCase() === selectedCategory.toLowerCase();
-  });
-
-  const featuredDrops = merch.filter(m => m.isFeatured && m.isPublished);
-
-  const getColorSwatch = (name: string) => {
-    const n = name.toLowerCase();
-    if (n.includes('black')) return '#141414';
-    if (n.includes('bone') || n.includes('white') || n.includes('cream')) return '#EFEAE2';
-    if (n.includes('grey') || n.includes('gray')) return '#666666';
-    if (n.includes('olive') || n.includes('green') || n.includes('moss')) return '#485340';
-    if (n.includes('sand') || n.includes('beige') || n.includes('tan')) return '#C2B69D';
-    if (n.includes('brown') || n.includes('earth') || n.includes('espresso')) return '#4A3525';
-    if (n.includes('navy') || n.includes('blue')) return '#1E293B';
-    if (n.includes('red') || n.includes('burgundy') || n.includes('maroon')) return '#6A1A24';
-    return '#333333';
-  };
-
-  const getItemImageForColor = (item: MerchItem, colorName?: string): string => {
-    if (!colorName) return item.coverImage;
-    if (item.colorImages && item.colorImages[colorName]) {
-      return item.colorImages[colorName];
-    }
-    const colors = item.colors && item.colors.length > 0 ? item.colors : ['Black', 'White'];
-    const idx = colors.indexOf(colorName);
-    if (idx === 0) return item.coverImage;
-    if (idx > 0 && item.images && item.images[idx - 1]) {
-      return item.images[idx - 1];
-    }
-    const lower = colorName.toLowerCase();
-    if ((lower.includes('white') || lower.includes('bone') || lower.includes('light') || lower.includes('grey') || lower.includes('gray')) && item.images?.[0]) {
-      return item.images[0];
-    }
-    return item.coverImage;
-  };
-
-  const handleWhatsAppOrder = (item: MerchItem, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const phone = item.whatsappNumber?.replace(/[^0-9]/g, '') || '201000000000';
-    const chosenColor = selectedColors[item.id] || (item.colors && item.colors.length > 0 ? item.colors[0] : 'Black');
-    const chosenSize = selectedSizes[item.id] || (item.sizes && item.sizes.length > 0 ? item.sizes[0] : 'M');
-    const cur = item.currency?.trim() || 'EGP';
-
-    const lines = [
-      `Hello TURVEX Store!`,
-      `I would like to order: ${item.name}`,
-      `---------------------------------`,
-      `Color (اللون): ${chosenColor}`,
-      `Size (المقاس): ${chosenSize}`,
-      `Price (السعر): ${item.price.toLocaleString()} ${cur}`,
-      `---------------------------------`,
-      `Please confirm stock availability and shipping.`
-    ];
-
-    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(lines.join('\n'))}`, '_blank');
-  };
-
   return (
-    <div className="w-full space-y-24">
-      
-      {/* 1. HERO SECTION: STREETWEAR BRAND DROP */}
-      <section className="relative min-h-[85vh] flex flex-col justify-between border-b border-[#242424] overflow-hidden">
-        {/* Background image overlay */}
-        {settings.heroImage && (
-          <div className="absolute inset-0 z-0">
-            <img
-              src={settings.heroImage}
-              alt="Brand Lookbook Backdrop"
-              className="w-full h-full object-cover opacity-25 filter grayscale contrast-125 brightness-75"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/80 to-[#050505]/40" />
+    <div className="space-y-24 sm:space-y-36">
+      {/* 1. FULL-SCREEN HERO SECTION */}
+      <section className="relative min-h-screen w-full flex flex-col justify-between items-center px-4 sm:px-6 pt-32 pb-12 overflow-hidden">
+        {/* Cinematic Background Image with Dark Vignette */}
+        <div className="absolute inset-0 -z-10 bg-[#050505]">
+          <img
+            src="https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=2000&q=85"
+            alt="TURVEX Campaign"
+            className="w-full h-full object-cover object-center filter grayscale contrast-125 opacity-40 scale-105 animate-in fade-in zoom-in-105 duration-1000"
+          />
+          {/* Multi-layered dark luxury gradient overlays */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/60 to-[#050505]/40" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#050505]/80 via-transparent to-[#050505]/80" />
+        </div>
+
+        {/* Ambient Subtle Specular Glow */}
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-white/[0.03] blur-[120px] rounded-full pointer-events-none -z-10" />
+
+        {/* Top Spacer for floating navbar */}
+        <div className="w-full h-8" />
+
+        {/* Central Brand Narrative */}
+        <div className="max-w-4xl mx-auto text-center space-y-6 z-10 px-2">
+          {/* Minimal Tagline Pill */}
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full liquid-glass-pill animate-in fade-in slide-in-from-top-4 duration-700">
+            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+            <span className="text-[10px] sm:text-xs font-mono uppercase tracking-[0.25em] text-[#E0E0E0]">
+              Autumn / Winter Capsule 01
+            </span>
           </div>
-        )}
 
-        <div className="relative z-10 max-w-7xl mx-auto px-6 pt-24 sm:pt-32 pb-16 w-full flex-1 flex flex-col justify-center">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-            
-            {/* Left Column: Headlines & Call to Actions */}
-            <div className="lg:col-span-8 space-y-8">
-              <div className="text-xs uppercase tracking-[0.3em] text-[#A1A1A1] flex items-center gap-3 font-mono">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ambient-pulse" />
-                <span className="text-white font-semibold">TURVEX APPAREL</span>
-                <span className="text-[#555555]">·</span>
-                <span className="text-[#A1A1A1]">NEW CAPSULE DROP IS LIVE</span>
-              </div>
+          {/* Monumental Headline */}
+          <div className="space-y-2 animate-in fade-in slide-in-from-bottom-6 duration-800">
+            <h1 className="text-4xl sm:text-6xl md:text-8xl font-black uppercase tracking-tight text-white leading-[0.95]">
+              BUILT DIFFERENT.<br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-b from-white via-white/90 to-white/40">
+                WORN DIFFERENT.
+              </span>
+            </h1>
+          </div>
 
-              <h1 
-                onClick={onOpenAdminAuth}
-                className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight text-[#F5F5F5] uppercase leading-[0.95] cursor-pointer hover:text-white transition-colors"
-                title="TURVEX"
-              >
-                {settings.heroHeadline || 'TURVEX. HEAVYWEIGHT STREETWEAR.'}
-              </h1>
+          {/* Description */}
+          <p className="text-xs sm:text-base text-[#A1A1A1] max-w-xl mx-auto font-light leading-relaxed animate-in fade-in slide-in-from-bottom-8 duration-900">
+            Bespoke 480GSM French Terry knitwear, hand-acid washed combed tees, and relaxed wide-leg tailoring. Engineered in limited runs for everyday movement.
+          </p>
 
-              <p className="text-base sm:text-xl text-[#A1A1A1] max-w-2xl font-light leading-relaxed">
-                {settings.heroSubhead || 'Bespoke cuts, heavyweight knits, and limited capsule drops designed for everyday movement.'}
+          {/* Primary Action Buttons */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4 animate-in fade-in slide-in-from-bottom-10 duration-1000">
+            <button
+              onClick={() => onSelectTab('shop')}
+              className="w-full sm:w-auto px-8 py-4 bg-white text-black hover:bg-white/90 text-xs font-bold uppercase tracking-widest rounded-2xl flex items-center justify-center gap-2.5 transition-all shadow-[0_20px_50px_rgba(255,255,255,0.2)] cursor-pointer active:scale-95"
+            >
+              <span>Explore Collection</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+
+            <button
+              onClick={() => onSelectTab('collections')}
+              className="w-full sm:w-auto px-7 py-4 liquid-glass-nav text-white hover:bg-white/10 text-xs font-bold uppercase tracking-widest rounded-2xl flex items-center justify-center gap-2 transition-all cursor-pointer"
+            >
+              <span>View Capsules</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Animated Scroll Indicator */}
+        <div className="pt-8 flex flex-col items-center gap-2 z-10">
+          <button
+            onClick={() => scrollToSection('featured-capsules')}
+            className="group flex flex-col items-center gap-2 text-[10px] uppercase font-mono tracking-[0.25em] text-[#707070] hover:text-white transition-colors cursor-pointer"
+          >
+            <span>Scroll to Discover</span>
+            <div className="w-7 h-11 rounded-full border border-white/20 flex items-start justify-center p-1.5 group-hover:border-white/40 transition-colors">
+              <span className="w-1 h-2 rounded-full bg-white animate-bounce" />
+            </div>
+          </button>
+        </div>
+      </section>
+
+      {/* 2. SPECIFICATION VALUE STRIP */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="liquid-glass-panel rounded-3xl p-6 sm:p-8 border border-white/10 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+          <div className="space-y-1">
+            <span className="text-xl sm:text-2xl font-black font-mono text-white block">480 GSM</span>
+            <span className="text-[11px] uppercase tracking-wider text-[#888888] font-mono">Dense French Terry</span>
+          </div>
+          <div className="space-y-1">
+            <span className="text-xl sm:text-2xl font-black font-mono text-white block">100%</span>
+            <span className="text-[11px] uppercase tracking-wider text-[#888888] font-mono">Combed Organic Cotton</span>
+          </div>
+          <div className="space-y-1">
+            <span className="text-xl sm:text-2xl font-black font-mono text-white block">Boxy Fit</span>
+            <span className="text-[11px] uppercase tracking-wider text-[#888888] font-mono">Dropped Shoulder Cut</span>
+          </div>
+          <div className="space-y-1">
+            <span className="text-xl sm:text-2xl font-black font-mono text-white block">48H</span>
+            <span className="text-[11px] uppercase tracking-wider text-[#888888] font-mono">Studio Express Dispatch</span>
+          </div>
+        </div>
+      </section>
+
+      {/* 3. FEATURED CAPSULE SHOWCASES */}
+      <section id="featured-capsules" className="max-w-7xl mx-auto px-4 sm:px-6 space-y-10">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div className="space-y-2">
+            <span className="text-[11px] uppercase tracking-[0.25em] text-[#707070] font-mono block">
+              Curated Series
+            </span>
+            <h2 className="text-2xl sm:text-4xl font-black uppercase text-white tracking-tight">
+              Featured Collections
+            </h2>
+          </div>
+          <button
+            onClick={() => onSelectTab('collections')}
+            className="text-xs uppercase tracking-widest text-[#A1A1A1] hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
+          >
+            <span>View All Capsules</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+          {/* Card 1 */}
+          <div
+            onClick={() => onSelectTab('shop')}
+            className="group relative aspect-[4/5] rounded-3xl overflow-hidden liquid-glass-card cursor-pointer"
+          >
+            <img
+              src="https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=1200&q=85"
+              alt="Heavyweight Hoodie Series"
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 filter grayscale"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+            <div className="absolute bottom-6 left-6 right-6 space-y-2">
+              <span className="text-[10px] uppercase font-mono tracking-widest text-[#CCCCCC]">
+                Capsule 01
+              </span>
+              <h3 className="text-xl font-bold uppercase text-white">
+                480GSM Boxy Hoodies
+              </h3>
+              <p className="text-xs text-[#A1A1A1] line-clamp-2">
+                Double-lined zero-drawstring hoods in Washed Black, Vintage Bone, and Raw Clay.
               </p>
+              <div className="pt-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-white">
+                <span>Shop Hoodies</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </div>
+          </div>
 
-              <div className="pt-2 flex flex-wrap items-center gap-4">
-                <button
-                  onClick={scrollToStore}
-                  className="px-8 py-4 bg-[#F5F5F5] hover:bg-white text-[#050505] text-xs font-bold uppercase tracking-widest transition-all flex items-center gap-3 shadow-lg hover:shadow-white/10 hover-luxury-lift cursor-pointer font-mono"
-                >
-                  <ShoppingBag className="w-4 h-4 text-black" />
-                  <span>EXPLORE STORE</span>
-                  <ArrowDown className="w-4 h-4 text-black" />
-                </button>
+          {/* Card 2 */}
+          <div
+            onClick={() => onSelectTab('shop')}
+            className="group relative aspect-[4/5] rounded-3xl overflow-hidden liquid-glass-card cursor-pointer"
+          >
+            <img
+              src="https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=1200&q=85"
+              alt="Acid Wash Tees"
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 filter grayscale"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+            <div className="absolute bottom-6 left-6 right-6 space-y-2">
+              <span className="text-[10px] uppercase font-mono tracking-widest text-[#CCCCCC]">
+                Capsule 02
+              </span>
+              <h3 className="text-xl font-bold uppercase text-white">
+                Acid Wash &amp; Patina Tees
+              </h3>
+              <p className="text-xs text-[#A1A1A1] line-clamp-2">
+                280GSM stone-washed combed cotton with tight reinforced necklines.
+              </p>
+              <div className="pt-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-white">
+                <span>Shop Tees</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </div>
+          </div>
 
+          {/* Card 3 */}
+          <div
+            onClick={() => onSelectTab('shop')}
+            className="group relative aspect-[4/5] rounded-3xl overflow-hidden liquid-glass-card cursor-pointer"
+          >
+            <img
+              src="https://images.unsplash.com/photo-1552902865-b72c031ac5ea?auto=format&fit=crop&w=1200&q=85"
+              alt="Tactical Sweatpants"
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 filter grayscale"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+            <div className="absolute bottom-6 left-6 right-6 space-y-2">
+              <span className="text-[10px] uppercase font-mono tracking-widest text-[#CCCCCC]">
+                Capsule 03
+              </span>
+              <h3 className="text-xl font-bold uppercase text-white">
+                Wide-Leg Cargo Sweatpants
+              </h3>
+              <p className="text-xs text-[#A1A1A1] line-clamp-2">
+                450GSM brushed fleece featuring internal ankle toggles and zippered pockets.
+              </p>
+              <div className="pt-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-white">
+                <span>Shop Pants</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 4. NEW ARRIVALS SECTION */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 space-y-8">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div className="space-y-2">
+            <span className="text-[11px] uppercase tracking-[0.25em] text-[#707070] font-mono block">
+              Just Dropped &bull; Limited Run
+            </span>
+            <h2 className="text-2xl sm:text-4xl font-black uppercase text-white tracking-tight">
+              New Arrivals
+            </h2>
+          </div>
+          <button
+            onClick={() => onSelectTab('shop')}
+            className="text-xs uppercase tracking-widest text-[#A1A1A1] hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
+          >
+            <span>Explore All Pieces</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
+          {newArrivals.map(product => (
+            <ProductCard
+              key={product.id}
+              product={product}
+              onOpenDetail={onOpenMerchDetail}
+            />
+          ))}
+        </div>
+      </section>
+
+      {/* 5. EDITORIAL CAMPAIGN BANNER */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="relative rounded-3xl overflow-hidden liquid-glass-panel border border-white/15 p-8 sm:p-16">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            <div className="lg:col-span-7 space-y-4">
+              <span className="text-[10px] font-mono uppercase tracking-[0.3em] text-[#888888]">
+                Material Manifesto
+              </span>
+              <h2 className="text-3xl sm:text-5xl font-black uppercase text-white tracking-tight leading-none">
+                Pure French Terry.<br />Zero Compromise.
+              </h2>
+              <p className="text-xs sm:text-sm text-[#A1A1A1] max-w-lg font-light leading-relaxed">
+                We believe garments should outlast seasons. Our custom high-density knit preserves its boxy silhouette and heavyweight drape without distortion or pilling.
+              </p>
+              <div className="pt-2">
                 <button
-                  onClick={() => onSelectTab('merch')}
-                  className="px-6 py-4 bg-[#111111]/80 hover:bg-[#111111] border border-[#242424] hover:border-[#707070] text-[#F5F5F5] text-xs font-medium uppercase tracking-widest transition-colors flex items-center gap-2 hover-luxury-lift cursor-pointer font-mono"
+                  onClick={() => onSelectTab('about')}
+                  className="px-6 py-3 bg-white text-black text-xs font-bold uppercase tracking-wider rounded-xl hover:bg-white/90 transition-all cursor-pointer inline-flex items-center gap-2"
                 >
-                  <span>FULL COLLECTION</span>
+                  <span>Read The Manifesto</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
 
-            {/* Right Column: Hero Spotlight Card */}
-            <div className="lg:col-span-4 hidden lg:flex justify-end">
-              {featuredDrops[0] ? (
-                <div 
-                  onClick={() => onOpenMerchDetail(featuredDrops[0])}
-                  className="relative p-5 bg-[#0B0B0B]/90 border border-[#242424] shadow-2xl space-y-4 max-w-xs w-full hover-luxury-lift cursor-pointer group"
-                >
-                  <div className="flex items-center justify-between pb-2 border-b border-[#1C1C1C]">
-                    <span className="text-[10px] uppercase font-mono tracking-widest text-emerald-400 flex items-center gap-1.5">
-                      <Sparkles className="w-3 h-3" />
-                      FEATURED PIECE
-                    </span>
-                    <span className="text-[10px] uppercase font-mono text-[#888888]">
-                      {featuredDrops[0].category}
-                    </span>
-                  </div>
-
-                  <div className="aspect-square relative overflow-hidden bg-[#161616]">
-                    <img
-                      src={featuredDrops[0].coverImage}
-                      alt={featuredDrops[0].name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    <div className="absolute bottom-2 left-2 bg-black/90 px-2 py-1 text-[11px] font-mono font-bold text-white">
-                      {featuredDrops[0].price} {featuredDrops[0].currency || 'EGP'}
-                    </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <h3 className="text-sm font-bold text-white uppercase truncate">
-                      {featuredDrops[0].name}
-                    </h3>
-                    <div className="flex items-center justify-between text-[11px] text-[#888888] font-mono">
-                      <span>Sizes: {featuredDrops[0].sizes?.join(', ') || 'All Sizes'}</span>
-                      <span className="text-emerald-400">Quick View →</span>
-                    </div>
-                    {featuredDrops[0].colors && featuredDrops[0].colors.length > 0 && (
-                      <div className="text-[10px] text-[#A1A1A1] font-mono truncate pt-0.5 flex items-center gap-1.5">
-                        <span className="text-[#666666]">Colors:</span>
-                        <span>{featuredDrops[0].colors.join(' · ')}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div className="p-8 bg-[#0B0B0B]/90 border border-[#242424] text-center space-y-3 max-w-xs w-full font-mono">
-                  <ShoppingBag className="w-8 h-8 text-white mx-auto" />
-                  <p className="text-xs uppercase tracking-wider text-white font-bold">LIMITED CAPSULE 01</p>
-                  <p className="text-[11px] text-[#707070]">Exclusive garments handcrafted with premium heavyweight textiles.</p>
-                </div>
-              )}
+            <div className="lg:col-span-5 relative aspect-[4/3] rounded-2xl overflow-hidden border border-white/10">
+              <img
+                src="https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=1200&q=85"
+                alt="TURVEX Atelier"
+                className="w-full h-full object-cover filter grayscale contrast-125"
+              />
             </div>
-
-          </div>
-        </div>
-
-        {/* Continuous Fluid Ticker Marquee */}
-        <div className="relative z-10 w-full bg-[#080808] border-y border-[#242424] py-3.5 overflow-hidden select-none">
-          <div className="animate-marquee whitespace-nowrap text-xs uppercase tracking-[0.25em] text-[#888888] font-mono flex items-center gap-8">
-            <span className="text-[#F5F5F5] font-bold">TURVEX STORE</span>
-            <span>·</span>
-            <span>HEAVYWEIGHT HOODIES 450 GSM</span>
-            <span>·</span>
-            <span>ACID WASH OVERSIZED TEES</span>
-            <span>·</span>
-            <span>DIRECT WHATSAPP ORDERING</span>
-            <span>·</span>
-            <span>FAST SHIPPING ACROSS EGYPT & WORLDWIDE</span>
-            <span>·</span>
-            <span>PRICES IN EGP</span>
-            <span>·</span>
-            <span>LIMITED PRODUCTION RUNS</span>
-            <span>·</span>
-            <span className="text-[#F5F5F5] font-bold">TURVEX STORE</span>
-            <span>·</span>
-            <span>HEAVYWEIGHT HOODIES 450 GSM</span>
-            <span>·</span>
-            <span>ACID WASH OVERSIZED TEES</span>
-            <span>·</span>
-            <span>DIRECT WHATSAPP ORDERING</span>
-            <span>·</span>
-            <span>FAST SHIPPING ACROSS EGYPT & WORLDWIDE</span>
-            <span>·</span>
-            <span>PRICES IN EGP</span>
-          </div>
-        </div>
-
-        {/* Hero Bottom Metadata Ribbon */}
-        <div className="relative z-10 max-w-7xl mx-auto px-6 py-5 w-full flex flex-wrap items-center justify-between gap-4 text-xs text-[#707070] font-mono">
-          <div className="flex items-center gap-4">
-            <span className="text-white font-bold">{merch.length} Garments in Catalog</span>
-            <span>·</span>
-            <span className="text-emerald-400">{merch.filter(m => m.inStock).length} Available In Stock</span>
-            <span>·</span>
-            <span>Currency: EGP</span>
-          </div>
-          <div className="hidden sm:flex items-center gap-2 text-[11px] text-[#A1A1A1]">
-            <Truck className="w-3.5 h-3.5 text-white" />
-            <span>Fast Cairo & Regional Delivery</span>
           </div>
         </div>
       </section>
 
-      {/* 2. THE STORE SECTION (سفخقث) — FEATURED GARMENTS GRID */}
-      <section id="store-section" className="max-w-7xl mx-auto px-6 scroll-mt-24 space-y-8">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-4 border-b border-[#242424]">
-          <div>
-            <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-[#707070] mb-1 font-mono">
-              <ShoppingBag className="w-3.5 h-3.5 text-white" />
-              <span>Available Drops & Apparel</span>
+      {/* 6. BEST SELLERS SECTION */}
+      {bestSellers.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 space-y-8">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+            <div className="space-y-2">
+              <span className="text-[11px] uppercase tracking-[0.25em] text-[#707070] font-mono block">
+                Archive Staples &bull; Proven Silhouettes
+              </span>
+              <h2 className="text-2xl sm:text-4xl font-black uppercase text-white tracking-tight">
+                Best Sellers
+              </h2>
             </div>
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-[#F5F5F5] uppercase">
-              The Store Collection
-            </h2>
-          </div>
-
-          {/* Category Filter Pills */}
-          <div className="flex flex-wrap items-center gap-2">
-            {categories.map(cat => (
-              <button
-                key={cat.id}
-                onClick={() => setSelectedCategory(cat.id)}
-                className={`px-3 py-1.5 text-xs font-mono uppercase tracking-wider transition-colors cursor-pointer border ${
-                  selectedCategory === cat.id
-                    ? 'bg-white text-black font-bold border-white'
-                    : 'bg-[#0B0B0B] text-[#A1A1A1] border-[#242424] hover:text-white hover:border-[#666666]'
-                }`}
-              >
-                {cat.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {filteredMerch.length === 0 ? (
-          <div className="py-20 text-center border border-[#242424] bg-[#0B0B0B] text-xs font-mono text-[#707070] space-y-3">
-            <ShoppingBag className="w-8 h-8 text-[#555555] mx-auto" />
-            <p>No garments found in this category.</p>
             <button
-              onClick={() => setSelectedCategory('all')}
-              className="text-white underline hover:no-underline cursor-pointer"
+              onClick={() => onSelectTab('shop')}
+              className="text-xs uppercase tracking-widest text-[#A1A1A1] hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
             >
-              View all garments
+              <span>View Full Store</span>
+              <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredMerch.map(item => (
-              <div
-                key={item.id}
-                onClick={() => onOpenMerchDetail(item)}
-                className="group bg-[#0B0B0B] border border-[#242424] hover:border-[#707070] transition-all cursor-pointer flex flex-col justify-between overflow-hidden hover-luxury-lift"
-              >
-                {/* Product Photo - reflects selected color */}
-                <div className="aspect-[4/5] relative overflow-hidden bg-[#111111]">
-                  <img
-                    src={getItemImageForColor(item, selectedColors[item.id] || item.colors?.[0])}
-                    alt={item.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500 ease-out"
-                  />
-                  
-                  {/* Category Pill */}
-                  <div className="absolute top-3 left-3 bg-[#050505]/90 border border-[#242424] px-2.5 py-1 text-[10px] uppercase font-mono tracking-wider text-[#F5F5F5] z-10">
-                    {item.category}
-                  </div>
 
-                  {/* Stock Status Badge */}
-                  <div className="absolute top-3 right-3 z-10">
-                    {item.inStock ? (
-                      <span className="bg-emerald-950/80 border border-emerald-600/80 text-emerald-400 px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider">
-                        In Stock
-                      </span>
-                    ) : (
-                      <span className="bg-red-950/80 border border-red-800 text-red-400 px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider">
-                        Sold Out
-                      </span>
-                    )}
-                  </div>
-
-                  {/* 2 Photos Indicator Badge */}
-                  {item.images?.[0] && (
-                    <div className="absolute bottom-3 left-3 z-10 pointer-events-none group-hover:opacity-0 transition-opacity">
-                      <span className="bg-black/85 backdrop-blur-sm border border-[#333] text-[9px] font-mono text-[#CCCCCC] uppercase px-2 py-0.5">
-                        2 Photos (Front / Back)
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Quick View Hover Indicator */}
-                  <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity bg-black/85 backdrop-blur-sm px-3 py-1.5 border border-[#333333] flex items-center gap-1.5 text-xs text-white font-mono z-10">
-                    <Eye className="w-3.5 h-3.5" />
-                    <span>{item.images?.[0] ? 'Back View · Inspect' : 'Inspect Garment'}</span>
-                  </div>
-                </div>
-
-                {/* Details Footer */}
-                <div className="p-5 space-y-3">
-                  <div className="flex items-baseline justify-between">
-                    <h3 className="text-base font-bold text-white uppercase group-hover:text-emerald-400 transition-colors truncate">
-                      {item.name}
-                    </h3>
-                    <span className="text-base font-mono font-bold text-white shrink-0 ml-2">
-                      {item.price} {item.currency || 'EGP'}
-                    </span>
-                  </div>
-
-                  {item.description && (
-                    <p className="text-xs text-[#888888] font-light line-clamp-2 leading-relaxed">
-                      {item.description}
-                    </p>
-                  )}
-
-                  {/* Colors Selector */}
-                  {(() => {
-                    const colors = item.colors && item.colors.length > 0 ? item.colors : ['Black', 'White'];
-                    const activeColor = selectedColors[item.id] || colors[0];
-                    return (
-                      <div className="space-y-1.5 pt-1" onClick={e => e.stopPropagation()}>
-                        <div className="flex items-center justify-between text-[10px] uppercase font-mono text-[#707070]">
-                          <span>Color / اللون:</span>
-                          <span className="text-emerald-400 font-bold">
-                            {activeColor}
-                          </span>
-                        </div>
-                        <div className="flex flex-wrap gap-1.5">
-                          {colors.map(col => {
-                            const isSelected = activeColor === col;
-                            return (
-                              <button
-                                key={col}
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSelectedColors(prev => ({ ...prev, [item.id]: col }));
-                                }}
-                                className={`px-2 py-1 text-[10px] font-mono uppercase tracking-wider flex items-center gap-1.5 border transition-all cursor-pointer ${
-                                  isSelected
-                                    ? 'bg-[#1C1C1C] text-emerald-400 border-emerald-400 font-bold shadow-sm'
-                                    : 'bg-[#121212] text-[#888888] border-[#262626] hover:text-white hover:border-[#555555]'
-                                }`}
-                              >
-                                <span
-                                  className="w-2 h-2 rounded-full border border-black/50"
-                                  style={{ backgroundColor: getColorSwatch(col) }}
-                                />
-                                <span>{col}</span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })()}
-
-                  {/* Sizes Available */}
-                  {item.sizes && item.sizes.length > 0 && (
-                    <div className="space-y-1.5 pt-1" onClick={e => e.stopPropagation()}>
-                      <div className="flex items-center justify-between text-[10px] uppercase font-mono text-[#707070]">
-                        <span>Size:</span>
-                        <span className="text-[#E0E0E0] font-semibold">
-                          {selectedSizes[item.id] || item.sizes[0]}
-                        </span>
-                      </div>
-                      <div className="flex flex-wrap gap-1">
-                        {item.sizes.map(sz => {
-                          const isSelected = (selectedSizes[item.id] || item.sizes![0]) === sz;
-                          return (
-                            <button
-                              key={sz}
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedSizes(prev => ({ ...prev, [item.id]: sz }));
-                              }}
-                              className={`px-2 py-0.5 text-[10px] font-mono border transition-all cursor-pointer ${
-                                isSelected
-                                  ? 'bg-white text-black border-white font-bold'
-                                  : 'bg-[#141414] text-[#A1A1A1] border-[#242424] hover:text-white hover:border-[#555]'
-                              }`}
-                            >
-                              {sz}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Order Actions */}
-                  <div className="pt-3 border-t border-[#1C1C1C] flex items-center justify-between gap-3">
-                    <button
-                      type="button"
-                      onClick={(e) => handleWhatsAppOrder(item, e)}
-                      className="flex-1 py-2.5 bg-[#161616] hover:bg-emerald-950/60 border border-[#262626] hover:border-emerald-500/60 text-xs font-mono font-semibold uppercase tracking-wider text-white hover:text-emerald-300 flex items-center justify-center gap-2 transition-all cursor-pointer"
-                    >
-                      <PhoneCall className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>Order ({selectedColors[item.id] || item.colors?.[0] || 'Black'})</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => onOpenMerchDetail(item)}
-                      className="p-2.5 bg-[#111111] border border-[#242424] hover:border-white text-white transition-colors cursor-pointer"
-                      title="View garment details"
-                    >
-                      <ArrowRight className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
+            {bestSellers.map(product => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                onOpenDetail={onOpenMerchDetail}
+              />
             ))}
           </div>
-        )}
-      </section>
+        </section>
+      )}
 
-      {/* 3. BRAND CRAFTSMANSHIP & SPECIFICATIONS */}
-      <section className="max-w-7xl mx-auto px-6">
-        <div className="bg-[#0B0B0B] border border-[#242424] p-8 sm:p-12 hover-luxury-lift space-y-8">
-          <div>
-            <span className="text-xs uppercase tracking-widest text-[#707070] font-mono block mb-1">
-              Garment Architecture
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-[#F5F5F5]">
-              Craftsmanship & Production Standards
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-4 border-t border-[#1C1C1C]">
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 text-white">
-                <Scissors className="w-5 h-5 text-white" />
-                <h3 className="text-sm font-bold uppercase tracking-wider font-mono">450 GSM Heavyweight</h3>
-              </div>
-              <p className="text-xs text-[#888888] font-light leading-relaxed">
-                Milled from high-density Egyptian cotton French Terry. Substantial hand feel, structural drape, and tailored durability designed to last seasons.
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 text-white">
-                <ShieldCheck className="w-5 h-5 text-emerald-400" />
-                <h3 className="text-sm font-bold uppercase tracking-wider font-mono">Boxy Architectural Cut</h3>
-              </div>
-              <p className="text-xs text-[#888888] font-light leading-relaxed">
-                Relaxed dropped shoulders, widened body silhouette, and ribbed hem tension calibrated for perfect proportion over any trousers.
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 text-white">
-                <Truck className="w-5 h-5 text-white" />
-                <h3 className="text-sm font-bold uppercase tracking-wider font-mono">Fast Direct Delivery</h3>
-              </div>
-              <p className="text-xs text-[#888888] font-light leading-relaxed">
-                Direct dispatch from Cairo across all Egyptian governorates with tracked courier delivery and straightforward WhatsApp customer service.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 4. FULL STORE BANNER CALL TO ACTION */}
-      <section className="max-w-7xl mx-auto px-6">
-        <div className="relative bg-gradient-to-r from-[#111111] via-[#0D0D0D] to-[#141414] border border-[#2A2A2A] p-8 sm:p-14 overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8">
-          <div className="space-y-3 max-w-xl">
-            <span className="text-xs uppercase font-mono tracking-widest text-emerald-400 block">
-              TURVEX APPAREL
+      {/* 7. BRAND STORY SECTION */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="liquid-glass-card rounded-3xl p-8 sm:p-14 border border-white/10 space-y-8">
+          <div className="max-w-2xl space-y-3">
+            <span className="text-[10px] uppercase font-mono tracking-widest text-[#707070]">
+              The TURVEX Origin
             </span>
             <h2 className="text-2xl sm:text-4xl font-black uppercase text-white tracking-tight">
-              Looking for our complete lookbook & drop archives?
+              An Independent Streetwear Atelier
             </h2>
             <p className="text-xs sm:text-sm text-[#A1A1A1] font-light leading-relaxed">
-              Explore the dedicated Store page with detailed garment specifications, zoom galleries, and direct checkout inquiries.
+              TURVEX exists at the intersection of dark luxury and modern utilitarian streetwear. We craft garments for individuals who value tangible fabric density, subtle textures, and enduring form.
             </p>
           </div>
 
-          <button
-            onClick={() => {
-              onSelectTab('merch');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            className="px-8 py-4 bg-white hover:bg-[#E5E5E5] text-black text-xs font-bold uppercase tracking-widest transition-all shrink-0 font-mono flex items-center gap-3 cursor-pointer shadow-xl hover-luxury-lift"
-          >
-            <ShoppingBag className="w-4 h-4 text-black" />
-            <span>ENTER FULL STORE</span>
-            <ArrowRight className="w-4 h-4 text-black" />
-          </button>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-4 border-t border-white/10 text-xs text-[#CCCCCC]">
+            <div className="space-y-2">
+              <span className="font-bold uppercase tracking-wider text-white block">
+                01. Heavyweight Philosophy
+              </span>
+              <p className="text-[#888888] leading-relaxed">
+                480 GSM cotton provides the structural stiffness necessary for true dropped-shoulder streetwear volume.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <span className="font-bold uppercase tracking-wider text-white block">
+                02. Non-Disposable Craft
+              </span>
+              <p className="text-[#888888] leading-relaxed">
+                Reinforced bar-tacking on stress points, double-needle coverstitching, and metal two-way zippers.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <span className="font-bold uppercase tracking-wider text-white block">
+                03. Limited Drops
+              </span>
+              <p className="text-[#888888] leading-relaxed">
+                We produce in controlled quantities. When a colorway or capsule sells out, it enters our permanent archive.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 
+      {/* 8. DROP LIST / NEWSLETTER SECTION */}
+      <section className="max-w-3xl mx-auto px-4 sm:px-6 text-center space-y-6">
+        <div className="space-y-2">
+          <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-[#707070]">
+            Direct Access
+          </span>
+          <h2 className="text-2xl sm:text-3xl font-black uppercase text-white tracking-tight">
+            Join The Private Drop List
+          </h2>
+          <p className="text-xs text-[#A1A1A1] max-w-md mx-auto leading-relaxed">
+            Receive private access links 1 hour before public capsule releases. No spam. Only drop notifications.
+          </p>
+        </div>
+
+        <form onSubmit={(e) => { e.preventDefault(); alert('You have been added to the TURVEX private drop list.'); }} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+          <input
+            type="email"
+            required
+            placeholder="Enter your email address"
+            className="flex-1 px-4 py-3 bg-white/5 border border-white/15 focus:border-white rounded-xl text-xs text-white placeholder-[#666666] outline-none"
+          />
+          <button
+            type="submit"
+            className="px-6 py-3 bg-white text-black hover:bg-white/90 text-xs font-bold uppercase tracking-wider rounded-xl transition-all cursor-pointer whitespace-nowrap"
+          >
+            Get Access
+          </button>
+        </form>
+      </section>
     </div>
   );
 };

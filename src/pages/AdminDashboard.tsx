@@ -1,19 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   MerchItem,
   SiteSettings, 
-  Song,
-  Artist,
-  Album,
-  Collection,
-  GalleryItem,
-  Quote
+  CustomerOrder
 } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { 
   saveMerchItem,
   deleteMerchItem,
-  saveSiteSettings
+  saveSiteSettings,
+  fetchAllOrders,
+  updateOrderStatus,
+  deleteOrder
 } from '../services/db';
 import { 
   Plus, 
@@ -33,22 +31,29 @@ import {
   ExternalLink,
   PackageCheck,
   PackageX,
-  Sparkles
+  Sparkles,
+  ClipboardList,
+  Clock,
+  MapPin,
+  Phone,
+  Mail,
+  User,
+  Search
 } from 'lucide-react';
 
 interface AdminDashboardProps {
   merch: MerchItem[];
   settings: SiteSettings;
   onRefreshData: () => Promise<void>;
-  songs?: Song[];
-  artists?: Artist[];
-  albums?: Album[];
-  collections?: Collection[];
-  gallery?: GalleryItem[];
-  quotes?: Quote[];
+  songs?: any[];
+  artists?: any[];
+  albums?: any[];
+  collections?: any[];
+  gallery?: any[];
+  quotes?: any[];
 }
 
-type AdminSection = 'dashboard' | 'merch' | 'settings';
+type AdminSection = 'dashboard' | 'orders' | 'merch' | 'settings';
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   merch,
@@ -59,6 +64,51 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [activeSection, setActiveSection] = useState<AdminSection>('dashboard');
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
   const [saving, setSaving] = useState(false);
+
+  // ORDERS STATE
+  const [orders, setOrders] = useState<CustomerOrder[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
+  const [orderSearchQuery, setOrderSearchQuery] = useState('');
+  const [orderFilterStatus, setOrderFilterStatus] = useState<string>('all');
+
+  const loadOrders = async () => {
+    setLoadingOrders(true);
+    try {
+      const data = await fetchAllOrders();
+      setOrders(data);
+    } catch (err) {
+      console.error('Failed to load orders:', err);
+    } finally {
+      setLoadingOrders(false);
+    }
+  };
+
+  useEffect(() => {
+    loadOrders();
+  }, []);
+
+  const handleUpdateOrderStatus = async (orderId: string, status: CustomerOrder['status']) => {
+    try {
+      await updateOrderStatus(orderId, status);
+      setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status } : o));
+      showNotification(`Order status updated to: ${status}`);
+    } catch (err) {
+      console.error(err);
+      showNotification(parseErrorMessage(err), 'error');
+    }
+  };
+
+  const handleDeleteOrder = async (orderId: string) => {
+    if (!window.confirm('Are you sure you want to delete this order?')) return;
+    try {
+      await deleteOrder(orderId);
+      setOrders(prev => prev.filter(o => o.id !== orderId));
+      showNotification('Order deleted successfully');
+    } catch (err) {
+      console.error(err);
+      showNotification(parseErrorMessage(err), 'error');
+    }
+  };
 
   // EDIT STATE FOR MERCH
   const [editingMerch, setEditingMerch] = useState<Partial<MerchItem> | null>(null);
@@ -302,6 +352,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const inStockCount = merch.filter(m => m.inStock).length;
   const soldOutCount = merch.length - inStockCount;
   const featuredCount = merch.filter(m => m.isFeatured).length;
+  const pendingOrdersCount = orders.filter(o => o.status === 'pending').length;
+  const totalRevenue = orders.reduce((sum, o) => sum + (o.total || 0), 0);
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 space-y-8">
@@ -322,7 +374,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
         <div className="flex items-center gap-3">
           <button
-            onClick={() => onRefreshData()}
+            onClick={() => {
+              onRefreshData();
+              loadOrders();
+              showNotification('Database and orders refreshed');
+            }}
             className="px-3.5 py-2 bg-[#111111] border border-[#242424] hover:border-[#707070] text-[#A1A1A1] hover:text-[#F5F5F5] text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer"
             title="Reload latest data from Firestore"
           >
@@ -366,6 +422,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
           {[
             { id: 'dashboard' as AdminSection, label: 'Store Overview', count: undefined, icon: LayoutDashboard },
+            { id: 'orders' as AdminSection, label: 'Customer Orders', count: orders.length, icon: ClipboardList, pendingBadge: pendingOrdersCount > 0 ? `${pendingOrdersCount} new` : undefined },
             { id: 'merch' as AdminSection, label: 'Store Products', count: merch.length, icon: ShoppingBag },
             { id: 'settings' as AdminSection, label: 'Brand & Settings', count: undefined, icon: Sliders },
           ].map(tab => {
@@ -388,9 +445,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-[#707070]'}`} />
                   <span className="truncate">{tab.label}</span>
                 </div>
-                {tab.count !== undefined && (
-                  <span className="text-[10px] font-mono tabular-nums text-[#666666]">{tab.count}</span>
-                )}
+                <div className="flex items-center gap-1.5">
+                  {tab.pendingBadge && (
+                    <span className="px-1.5 py-0.5 bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[10px] font-mono rounded">
+                      {tab.pendingBadge}
+                    </span>
+                  )}
+                  {tab.count !== undefined && (
+                    <span className="text-[10px] font-mono tabular-nums text-[#666666]">{tab.count}</span>
+                  )}
+                </div>
               </button>
             );
           })}
@@ -573,6 +637,247 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   ))}
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* ================= SECTION: CUSTOMER ORDERS ================= */}
+          {activeSection === 'orders' && (
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#242424] pb-4">
+                <div>
+                  <h2 className="text-lg font-bold uppercase tracking-tight text-[#F5F5F5] flex items-center gap-2">
+                    <ClipboardList className="w-5 h-5 text-white" />
+                    <span>Customer Orders &amp; Fulfillment</span>
+                  </h2>
+                  <p className="text-xs text-[#707070] font-mono mt-0.5">
+                    Live checkout orders logged directly from customers into Firestore.
+                  </p>
+                </div>
+                <button
+                  onClick={loadOrders}
+                  className="px-3.5 py-1.5 bg-[#161616] border border-[#333333] hover:border-white text-xs uppercase tracking-wider text-white flex items-center gap-2 transition-colors cursor-pointer"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${loadingOrders ? 'animate-spin' : ''}`} />
+                  <span>Reload Orders ({orders.length})</span>
+                </button>
+              </div>
+
+              {/* Search & Filter Toolbar */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-[#0B0B0B] border border-[#242424] p-3">
+                <div className="relative w-full sm:w-72">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#707070]" />
+                  <input
+                    type="text"
+                    value={orderSearchQuery}
+                    onChange={(e) => setOrderSearchQuery(e.target.value)}
+                    placeholder="Search name, phone, order #..."
+                    className="w-full pl-9 pr-3 py-1.5 bg-[#111111] border border-[#262626] text-xs text-white placeholder-[#555] outline-none font-mono"
+                  />
+                </div>
+
+                <div className="flex flex-wrap items-center gap-1.5 w-full sm:w-auto">
+                  {['all', 'pending', 'confirmed', 'shipped', 'delivered', 'cancelled'].map(st => (
+                    <button
+                      key={st}
+                      onClick={() => setOrderFilterStatus(st)}
+                      className={`px-3 py-1 text-[11px] font-mono uppercase tracking-wider transition-all cursor-pointer ${
+                        orderFilterStatus === st
+                          ? 'bg-white text-black font-bold'
+                          : 'text-[#888888] hover:text-white bg-[#141414] hover:bg-[#1E1E1E]'
+                      }`}
+                    >
+                      {st} {st === 'pending' && pendingOrdersCount > 0 ? `(${pendingOrdersCount})` : ''}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Orders List */}
+              {orders.length === 0 ? (
+                <div className="p-16 text-center bg-[#0B0B0B] border border-[#242424] space-y-3">
+                  <ClipboardList className="w-8 h-8 text-[#555555] mx-auto" />
+                  <p className="text-sm font-semibold text-white uppercase tracking-wider">
+                    No orders placed yet
+                  </p>
+                  <p className="text-xs text-[#707070] max-w-sm mx-auto">
+                    When customers complete checkout, their order code, shipping address, and chosen pieces will appear here in real time.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {orders
+                    .filter(order => {
+                      if (orderFilterStatus !== 'all' && order.status !== orderFilterStatus) return false;
+                      if (!orderSearchQuery.trim()) return true;
+                      const q = orderSearchQuery.toLowerCase();
+                      return (
+                        order.orderNumber.toLowerCase().includes(q) ||
+                        order.customerName.toLowerCase().includes(q) ||
+                        order.customerPhone.toLowerCase().includes(q) ||
+                        order.governorate.toLowerCase().includes(q) ||
+                        order.city.toLowerCase().includes(q)
+                      );
+                    })
+                    .map(order => {
+                      const cleanPhone = order.customerPhone.replace(/[^0-9]/g, '');
+                      const formattedWaPhone = cleanPhone.startsWith('0') ? `2${cleanPhone}` : cleanPhone;
+                      const waLink = `https://wa.me/${formattedWaPhone}?text=${encodeURIComponent(
+                        `Hello ${order.customerName}! Contacting you from TURVEX Studio regarding your order #${order.orderNumber}.`
+                      )}`;
+
+                      return (
+                        <div
+                          key={order.id}
+                          className="bg-[#0B0B0B] border border-[#242424] hover:border-[#444444] p-5 sm:p-6 transition-all space-y-5"
+                        >
+                          {/* Order Header */}
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#1A1A1A]">
+                            <div className="flex items-center gap-3">
+                              <span className="font-mono text-base font-bold text-white tracking-widest">
+                                {order.orderNumber}
+                              </span>
+                              <span className="text-[11px] text-[#707070] font-mono">
+                                {new Date(order.createdAt).toLocaleString()}
+                              </span>
+                            </div>
+
+                            {/* Status Selector */}
+                            <div className="flex items-center gap-2">
+                              <span className="text-[11px] uppercase tracking-wider text-[#707070] font-mono">Status:</span>
+                              <select
+                                value={order.status}
+                                onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value as CustomerOrder['status'])}
+                                className={`px-2.5 py-1 text-xs font-mono uppercase font-bold border rounded outline-none cursor-pointer ${
+                                  order.status === 'pending'
+                                    ? 'bg-amber-950/40 border-amber-500/50 text-amber-300'
+                                    : order.status === 'confirmed'
+                                    ? 'bg-blue-950/40 border-blue-500/50 text-blue-300'
+                                    : order.status === 'shipped'
+                                    ? 'bg-purple-950/40 border-purple-500/50 text-purple-300'
+                                    : order.status === 'delivered'
+                                    ? 'bg-emerald-950/40 border-emerald-500/50 text-emerald-300'
+                                    : 'bg-red-950/40 border-red-500/50 text-red-300'
+                                }`}
+                              >
+                                <option value="pending" className="bg-[#111] text-amber-300">Pending / قيد الانتظار</option>
+                                <option value="confirmed" className="bg-[#111] text-blue-300">Confirmed / تم التأكيد</option>
+                                <option value="shipped" className="bg-[#111] text-purple-300">Shipped / تم الشحن</option>
+                                <option value="delivered" className="bg-[#111] text-emerald-300">Delivered / تم التوصيل</option>
+                                <option value="cancelled" className="bg-[#111] text-red-300">Cancelled / ملغي</option>
+                              </select>
+                            </div>
+                          </div>
+
+                          {/* Customer Details & Shipping Grid */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono text-[#CCCCCC] bg-[#0E0E0E] p-4 border border-[#1C1C1C]">
+                            <div className="space-y-1.5">
+                              <p className="flex items-center gap-2 text-white font-semibold">
+                                <User className="w-3.5 h-3.5 text-[#888888]" />
+                                <span>{order.customerName}</span>
+                              </p>
+                              <p className="flex items-center gap-2 text-[#A1A1A1]">
+                                <Phone className="w-3.5 h-3.5 text-[#888888]" />
+                                <span>{order.customerPhone}</span>
+                              </p>
+                              {order.customerEmail && order.customerEmail !== 'unspecified@turvex.store' && (
+                                <p className="flex items-center gap-2 text-[#707070]">
+                                  <Mail className="w-3.5 h-3.5 text-[#888888]" />
+                                  <span>{order.customerEmail}</span>
+                                </p>
+                              )}
+                            </div>
+
+                            <div className="space-y-1.5">
+                              <p className="flex items-start gap-2 text-[#CCCCCC]">
+                                <MapPin className="w-3.5 h-3.5 text-[#888888] shrink-0 mt-0.5" />
+                                <span>{order.address}, {order.city}, {order.governorate}</span>
+                              </p>
+                              {order.notes && (
+                                <p className="text-[11px] text-[#A1A1A1] italic">
+                                  Notes: "{order.notes}"
+                                </p>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Ordered Pieces */}
+                          <div className="space-y-2">
+                            <span className="text-[11px] uppercase tracking-wider text-[#707070] font-mono block">
+                              Ordered Garments ({order.items.length})
+                            </span>
+                            <div className="divide-y divide-[#1A1A1A] border-y border-[#1A1A1A]">
+                              {order.items.map((item, idx) => (
+                                <div key={idx} className="py-2.5 flex items-center justify-between gap-4">
+                                  <div className="flex items-center gap-3 min-w-0">
+                                    <img
+                                      src={item.image}
+                                      alt={item.name}
+                                      className="w-10 h-12 object-cover border border-[#242424] shrink-0 rounded"
+                                    />
+                                    <div className="min-w-0">
+                                      <p className="text-xs font-semibold text-white truncate">{item.name}</p>
+                                      <div className="flex items-center gap-2 text-[11px] text-[#888888] font-mono mt-0.5">
+                                        <span>Color: <strong className="text-white">{item.color}</strong></span>
+                                        <span>·</span>
+                                        <span>Size: <strong className="text-white">{item.size}</strong></span>
+                                        <span>·</span>
+                                        <span>Qty: <strong className="text-white">{item.quantity}</strong></span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <span className="text-xs font-mono font-bold text-white shrink-0">
+                                    {item.price * item.quantity} EGP
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Totals & Quick Actions */}
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
+                            <div className="flex items-center gap-4 text-xs font-mono">
+                              <div>
+                                <span className="text-[#707070] block text-[10px]">Method</span>
+                                <span className="text-white">{order.paymentMethod}</span>
+                              </div>
+                              <div>
+                                <span className="text-[#707070] block text-[10px]">Total with Delivery</span>
+                                <span className="text-base font-bold text-white">{order.total} EGP</span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <a
+                                href={waLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="px-3 py-1.5 bg-emerald-950/40 hover:bg-emerald-900/60 border border-emerald-500/40 text-emerald-300 text-xs font-mono uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer"
+                              >
+                                <Phone className="w-3.5 h-3.5" />
+                                <span>WhatsApp Customer</span>
+                              </a>
+
+                              <a
+                                href={`tel:${order.customerPhone}`}
+                                className="px-3 py-1.5 bg-[#141414] hover:bg-[#1E1E1E] border border-[#333] text-[#CCC] text-xs font-mono uppercase tracking-wider flex items-center gap-1.5 transition-colors"
+                              >
+                                <span>Call</span>
+                              </a>
+
+                              <button
+                                onClick={() => handleDeleteOrder(order.id)}
+                                className="p-1.5 text-[#707070] hover:text-red-400 transition-colors cursor-pointer"
+                                title="Delete order record"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              )}
             </div>
           )}
 

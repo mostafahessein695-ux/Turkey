@@ -1,6 +1,6 @@
 {
-  "name": "MY WORLD — Music & Lifestyle Journal",
-  "description": "A curated personal universe of music, underground artists, albums, collections, photography, and quotes.",
+  "name": "TURVEX — Premium Streetwear",
+  "description": "Premium streetwear e-commerce brand featuring bespoke cuts, heavyweight knits, and limited capsule drops.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

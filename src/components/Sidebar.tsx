@@ -93,8 +93,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
             );
           })}
 
-          {/* Admin management link - visible ONLY to authorized administrator */}
-          {isAdmin && (
+          {/* Admin management link - visible to admin, or quick login button */}
+          {isAdmin ? (
             <div className="pt-3 mt-3 border-t border-[#1C1C1C]">
               <span className="text-[10px] uppercase tracking-[0.25em] text-[#707070] block px-3 py-1 font-mono">
                 Management
@@ -109,6 +109,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
               >
                 <Shield className="w-4 h-4 shrink-0 text-white" />
                 <span className="truncate">Admin Dashboard</span>
+              </button>
+            </div>
+          ) : (
+            <div className="pt-3 mt-3 border-t border-[#1C1C1C]">
+              <button
+                onClick={() => {
+                  setMobileDrawerOpen(false);
+                  onOpenAdminAuth();
+                }}
+                className="w-full flex items-center gap-3.5 px-3 py-2.5 text-xs uppercase tracking-wider text-[#707070] hover:text-[#F5F5F5] hover:bg-[#0B0B0B] transition-all cursor-pointer rounded-none text-left"
+              >
+                <Lock className="w-4 h-4 shrink-0 text-[#707070]" />
+                <span className="truncate">Admin Login (Pass: rogy)</span>
               </button>
             </div>
           )}
@@ -192,12 +205,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </button>
 
         <div className="flex items-center gap-3">
-          {isAdmin && (
+          {isAdmin ? (
             <button
               onClick={() => handleNavClick('admin')}
               className="text-xs uppercase tracking-wider text-white border border-[#333333] px-2.5 py-1 flex items-center gap-1.5"
             >
               <Shield className="w-3 h-3" />
+              <span>Admin</span>
+            </button>
+          ) : (
+            <button
+              onClick={onOpenAdminAuth}
+              className="text-xs uppercase tracking-wider text-[#CCCCCC] hover:text-white border border-[#2B2B2B] px-2.5 py-1 flex items-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <Lock className="w-3 h-3 text-[#A1A1A1]" />
               <span>Admin</span>
             </button>
           )}

@@ -1,128 +1,65 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { CartProvider, useCart } from './context/CartContext';
 import { 
-  Song, 
-  Artist, 
-  Album, 
-  Collection, 
-  GalleryItem, 
-  Quote, 
-  MerchItem,
+  MerchItem, 
   SiteSettings, 
   NavTab 
 } from './types';
 import { 
-  fetchPublishedSongs, 
-  fetchAllSongs,
-  fetchPublishedArtists, 
-  fetchAllArtists,
-  fetchPublishedAlbums, 
-  fetchAllAlbums,
-  fetchPublishedCollections, 
-  fetchAllCollections,
-  fetchPublishedGallery, 
-  fetchAllGallery,
-  fetchPublishedQuotes, 
-  fetchAllQuotes,
   fetchPublishedMerch,
   fetchAllMerch,
-  fetchSiteSettings,
-  seedStarterContent
+  fetchSiteSettings
 } from './services/db';
-import { Sidebar } from './components/Sidebar';
-import { Footer } from './components/Footer';
-import { HomePage } from './pages/HomePage';
-import { MerchPage } from './pages/MerchPage';
-import { AdminDashboard } from './pages/AdminDashboard';
-import { DetailModal } from './components/DetailModal';
-import { LightboxModal } from './components/LightboxModal';
+import { LiquidGlassNavbar } from './components/LiquidGlassNavbar';
+import { CartDrawer } from './components/CartDrawer';
+import { ProductDetailModal } from './components/ProductDetailModal';
+import { SearchModal } from './components/SearchModal';
 import { AdminAuthModal } from './components/AdminAuthModal';
-import { IntroEntrance } from './components/IntroEntrance';
-import { ASSET_IMAGES } from './assets/images';
+import { Footer } from './components/Footer';
+
+// Pages
+import { HomePage } from './pages/HomePage';
+import { ShopPage } from './pages/ShopPage';
+import { CollectionsPage } from './pages/CollectionsPage';
+import { AboutPage } from './pages/AboutPage';
+import { CheckoutPage } from './pages/CheckoutPage';
+import { AdminDashboard } from './pages/AdminDashboard';
 
 const MainApp: React.FC = () => {
   const { isAdmin } = useAuth();
   const [currentTab, setCurrentTab] = useState<NavTab>('home');
   const [loading, setLoading] = useState(true);
 
-  // Cinematic Intro Entrance State (Full-screen underground rap intro)
-  const [showIntro, setShowIntro] = useState<boolean>(true);
-
-  const handleIntroComplete = () => {
-    setShowIntro(false);
-  };
-
-  const handleReplayIntro = () => {
-    setShowIntro(true);
-  };
-
-  // Database states
-  const [songs, setSongs] = useState<Song[]>([]);
-  const [artists, setArtists] = useState<Artist[]>([]);
-  const [albums, setAlbums] = useState<Album[]>([]);
-  const [collections, setCollections] = useState<Collection[]>([]);
-  const [gallery, setGallery] = useState<GalleryItem[]>([]);
-  const [quotes, setQuotes] = useState<Quote[]>([]);
+  // Database state
   const [merch, setMerch] = useState<MerchItem[]>([]);
   const [settings, setSettings] = useState<SiteSettings>({
     heroHeadline: 'TURVEX. HEAVYWEIGHT STREETWEAR.',
     heroSubhead: 'Bespoke cuts, heavyweight knits, and limited capsule drops designed for everyday movement.',
-    heroImage: ASSET_IMAGES.heroVinyl,
-    aboutBio: 'TURVEX is an independent streetwear archive and garment studio focused on custom heavyweight cotton silhouettes, washed tones, and durable minimalism.',
-    aboutPhoto: ASSET_IMAGES.artistPortrait,
+    aboutBio: 'TURVEX is an independent streetwear atelier and garment archive focused on custom 480GSM heavyweight cotton silhouettes, stone acid washes, and durable minimalism.',
     socialLinks: [
-      { platform: 'Spotify', url: 'https://open.spotify.com', handle: '@turvex' },
-      { platform: 'SoundCloud', url: 'https://soundcloud.com', handle: 'turvex-archives' },
-      { platform: 'Bandcamp', url: 'https://bandcamp.com', handle: 'turvex' },
-      { platform: 'Instagram', url: 'https://instagram.com', handle: '@turvex.studio' },
+      { platform: 'Instagram', url: 'https://instagram.com/turvex.studio', handle: '@turvex.studio' },
+      { platform: 'WhatsApp', url: 'https://wa.me/201000000000', handle: 'Studio Direct' },
+      { platform: 'TikTok', url: 'https://tiktok.com/@turvex', handle: '@turvex' },
     ],
-    featuredCollectionId: 'col_late_night',
   });
 
   // Modal states
-  const [detailTarget, setDetailTarget] = useState<{
-    type: 'song' | 'artist' | 'album' | 'collection' | 'merch';
-    data: any;
-  } | null>(null);
-
-  const [lightboxItem, setLightboxItem] = useState<GalleryItem | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<MerchItem | null>(null);
+  const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [adminAuthOpen, setAdminAuthOpen] = useState(false);
 
   // Load database data
   const loadData = useCallback(async () => {
     try {
-      // If admin, fetch all records (including drafts); otherwise fetch published
-      const [
-        songsData,
-        artistsData,
-        albumsData,
-        collectionsData,
-        galleryData,
-        quotesData,
-        merchData,
-        settingsData,
-      ] = await Promise.all([
-        isAdmin ? fetchAllSongs() : fetchPublishedSongs(),
-        isAdmin ? fetchAllArtists() : fetchPublishedArtists(),
-        isAdmin ? fetchAllAlbums() : fetchPublishedAlbums(),
-        isAdmin ? fetchAllCollections() : fetchPublishedCollections(),
-        isAdmin ? fetchAllGallery() : fetchPublishedGallery(),
-        isAdmin ? fetchAllQuotes() : fetchPublishedQuotes(),
+      const [merchData, settingsData] = await Promise.all([
         isAdmin ? fetchAllMerch() : fetchPublishedMerch(),
         fetchSiteSettings(),
       ]);
-
-      // Set application states from Firestore
-      setSongs(songsData);
-      setArtists(artistsData);
-      setAlbums(albumsData);
-      setCollections(collectionsData);
-      setGallery(galleryData);
-      setQuotes(quotesData);
       setMerch(merchData);
       setSettings(settingsData);
     } catch (err) {
-      console.error('Failed to load application data:', err);
+      console.error('Failed to load TURVEX catalog:', err);
     } finally {
       setLoading(false);
     }
@@ -132,124 +69,137 @@ const MainApp: React.FC = () => {
     loadData();
   }, [loadData]);
 
-  // Handle switching between related items in detail view
-  const handleSelectOtherDetailItem = (type: 'song' | 'artist' | 'album' | 'collection' | 'merch', id: string) => {
-    if (type === 'song') {
-      const s = songs.find(item => item.id === id);
-      if (s) setDetailTarget({ type: 'song', data: s });
-    } else if (type === 'artist') {
-      const a = artists.find(item => item.id === id);
-      if (a) setDetailTarget({ type: 'artist', data: a });
-    } else if (type === 'album') {
-      const al = albums.find(item => item.id === id);
-      if (al) setDetailTarget({ type: 'album', data: al });
-    } else if (type === 'collection') {
-      const c = collections.find(item => item.id === id);
-      if (c) setDetailTarget({ type: 'collection', data: c });
-    } else if (type === 'merch') {
-      const m = merch.find(item => item.id === id);
-      if (m) setDetailTarget({ type: 'merch', data: m });
-    }
+  const handleTabChange = (tab: NavTab) => {
+    setCurrentTab(tab);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleNavigateToShopWithCategory = (category: string) => {
+    setCurrentTab('shop');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] text-[#F5F5F5] selection:bg-[#242424] selection:text-[#FFFFFF] flex flex-col lg:flex-row">
-      {/* 1. Permanent Left Sidebar on desktop, collapsible drawer on mobile */}
-      <Sidebar
+    <div className="min-h-screen bg-[#050505] text-[#F5F5F5] selection:bg-white selection:text-black flex flex-col justify-between font-sans relative">
+      {/* 1. Floating Apple iOS 26 Liquid Glass Navbar */}
+      <LiquidGlassNavbar
         currentTab={currentTab}
-        onSelectTab={setCurrentTab}
+        onSelectTab={handleTabChange}
         onOpenAdminAuth={() => setAdminAuthOpen(true)}
-        settings={settings}
+        onOpenSearch={() => setSearchModalOpen(true)}
       />
 
-      {/* 2. Main Website Content to the RIGHT of the sidebar */}
-      <div className="flex-1 min-w-0 lg:pl-64 flex flex-col justify-between min-h-screen">
-        <main className="flex-1">
-          {loading ? (
-            <div className="max-w-7xl mx-auto px-6 py-32 flex flex-col items-center justify-center space-y-4">
-              <div className="w-8 h-8 border border-[#404040] border-t-white animate-spin" />
-              <p className="text-xs uppercase tracking-widest text-[#707070]">
-                Connecting to TURVEX...
-              </p>
-            </div>
-          ) : (
-            <>
-              {currentTab === 'home' && (
-                <HomePage
-                  settings={settings}
-                  merch={merch}
-                  onSelectTab={setCurrentTab}
-                  onOpenMerchDetail={item => setDetailTarget({ type: 'merch', data: item })}
-                  onOpenAdminAuth={() => setAdminAuthOpen(true)}
-                />
-              )}
+      {/* 2. Main Page Content */}
+      <main className="flex-1 w-full min-w-0">
+        {loading ? (
+          <div className="min-h-[80vh] flex flex-col items-center justify-center space-y-4">
+            <div className="w-8 h-8 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+            <p className="text-xs uppercase tracking-[0.25em] text-[#707070] font-mono">
+              Loading TURVEX Studio...
+            </p>
+          </div>
+        ) : (
+          <>
+            {currentTab === 'home' && (
+              <HomePage
+                settings={settings}
+                merch={merch}
+                onSelectTab={handleTabChange}
+                onOpenMerchDetail={item => setSelectedProduct(item)}
+                onOpenAdminAuth={() => setAdminAuthOpen(true)}
+                onNavigateToShopWithCategory={handleNavigateToShopWithCategory}
+              />
+            )}
 
-              {currentTab === 'merch' && (
-                <MerchPage
-                  merch={merch}
-                />
-              )}
+            {(currentTab === 'shop' || currentTab === 'merch') && (
+              <ShopPage
+                products={merch}
+                onOpenProductDetail={item => setSelectedProduct(item)}
+              />
+            )}
 
-              {currentTab === 'admin' && (
-                isAdmin ? (
+            {currentTab === 'collections' && (
+              <CollectionsPage
+                products={merch}
+                onNavigateToShopWithCategory={handleNavigateToShopWithCategory}
+                onOpenProductDetail={item => setSelectedProduct(item)}
+              />
+            )}
+
+            {currentTab === 'about' && (
+              <AboutPage
+                settings={settings}
+                onExploreShop={() => handleTabChange('shop')}
+              />
+            )}
+
+            {currentTab === 'checkout' && (
+              <CheckoutPage
+                onBackToShop={() => handleTabChange('shop')}
+                onNavigateTab={handleTabChange}
+              />
+            )}
+
+            {currentTab === 'admin' && (
+              isAdmin ? (
+                <div className="pt-24 pb-12">
                   <AdminDashboard
                     merch={merch}
                     settings={settings}
                     onRefreshData={loadData}
                   />
-                ) : (
-                  <div className="max-w-md mx-auto px-6 py-32 text-center space-y-4">
-                    <h2 className="text-xl font-bold uppercase tracking-wide text-[#F5F5F5]">
-                      Access Restricted
-                    </h2>
-                    <p className="text-xs text-[#707070]">
-                      The administrator dashboard requires authenticated credentials for {settings.socialLinks?.[0]?.handle || 'the archive owner'}.
-                    </p>
-                    <button
-                      onClick={() => setAdminAuthOpen(true)}
-                      className="px-6 py-2.5 bg-[#F5F5F5] text-[#050505] text-xs uppercase font-bold tracking-wider cursor-pointer hover:bg-white"
-                    >
-                      Authenticate with Google
-                    </button>
+                </div>
+              ) : (
+                <div className="max-w-md mx-auto px-6 py-40 text-center space-y-5">
+                  <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto text-white">
+                    <span className="font-mono text-xs font-bold">LOCK</span>
                   </div>
-                )
-              )}
-            </>
-          )}
-        </main>
+                  <div className="space-y-1.5">
+                    <h2 className="text-xl font-bold uppercase tracking-wide text-[#F5F5F5]">
+                      Admin Access Restricted
+                    </h2>
+                    <p className="text-xs text-[#888888] leading-relaxed">
+                      TURVEX studio administration portal. Please log in with the administrator password (<strong className="text-white font-mono">rogy</strong>).
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setAdminAuthOpen(true)}
+                    className="px-6 py-3 bg-white text-black text-xs uppercase font-bold tracking-wider rounded-xl cursor-pointer hover:bg-white/90 shadow-xl transition-all"
+                  >
+                    Enter Password (rogy)
+                  </button>
+                </div>
+              )
+            )}
+          </>
+        )}
+      </main>
 
-        {/* Minimal Footer */}
-        <Footer
-          settings={settings}
-          onSelectTab={setCurrentTab}
-          onOpenAdminAuth={() => setAdminAuthOpen(true)}
-          onReplayIntro={handleReplayIntro}
-        />
-      </div>
-
-      {/* Cinematic Intro Entrance Overlay */}
-      {showIntro && (
-        <IntroEntrance
-          onEnter={handleIntroComplete}
-          siteName="TURVEX"
-          tagline={settings.heroSubhead || "HEAVYWEIGHT STREETWEAR & CAPSULE DROP ARCHIVE"}
-        />
-      )}
-
-      {/* Modals & Overlays */}
-      <DetailModal
-        target={detailTarget}
-        allSongs={songs}
-        allAlbums={albums}
-        onClose={() => setDetailTarget(null)}
-        onSelectOtherItem={handleSelectOtherDetailItem}
+      {/* 3. Luxury Dark Minimal Footer */}
+      <Footer
+        settings={settings}
+        onSelectTab={handleTabChange}
+        onOpenAdminAuth={() => setAdminAuthOpen(true)}
       />
 
-      <LightboxModal
-        item={lightboxItem}
-        items={gallery}
-        onClose={() => setLightboxItem(null)}
-        onNavigate={item => setLightboxItem(item)}
+      {/* 4. Modals & Overlays */}
+      <CartDrawer
+        onProceedToCheckout={() => handleTabChange('checkout')}
+        onExploreProducts={() => handleTabChange('shop')}
+      />
+
+      <ProductDetailModal
+        product={selectedProduct}
+        allProducts={merch}
+        onClose={() => setSelectedProduct(null)}
+        onSelectOtherProduct={p => setSelectedProduct(p)}
+      />
+
+      <SearchModal
+        isOpen={searchModalOpen}
+        products={merch}
+        onClose={() => setSearchModalOpen(false)}
+        onSelectProduct={p => setSelectedProduct(p)}
       />
 
       <AdminAuthModal
@@ -267,7 +217,9 @@ const MainApp: React.FC = () => {
 export default function App() {
   return (
     <AuthProvider>
-      <MainApp />
+      <CartProvider>
+        <MainApp />
+      </CartProvider>
     </AuthProvider>
   );
 }
