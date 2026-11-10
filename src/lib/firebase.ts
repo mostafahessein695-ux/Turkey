@@ -2,6 +2,8 @@ import { initializeApp } from 'firebase/app';
 import { 
   getAuth, 
   signInWithPopup, 
+  signInWithRedirect,
+  getRedirectResult,
   GoogleAuthProvider, 
   signOut as fbSignOut, 
   onAuthStateChanged,
@@ -32,6 +34,7 @@ export const db = (targetDbId && targetDbId !== '(default)')
   ? getFirestore(app, targetDbId) 
   : getFirestore(app);
 export const auth = getAuth(app);
+export { signInWithRedirect, getRedirectResult };
 
 export const ADMIN_EMAIL = 'mostafahessein695@gmail.com';
 export const ADMIN_SECRET_KEY = (import.meta.env.VITE_ADMIN_SECRET_KEY as string) || 'rogy';
@@ -115,7 +118,13 @@ export async function loginWithGoogle() {
   try {
     const result = await signInWithPopup(auth, googleProvider);
     return result.user;
-  } catch (err) {
+  } catch (err: unknown) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    if (errMsg.includes('auth/popup-blocked') || errMsg.includes('auth/cancelled-popup-request')) {
+      console.warn('Popup blocked by browser, trying redirect fallback...');
+      await signInWithRedirect(auth, googleProvider);
+      return null;
+    }
     console.error('Google Sign In failed:', err);
     throw err;
   }

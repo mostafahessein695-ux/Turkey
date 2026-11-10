@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { X, Lock, ShieldCheck, AlertCircle, Key, Eye, EyeOff, ArrowRight } from 'lucide-react';
+import { X, Lock, ShieldCheck, AlertCircle, Key, Eye, EyeOff, ArrowRight, Copy, Check } from 'lucide-react';
 
 interface AdminAuthModalProps {
   isOpen: boolean;
@@ -21,6 +21,9 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
   const [googleError, setGoogleError] = useState<string | null>(null);
   const [loadingGoogle, setLoadingGoogle] = useState(false);
   const [usePasswordMethod, setUsePasswordMethod] = useState(false);
+  const [copiedDomain, setCopiedDomain] = useState(false);
+
+  const currentHost = typeof window !== 'undefined' ? window.location.hostname : '';
 
   if (!isOpen) return null;
 
@@ -49,7 +52,8 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
     try {
       const user = await loginWithGoogle();
       if (!user) {
-        throw new Error('Authentication process was cancelled.');
+        // Redirect flow in progress
+        return;
       }
       if (user.email?.toLowerCase() !== adminEmail.toLowerCase()) {
         setGoogleError(`Access denied. ${user.email} is not authorized. Super Admin privileges are restricted exclusively to ${adminEmail}.`);
@@ -60,11 +64,18 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : String(err);
       if (errMsg.includes('auth/unauthorized-domain')) {
-        setGoogleError('Domain not configured in Firebase console. Please use Admin Password below.');
+        setGoogleError(
+          `Domain "${currentHost}" is not authorized by Firebase Auth yet. Outside AI Studio, Google requires adding this domain to Firebase Console > Authentication > Settings > Authorized Domains. You can immediately log in using the Admin Password below.`
+        );
+        setUsePasswordMethod(true);
       } else if (errMsg.includes('auth/popup-closed-by-user')) {
-        setGoogleError('Sign-in popup was closed before completion.');
+        setGoogleError('Sign-in popup was closed before completion. You can also sign in with your Admin Password below.');
+      } else if (errMsg.includes('auth/popup-blocked')) {
+        setGoogleError('Popup was blocked by your browser. Please allow popups or use your Admin Password below.');
+        setUsePasswordMethod(true);
       } else {
-        setGoogleError(errMsg || 'Google authentication failed.');
+        setGoogleError(errMsg || 'Google authentication failed. Please use your Admin Password below.');
+        setUsePasswordMethod(true);
       }
     } finally {
       setLoadingGoogle(false);
@@ -112,9 +123,41 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
         {/* Primary Method: Google Super Admin Login */}
         <div className="space-y-4">
           {googleError && (
-            <div className="p-3 bg-[#1A0E0E] border border-[#4A1E1E] flex items-start gap-2.5 text-xs text-[#FF9999]">
-              <AlertCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#FF6666] shrink-0 mt-0.5" />
-              <span className="leading-relaxed font-sans">{googleError}</span>
+            <div className="p-3 bg-[#1A0E0E] border border-[#4A1E1E] space-y-2.5 text-xs text-[#FF9999]">
+              <div className="flex items-start gap-2.5">
+                <AlertCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#FF6666] shrink-0 mt-0.5" />
+                <span className="leading-relaxed font-sans">{googleError}</span>
+              </div>
+
+              {currentHost && (
+                <div className="pt-2 border-t border-[#3A1818] flex items-center justify-between gap-2">
+                  <div className="truncate font-mono text-[10px] text-[#A1A1A1]">
+                    Domain: <span className="text-white select-all">{currentHost}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(currentHost);
+                      setCopiedDomain(true);
+                      setTimeout(() => setCopiedDomain(false), 2500);
+                    }}
+                    className="px-2.5 py-1 bg-[#2B1414] hover:bg-[#3D1A1A] border border-[#552222] hover:border-[#883333] text-[10px] text-white font-mono uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0"
+                    title="Copy this domain to add into Firebase Console Authorized Domains"
+                  >
+                    {copiedDomain ? (
+                      <>
+                        <Check className="w-3 h-3 text-emerald-400" />
+                        <span>Copied</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3 h-3 text-[#A1A1A1]" />
+                        <span>Copy Domain</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -151,7 +194,9 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
             <div className="w-full border-t border-[#1F1F1F]" />
           </div>
           <div className="relative flex justify-center text-[10px] uppercase font-mono">
-            <span className="bg-[#0B0B0B] px-2 text-[#707070]">Or Admin Key</span>
+            <span className="bg-[#0B0B0B] px-2 text-[#707070]">
+              {usePasswordMethod ? 'Direct Administrator Key' : 'Or Admin Password'}
+            </span>
           </div>
         </div>
 
@@ -162,76 +207,86 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
             className="w-full py-2.5 px-3 bg-[#111111] hover:bg-[#161616] border border-[#2B2B2B] hover:border-[#3D3D3D] text-[#CCCCCC] text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-colors cursor-pointer font-mono"
           >
             <Key className="w-3.5 h-3.5 text-[#888888]" />
-            <span>Sign In with Password Key</span>
+            <span>Sign In with Password</span>
           </button>
         ) : (
-          <form onSubmit={handlePasswordLogin} className="space-y-4">
-            {error && (
-              <div className="p-3 bg-[#1A0E0E] border border-[#4A1E1E] flex items-start gap-2.5 text-xs text-[#FF9999]">
-                <AlertCircle className="w-3.5 h-3.5 text-[#FF6666] shrink-0 mt-0.5" />
-                <span className="leading-relaxed font-sans">{error}</span>
-              </div>
-            )}
+          <div className="space-y-4">
+            <form onSubmit={handlePasswordLogin} className="space-y-4">
+              {error && (
+                <div className="p-3 bg-[#1A0E0E] border border-[#4A1E1E] flex items-start gap-2.5 text-xs text-[#FF9999]">
+                  <AlertCircle className="w-3.5 h-3.5 text-[#FF6666] shrink-0 mt-0.5" />
+                  <span className="leading-relaxed font-sans">{error}</span>
+                </div>
+              )}
 
-            {/* Username */}
-            <div className="space-y-1">
-              <label className="text-[11px] uppercase tracking-wider text-[#888888] block font-mono">
-                Admin Username
-              </label>
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="w-full px-3 py-2 bg-[#050505] border border-[#2A2A2A] focus:border-white text-xs text-white placeholder-[#555555] font-mono outline-none transition-colors"
-                placeholder="admin"
-              />
-            </div>
-
-            {/* Password */}
-            <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <label className="text-[11px] uppercase tracking-wider text-[#CCCCCC] block font-mono font-semibold">
-                  Password
+              {/* Username */}
+              <div className="space-y-1">
+                <label className="text-[11px] uppercase tracking-wider text-[#888888] block font-mono">
+                  Admin Username
                 </label>
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="text-[11px] text-[#707070] hover:text-white flex items-center gap-1 transition-colors cursor-pointer"
-                >
-                  {showPassword ? (
-                    <>
-                      <EyeOff className="w-3 h-3" />
-                      <span>Hide</span>
-                    </>
-                  ) : (
-                    <>
-                      <Eye className="w-3 h-3" />
-                      <span>Show</span>
-                    </>
-                  )}
-                </button>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="w-full px-3 py-2 bg-[#050505] border border-[#2A2A2A] focus:border-white text-xs text-white placeholder-[#555555] font-mono outline-none transition-colors"
+                  placeholder="admin"
+                />
               </div>
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  if (error) setError(null);
-                }}
-                placeholder="Enter password"
-                autoFocus
-                className="w-full px-3 py-2 bg-[#050505] border border-[#333333] focus:border-white text-xs text-white placeholder-[#555555] font-mono outline-none transition-colors"
-              />
-            </div>
+
+              {/* Password */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] uppercase tracking-wider text-[#CCCCCC] block font-mono font-semibold">
+                    Password
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="text-[11px] text-[#707070] hover:text-white flex items-center gap-1 transition-colors cursor-pointer"
+                  >
+                    {showPassword ? (
+                      <>
+                        <EyeOff className="w-3 h-3" />
+                        <span>Hide</span>
+                      </>
+                    ) : (
+                      <>
+                        <Eye className="w-3 h-3" />
+                        <span>Show</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (error) setError(null);
+                  }}
+                  placeholder="Enter password"
+                  autoFocus
+                  className="w-full px-3 py-2 bg-[#050505] border border-[#333333] focus:border-white text-xs text-white placeholder-[#555555] font-mono outline-none transition-colors"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-2.5 px-4 bg-white/10 hover:bg-white/20 border border-white/25 text-white text-xs font-bold tracking-widest uppercase flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md"
+              >
+                <span>Authenticate Key</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </form>
 
             <button
-              type="submit"
-              className="w-full py-2.5 px-4 bg-white/10 hover:bg-white/20 border border-white/25 text-white text-xs font-bold tracking-widest uppercase flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md"
+              type="button"
+              onClick={() => setUsePasswordMethod(false)}
+              className="w-full text-center text-[10px] uppercase font-mono text-[#707070] hover:text-white transition-colors cursor-pointer pt-1"
             >
-              <span>Authenticate Key</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              Hide Password Form
             </button>
-          </form>
+          </div>
         )}
 
         <div className="pt-5 text-[10px] text-[#555555] text-center font-mono">

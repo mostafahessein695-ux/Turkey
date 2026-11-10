@@ -7,14 +7,15 @@ import {
   isUserAdmin, 
   verifyAndProvisionServerAdmin, 
   verifyAdminSecret,
-  ADMIN_EMAIL 
+  ADMIN_EMAIL,
+  getRedirectResult 
 } from '../lib/firebase';
 
 interface AuthContextType {
   user: User | null;
   isAdmin: boolean;
   loading: boolean;
-  loginWithGoogle: () => Promise<User>;
+  loginWithGoogle: () => Promise<User | null>;
   loginWithSecret: (secret: string) => boolean;
   logout: () => Promise<void>;
   adminEmail: string;
@@ -50,6 +51,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isVerifyingAdmin, setIsVerifyingAdmin] = useState<boolean>(false);
 
   useEffect(() => {
+    // Process redirect result if browser was redirected for OAuth
+    getRedirectResult(auth).then(async result => {
+      if (result?.user && result.user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+        setIsVerifyingAdmin(true);
+        const isVerifiedAdmin = await verifyAndProvisionServerAdmin(result.user);
+        if (isVerifiedAdmin) {
+          try {
+            sessionStorage.setItem('turvex_admin_authenticated', 'true');
+            localStorage.setItem('turvex_admin_authenticated', 'true');
+            sessionStorage.setItem('myworld_admin_authenticated', 'true');
+            localStorage.setItem('myworld_admin_authenticated', 'true');
+          } catch {}
+          setIsAdmin(true);
+        }
+        setIsVerifyingAdmin(false);
+      }
+    }).catch(err => {
+      console.warn('Redirect auth result check:', err);
+    });
+
     const unsubscribe = onAuthStateChanged(auth, async currentUser => {
       setUser(currentUser);
       if (currentUser && currentUser.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
