@@ -116,6 +116,18 @@ export interface Quote {
   createdAt: string;
 }
 
+export interface WebsiteImages {
+  homeHeroImage?: string;
+  capsuleHeavyweightImage?: string;
+  capsuleAcidWashImage?: string;
+  capsuleTacticalImage?: string;
+  capsuleHeadwearImage?: string;
+  brandStoryImage?: string;
+  aboutHeroImage?: string;
+  promoBannerImage?: string;
+  customImages?: Record<string, string>;
+}
+
 export interface SiteSettings {
   id?: string;
   heroHeadline: string;
@@ -129,6 +141,7 @@ export interface SiteSettings {
     handle: string;
   }[];
   featuredCollectionId?: string;
+  websiteImages?: WebsiteImages;
   updatedAt?: string;
 }
 

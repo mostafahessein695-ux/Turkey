@@ -121,6 +121,7 @@ const MainApp: React.FC = () => {
             {currentTab === 'collections' && (
               <CollectionsPage
                 products={merch}
+                settings={settings}
                 onNavigateToShopWithCategory={handleNavigateToShopWithCategory}
                 onOpenProductDetail={item => setSelectedProduct(item)}
               />

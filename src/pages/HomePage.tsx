@@ -49,7 +49,7 @@ export const HomePage: React.FC<HomePageProps> = ({
         {/* Cinematic Background Image with Dark Vignette */}
         <div className="absolute inset-0 -z-10 bg-[#050505]">
           <img
-            src="https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=2000&q=85"
+            src={settings?.websiteImages?.homeHeroImage || settings?.heroImage || "https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=2000&q=85"}
             alt="TURVEX Campaign"
             className="w-full h-full object-cover object-center filter grayscale contrast-125 opacity-40 scale-105 animate-in fade-in zoom-in-105 duration-1000"
           />
@@ -171,7 +171,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             className="group relative aspect-[4/5] rounded-3xl overflow-hidden liquid-glass-card cursor-pointer"
           >
             <img
-              src="https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=1200&q=85"
+              src={settings?.websiteImages?.capsuleHeavyweightImage || "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=1200&q=85"}
               alt="Heavyweight Hoodie Series"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 filter grayscale"
             />
@@ -199,7 +199,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             className="group relative aspect-[4/5] rounded-3xl overflow-hidden liquid-glass-card cursor-pointer"
           >
             <img
-              src="https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=1200&q=85"
+              src={settings?.websiteImages?.capsuleAcidWashImage || "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=1200&q=85"}
               alt="Acid Wash Tees"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 filter grayscale"
             />
@@ -227,7 +227,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             className="group relative aspect-[4/5] rounded-3xl overflow-hidden liquid-glass-card cursor-pointer"
           >
             <img
-              src="https://images.unsplash.com/photo-1552902865-b72c031ac5ea?auto=format&fit=crop&w=1200&q=85"
+              src={settings?.websiteImages?.capsuleTacticalImage || "https://images.unsplash.com/photo-1552902865-b72c031ac5ea?auto=format&fit=crop&w=1200&q=85"}
               alt="Tactical Sweatpants"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 filter grayscale"
             />
@@ -309,7 +309,7 @@ export const HomePage: React.FC<HomePageProps> = ({
 
             <div className="lg:col-span-5 relative aspect-[4/3] rounded-2xl overflow-hidden border border-white/10">
               <img
-                src="https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=1200&q=85"
+                src={settings?.websiteImages?.brandStoryImage || "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=1200&q=85"}
                 alt="TURVEX Atelier"
                 className="w-full h-full object-cover filter grayscale contrast-125"
               />

@@ -137,9 +137,9 @@ export const MerchPage: React.FC<MerchPageProps> = ({ merch }) => {
       `Hello TURVEX Store!`,
       `I would like to order: ${item.name}`,
       `---------------------------------`,
-      `Color (اللون): ${color}`,
-      `Size (المقاس): ${size}`,
-      `Price (السعر): ${formatPrice(item.price, item.currency)}`,
+      `Color: ${color}`,
+      `Size: ${size}`,
+      `Price: ${formatPrice(item.price, item.currency)}`,
       `---------------------------------`,
       `Please confirm stock availability and shipping.`
     ];
@@ -657,7 +657,7 @@ export const MerchPage: React.FC<MerchPageProps> = ({ merch }) => {
                 {modalItem.colors && modalItem.colors.length > 0 && (
                   <div className="space-y-3 border-t border-[#1F1F1F] pt-4">
                     <div className="flex items-center justify-between text-xs font-mono">
-                      <span className="text-[#888888] uppercase">CHOOSE COLOR / اللون</span>
+                      <span className="text-[#888888] uppercase tracking-wider">CHOOSE COLOR</span>
                       <span className="text-emerald-400 font-bold uppercase">
                         Selected: {selectedColors[modalItem.id] || modalItem.colors[0]}
                       </span>
@@ -691,7 +691,7 @@ export const MerchPage: React.FC<MerchPageProps> = ({ merch }) => {
                 {modalItem.sizes && modalItem.sizes.length > 0 && (
                   <div className="space-y-3 border-t border-[#1F1F1F] pt-4">
                     <div className="flex items-center justify-between text-xs font-mono">
-                      <span className="text-[#888888] uppercase">AVAILABLE SIZES / المقاس</span>
+                      <span className="text-[#888888] uppercase tracking-wider">AVAILABLE SIZES</span>
                       <div className="flex items-center gap-3">
                         <span className="text-white font-bold uppercase">
                           Selected: {selectedSizes[modalItem.id] || modalItem.sizes[0]}

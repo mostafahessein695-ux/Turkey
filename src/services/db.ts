@@ -1455,30 +1455,72 @@ const normalizeMerchItem = (item: MerchItem): MerchItem => {
   };
 };
 
+const DELETED_MERCH_KEY = 'turvex_deleted_product_ids_v1';
+
+// Read deleted product IDs from localStorage cache
+function getCachedDeletedIds(): Set<string> {
+  try {
+    const raw = localStorage.getItem(DELETED_MERCH_KEY);
+    if (raw) {
+      const arr = JSON.parse(raw);
+      if (Array.isArray(arr)) return new Set(arr);
+    }
+  } catch {}
+  return new Set();
+}
+
+function saveCachedDeletedIds(ids: Set<string>) {
+  try {
+    localStorage.setItem(DELETED_MERCH_KEY, JSON.stringify(Array.from(ids)));
+  } catch {}
+}
+
+export async function fetchDeletedProductIds(): Promise<Set<string>> {
+  const cached = getCachedDeletedIds();
+  try {
+    const snap = await getDoc(doc(db, SETTINGS_COLL, 'deleted_catalog'));
+    if (snap.exists()) {
+      const serverIds: string[] = snap.data()?.deletedIds || [];
+      serverIds.forEach(id => cached.add(id));
+      saveCachedDeletedIds(cached);
+    }
+  } catch (err) {
+    console.warn('Could not fetch deleted catalog IDs from Firestore, using local cache:', err);
+  }
+  return cached;
+}
+
 export async function fetchPublishedMerch(): Promise<MerchItem[]> {
+  const deletedIds = await fetchDeletedProductIds();
   try {
     const q = query(collection(db, MERCH_COLL), where('isPublished', '==', true));
     const snap = await getDocs(q);
     if (snap.docs.length > 0) {
-      return snap.docs.map(d => normalizeMerchItem({ id: d.id, ...d.data() } as MerchItem));
+      return snap.docs
+        .map(d => normalizeMerchItem({ id: d.id, ...d.data() } as MerchItem))
+        .filter(item => !deletedIds.has(item.id));
     }
-    return DEFAULT_MERCH.map(normalizeMerchItem);
+    // If database is empty, return default items excluding any deleted
+    return DEFAULT_MERCH.map(normalizeMerchItem).filter(item => !deletedIds.has(item.id));
   } catch (err) {
     console.warn('Using curated starter merch:', err);
-    return DEFAULT_MERCH.map(normalizeMerchItem);
+    return DEFAULT_MERCH.map(normalizeMerchItem).filter(item => !deletedIds.has(item.id));
   }
 }
 
 export async function fetchAllMerch(): Promise<MerchItem[]> {
+  const deletedIds = await fetchDeletedProductIds();
   try {
     const snap = await getDocs(collection(db, MERCH_COLL));
     if (snap.docs.length > 0) {
-      return snap.docs.map(d => normalizeMerchItem({ id: d.id, ...d.data() } as MerchItem));
+      return snap.docs
+        .map(d => normalizeMerchItem({ id: d.id, ...d.data() } as MerchItem))
+        .filter(item => !deletedIds.has(item.id));
     }
-    return DEFAULT_MERCH.map(normalizeMerchItem);
+    return DEFAULT_MERCH.map(normalizeMerchItem).filter(item => !deletedIds.has(item.id));
   } catch (err) {
     console.warn('Using curated starter merch:', err);
-    return DEFAULT_MERCH.map(normalizeMerchItem);
+    return DEFAULT_MERCH.map(normalizeMerchItem).filter(item => !deletedIds.has(item.id));
   }
 }
 
@@ -1515,6 +1557,18 @@ export async function saveMerchItem(item: Partial<MerchItem> & { id?: string }):
 
   try {
     await setDoc(doc(db, MERCH_COLL, merchId), payload);
+    // If it was previously marked deleted, unmark it
+    const deleted = getCachedDeletedIds();
+    if (deleted.has(merchId)) {
+      deleted.delete(merchId);
+      saveCachedDeletedIds(deleted);
+      try {
+        await setDoc(doc(db, SETTINGS_COLL, 'deleted_catalog'), {
+          deletedIds: Array.from(deleted),
+          updatedAt: now,
+        }, { merge: true });
+      } catch {}
+    }
     return merchId;
   } catch (err) {
     handleFirestoreError(err, OperationType.WRITE, `${MERCH_COLL}/${merchId}`);
@@ -1523,10 +1577,107 @@ export async function saveMerchItem(item: Partial<MerchItem> & { id?: string }):
 }
 
 export async function deleteMerchItem(id: string): Promise<void> {
+  const now = new Date().toISOString();
+  // 1. Immediately cache the deleted ID locally so the UI updates instantly
+  const deleted = getCachedDeletedIds();
+  deleted.add(id);
+  saveCachedDeletedIds(deleted);
+
   try {
+    // 2. Delete document from Firestore
     await deleteDoc(doc(db, MERCH_COLL, id));
   } catch (err) {
-    handleFirestoreError(err, OperationType.DELETE, `${MERCH_COLL}/${id}`);
+    console.warn(`Firestore document ${id} might not exist yet or error:`, err);
+  }
+
+  // 3. Persist deleted ID into Firestore deleted_catalog collection
+  try {
+    await setDoc(doc(db, SETTINGS_COLL, 'deleted_catalog'), {
+      deletedIds: Array.from(deleted),
+      updatedAt: now,
+    }, { merge: true });
+  } catch (err) {
+    console.warn('Could not update remote deleted_catalog:', err);
+  }
+
+  // 4. Remove this product from the shopping cart if present
+  try {
+    const rawCart = localStorage.getItem('turvex_cart_items_v1');
+    if (rawCart) {
+      const items = JSON.parse(rawCart);
+      if (Array.isArray(items)) {
+        const filtered = items.filter((ci: { product?: { id?: string } }) => ci.product?.id !== id);
+        localStorage.setItem('turvex_cart_items_v1', JSON.stringify(filtered));
+        window.dispatchEvent(new Event('turvex_cart_updated'));
+      }
+    }
+  } catch {}
+}
+
+// Update multiple product images or reorder them
+export async function updateProductImages(
+  productId: string,
+  images: string[],
+  coverImage?: string
+): Promise<void> {
+  const now = new Date().toISOString();
+  const mainImage = coverImage || (images.length > 0 ? images[0] : '');
+  try {
+    await updateDoc(doc(db, MERCH_COLL, productId), {
+      images,
+      coverImage: mainImage,
+      updatedAt: now,
+    });
+  } catch (err) {
+    handleFirestoreError(err, OperationType.UPDATE, `${MERCH_COLL}/${productId}`);
+    throw err;
+  }
+}
+
+// Delete a single image from a product
+export async function deleteProductImage(
+  productId: string,
+  imageToDelete: string
+): Promise<{ images: string[]; coverImage: string }> {
+  const now = new Date().toISOString();
+  const snap = await getDoc(doc(db, MERCH_COLL, productId));
+  if (!snap.exists()) {
+    throw new Error('Product not found in database');
+  }
+  const data = snap.data() as MerchItem;
+  const currentImages = Array.isArray(data.images) ? data.images : [data.coverImage];
+  const newImages = currentImages.filter(img => img !== imageToDelete);
+  const newCover = (data.coverImage === imageToDelete)
+    ? (newImages[0] || '')
+    : data.coverImage;
+
+  await updateDoc(doc(db, MERCH_COLL, productId), {
+    images: newImages,
+    coverImage: newCover,
+    updatedAt: now,
+  });
+
+  return { images: newImages, coverImage: newCover };
+}
+
+// Save or update custom website images (Hero, banners, capsule campaign images)
+export async function updateWebsiteImages(images: Partial<SiteSettings['websiteImages']>): Promise<SiteSettings> {
+  const now = new Date().toISOString();
+  const current = await fetchSiteSettings();
+  const mergedWebsiteImages = {
+    ...(current.websiteImages || {}),
+    ...images,
+  };
+  const payload = {
+    ...current,
+    websiteImages: mergedWebsiteImages,
+    updatedAt: now,
+  };
+  try {
+    await setDoc(doc(db, SETTINGS_COLL, 'global'), payload, { merge: true });
+    return payload;
+  } catch (err) {
+    handleFirestoreError(err, OperationType.WRITE, `${SETTINGS_COLL}/global`);
     throw err;
   }
 }

@@ -21,31 +21,31 @@ interface CheckoutPageProps {
 }
 
 const EGYPT_GOVERNORATES = [
-  'Cairo (القاهرة)',
-  'Giza (الجيزة)',
-  'Alexandria (الإسكندرية)',
-  'Qalyubia (القليوبية)',
-  'Sharqia (الشرقية)',
-  'Dakahlia (الدقهلية)',
-  'Gharbia (الغربية)',
-  'Monufia (المنوفية)',
-  'Beheira (البحيرة)',
-  'Kafr El Sheikh (كفر الشيخ)',
-  'Damietta (دمياط)',
-  'Port Said (بورسعيد)',
-  'Ismailia (الإسماعيلية)',
-  'Suez (السويس)',
-  'Red Sea (البحر الأحمر - الغردقة)',
-  'South Sinai (شرم الشيخ / دهب)',
-  'Fayoum (الفيوم)',
-  'Beni Suef (بني سويف)',
-  'Minya (المنيا)',
-  'Asyut (أسيوط)',
-  'Sohag (سوهاج)',
-  'Qena (قنا)',
-  'Luxor (الأقصر)',
-  'Aswan (أسوان)',
-  'Other / International'
+  'Cairo',
+  'Giza',
+  'Alexandria',
+  'Qalyubia',
+  'Sharqia',
+  'Dakahlia',
+  'Gharbia',
+  'Monufia',
+  'Beheira',
+  'Kafr El Sheikh',
+  'Damietta',
+  'Port Said',
+  'Ismailia',
+  'Suez',
+  'Red Sea (Hurghada / El Gouna)',
+  'South Sinai (Sharm El Sheikh / Dahab)',
+  'Fayoum',
+  'Beni Suef',
+  'Minya',
+  'Asyut',
+  'Sohag',
+  'Qena',
+  'Luxor',
+  'Aswan',
+  'Other / International Delivery'
 ];
 
 export const CheckoutPage: React.FC<CheckoutPageProps> = ({
@@ -280,7 +280,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
               {/* Full Name */}
               <div className="space-y-1.5">
                 <label className="text-[11px] uppercase tracking-wider text-[#CCCCCC] font-mono block">
-                  Full Name / الاسم بالكامل <span className="text-red-400">*</span>
+                  Full Name <span className="text-red-400">*</span>
                 </label>
                 <input
                   type="text"
@@ -296,7 +296,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-[11px] uppercase tracking-wider text-[#CCCCCC] font-mono block">
-                    Phone / رقم الهاتف <span className="text-red-400">*</span>
+                    Phone Number <span className="text-red-400">*</span>
                   </label>
                   <input
                     type="tel"
@@ -326,7 +326,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-[11px] uppercase tracking-wider text-[#CCCCCC] font-mono block">
-                    Governorate / المحافظة <span className="text-red-400">*</span>
+                    Governorate <span className="text-red-400">*</span>
                   </label>
                   <select
                     value={governorate}
@@ -343,7 +343,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
 
                 <div className="space-y-1.5">
                   <label className="text-[11px] uppercase tracking-wider text-[#CCCCCC] font-mono block">
-                    City / المنطقة / الحي <span className="text-red-400">*</span>
+                    City / District <span className="text-red-400">*</span>
                   </label>
                   <input
                     type="text"
@@ -359,7 +359,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
               {/* Street Address */}
               <div className="space-y-1.5">
                 <label className="text-[11px] uppercase tracking-wider text-[#CCCCCC] font-mono block">
-                  Detailed Address / العنوان بالتفصيل <span className="text-red-400">*</span>
+                  Detailed Address <span className="text-red-400">*</span>
                 </label>
                 <input
                   type="text"
@@ -374,13 +374,13 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
               {/* Notes */}
               <div className="space-y-1.5">
                 <label className="text-[11px] uppercase tracking-wider text-[#A1A1A1] font-mono block">
-                  Delivery Notes / ملاحظات التوصيل (Optional)
+                  Delivery Notes (Optional)
                 </label>
                 <textarea
                   rows={2}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Special instructions for the courier, preferred timing, etc."
+                  placeholder="Special instructions for courier, preferred delivery window, etc."
                   className="w-full px-4 py-2.5 bg-black/60 border border-white/15 focus:border-white rounded-xl text-xs text-white placeholder-[#555555] outline-none transition-colors resize-none"
                 />
               </div>
@@ -388,7 +388,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
               {/* Payment Method Selector */}
               <div className="space-y-2 pt-3 border-t border-white/10">
                 <label className="text-[11px] uppercase tracking-wider text-[#CCCCCC] font-mono block">
-                  Payment Method / طريقة الدفع
+                  Payment Method
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div
@@ -404,7 +404,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                       <p className="text-xs font-bold uppercase tracking-wider text-white">
                         Cash on Delivery
                       </p>
-                      <p className="text-[10px] text-[#A1A1A1]">الدفع كاش عند الاستلام</p>
+                      <p className="text-[10px] text-[#A1A1A1]">Pay when your order arrives</p>
                     </div>
                   </div>
 
@@ -421,7 +421,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                       <p className="text-xs font-bold uppercase tracking-wider text-white">
                         InstaPay / Wallet
                       </p>
-                      <p className="text-[10px] text-[#A1A1A1]">انستاباي أو المحافظ الإلكترونية</p>
+                      <p className="text-[10px] text-[#A1A1A1]">Direct bank transfer or mobile wallet</p>
                     </div>
                   </div>
                 </div>

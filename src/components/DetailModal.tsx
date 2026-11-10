@@ -554,9 +554,9 @@ export const DetailModal: React.FC<DetailModalProps> = ({
               `Hello TURVEX Store!`,
               `I would like to order: ${item.name}`,
               `---------------------------------`,
-              `Color (اللون): ${selectedColor}`,
-              `Size (المقاس): ${selectedSize}`,
-              `Price (السعر): ${formatPrice(item.price, item.currency)}`,
+              `Color: ${selectedColor}`,
+              `Size: ${selectedSize}`,
+              `Price: ${formatPrice(item.price, item.currency)}`,
               `---------------------------------`,
               `Please confirm stock availability and shipping.`
             ];
@@ -689,7 +689,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                   {/* Colors */}
                   <div className="space-y-2 border-t border-[#1F1F1F] pt-4">
                     <div className="flex items-center justify-between text-xs font-mono text-[#888888]">
-                      <span className="uppercase">CHOOSE COLOR / اختر اللون</span>
+                      <span className="uppercase tracking-wider">CHOOSE COLOR</span>
                       <span className="text-emerald-400 font-bold">{selectedColor}</span>
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -719,7 +719,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({
                   {item.sizes && item.sizes.length > 0 && (
                     <div className="space-y-2 border-t border-[#1F1F1F] pt-4">
                       <div className="flex items-center justify-between text-xs font-mono text-[#888888]">
-                        <span>SELECT SIZE / المقاس</span>
+                        <span className="uppercase tracking-wider">SELECT SIZE</span>
                         <span className="text-white font-bold">{selectedSize}</span>
                       </div>
                       <div className="flex flex-wrap gap-2">

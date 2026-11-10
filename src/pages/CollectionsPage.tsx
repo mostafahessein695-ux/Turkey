@@ -1,9 +1,9 @@
-import React from 'react';
-import { MerchItem } from '../types';
+import { MerchItem, SiteSettings } from '../types';
 import { ArrowRight, Sparkles, Layers } from 'lucide-react';
 
 interface CollectionsPageProps {
   products: MerchItem[];
+  settings?: SiteSettings;
   onNavigateToShopWithCategory?: (category: string) => void;
   onOpenProductDetail: (product: MerchItem) => void;
 }
@@ -19,7 +19,7 @@ interface StreetwearCollection {
   piecesCount: number;
 }
 
-const CAPSULES: StreetwearCollection[] = [
+const DEFAULT_CAPSULES: StreetwearCollection[] = [
   {
     id: 'capsule_heavyweight',
     title: 'Capsule 01: The Heavyweight Foundation',
@@ -64,9 +64,22 @@ const CAPSULES: StreetwearCollection[] = [
 
 export const CollectionsPage: React.FC<CollectionsPageProps> = ({
   products,
+  settings,
   onNavigateToShopWithCategory,
   onOpenProductDetail,
 }) => {
+  // Dynamically resolve hero images from settings.websiteImages if customized
+  const capsules = DEFAULT_CAPSULES.map(c => {
+    let customImage = '';
+    if (c.id === 'capsule_heavyweight') customImage = settings?.websiteImages?.capsuleHeavyweightImage || '';
+    if (c.id === 'capsule_acid_wash') customImage = settings?.websiteImages?.capsuleAcidWashImage || '';
+    if (c.id === 'capsule_tactical') customImage = settings?.websiteImages?.capsuleTacticalImage || '';
+    if (c.id === 'capsule_monochrome') customImage = settings?.websiteImages?.capsuleHeadwearImage || '';
+    return {
+      ...c,
+      heroImage: customImage || c.heroImage,
+    };
+  });
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-28 sm:py-36 space-y-16">
       {/* Header */}
@@ -84,7 +97,7 @@ export const CollectionsPage: React.FC<CollectionsPageProps> = ({
 
       {/* Capsules Stack */}
       <div className="space-y-12">
-        {CAPSULES.map((capsule, idx) => {
+        {capsules.map((capsule, idx) => {
           // Find matching products in this category
           const matchingProducts = products
             .filter(p => p.category.toLowerCase() === capsule.categoryFilter.toLowerCase())

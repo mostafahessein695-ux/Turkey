@@ -112,27 +112,27 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
           </div>
 
           {/* Action Icons (Search, Bag, Mobile Trigger) */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3">
             {/* Search Trigger */}
             <button
               onClick={onOpenSearch}
-              className="p-2 text-[#A1A1A1] hover:text-white hover:bg-white/10 rounded-full transition-colors cursor-pointer"
+              className="p-1.5 sm:p-2 text-[#A1A1A1] hover:text-white hover:bg-white/10 rounded-full transition-colors cursor-pointer"
               title="Search products"
               aria-label="Search"
             >
-              <Search className="w-4 h-4" />
+              <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
 
             {/* Shopping Bag with dynamic counter */}
             <button
               onClick={() => setIsCartOpen(true)}
-              className="relative p-2 text-[#A1A1A1] hover:text-white hover:bg-white/10 rounded-full transition-colors cursor-pointer group"
+              className="relative p-1.5 sm:p-2 text-[#A1A1A1] hover:text-white hover:bg-white/10 rounded-full transition-colors cursor-pointer group"
               title="Shopping Bag"
               aria-label="Shopping Cart"
             >
-              <ShoppingBag className="w-4 h-4 group-hover:scale-105 transition-transform" />
+              <ShoppingBag className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover:scale-105 transition-transform" />
               {totalCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-white text-[#050505] text-[10px] font-bold flex items-center justify-center animate-in zoom-in-50 duration-200">
+                <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-white text-[#050505] text-[9px] sm:text-[10px] font-bold flex items-center justify-center animate-in zoom-in-50 duration-200">
                   {totalCount > 9 ? '9+' : totalCount}
                 </span>
               )}
@@ -153,10 +153,10 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
             {/* Mobile Hamburger Drawer Trigger */}
             <button
               onClick={() => setMobileMenuOpen(true)}
-              className="md:hidden p-2 text-[#A1A1A1] hover:text-white hover:bg-white/10 rounded-full transition-colors cursor-pointer"
+              className="md:hidden p-1.5 sm:p-2 text-[#A1A1A1] hover:text-white hover:bg-white/10 rounded-full transition-colors cursor-pointer"
               aria-label="Toggle navigation"
             >
-              <Menu className="w-4 h-4" />
+              <Menu className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
           </div>
         </nav>

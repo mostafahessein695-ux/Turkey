@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { 
   MerchItem,
   SiteSettings, 
-  CustomerOrder
+  CustomerOrder,
+  WebsiteImages
 } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { 
@@ -11,7 +12,10 @@ import {
   saveSiteSettings,
   fetchAllOrders,
   updateOrderStatus,
-  deleteOrder
+  deleteOrder,
+  updateProductImages,
+  deleteProductImage,
+  updateWebsiteImages
 } from '../services/db';
 import { 
   Plus, 
@@ -38,7 +42,15 @@ import {
   Phone,
   Mail,
   User,
-  Search
+  Search,
+  Image as ImageIcon,
+  AlertTriangle,
+  MoveLeft,
+  MoveRight,
+  Star,
+  Eye,
+  Layers,
+  ArrowRight
 } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -53,7 +65,7 @@ interface AdminDashboardProps {
   quotes?: any[];
 }
 
-type AdminSection = 'dashboard' | 'orders' | 'merch' | 'settings';
+type AdminSection = 'dashboard' | 'orders' | 'merch' | 'images' | 'settings';
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   merch,
@@ -98,16 +110,63 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   };
 
-  const handleDeleteOrder = async (orderId: string) => {
-    if (!window.confirm('Are you sure you want to delete this order?')) return;
-    try {
-      await deleteOrder(orderId);
-      setOrders(prev => prev.filter(o => o.id !== orderId));
-      showNotification('Order deleted successfully');
-    } catch (err) {
-      console.error(err);
-      showNotification(parseErrorMessage(err), 'error');
+  // CONFIRMATION MODAL STATE FOR DELETIONS
+  const [deleteTarget, setDeleteTarget] = useState<{
+    type: 'merch' | 'order' | 'product_image';
+    id: string;
+    name: string;
+    extraData?: any;
+  } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // IMAGE MANAGEMENT STATE
+  const [imageSubtab, setImageSubtab] = useState<'website' | 'products'>('website');
+  const [selectedProductId, setSelectedProductId] = useState<string>(merch[0]?.id || '');
+  const [newProductImageUrl, setNewProductImageUrl] = useState('');
+  const [savingImages, setSavingImages] = useState(false);
+
+  // Sync selected product if merch changes
+  useEffect(() => {
+    if (!selectedProductId && merch.length > 0) {
+      setSelectedProductId(merch[0].id);
     }
+  }, [merch, selectedProductId]);
+
+  const executeConfirmedDelete = async () => {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
+    try {
+      if (deleteTarget.type === 'merch') {
+        await deleteMerchItem(deleteTarget.id);
+        await onRefreshData();
+        showNotification(`Garment "${deleteTarget.name}" deleted from store`);
+      } else if (deleteTarget.type === 'order') {
+        await deleteOrder(deleteTarget.id);
+        setOrders(prev => prev.filter(o => o.id !== deleteTarget.id));
+        showNotification(`Order "${deleteTarget.name}" deleted`);
+      } else if (deleteTarget.type === 'product_image') {
+        const { productId, imageUrl } = deleteTarget.extraData || {};
+        if (productId && imageUrl) {
+          await deleteProductImage(productId, imageUrl);
+          await onRefreshData();
+          showNotification('Product image deleted successfully');
+        }
+      }
+      setDeleteTarget(null);
+    } catch (err) {
+      console.error('Delete failed:', err);
+      showNotification(parseErrorMessage(err), 'error');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const promptDeleteOrder = (orderId: string, orderNumber: string) => {
+    setDeleteTarget({
+      type: 'order',
+      id: orderId,
+      name: orderNumber,
+    });
   };
 
   // EDIT STATE FOR MERCH
@@ -304,16 +363,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   };
 
   // DELETE MERCH
-  const handleDeleteMerch = async (id: string) => {
-    if (!window.confirm('Delete this garment from the store?')) return;
-    try {
-      await deleteMerchItem(id);
-      await onRefreshData();
-      showNotification('Garment deleted successfully');
-    } catch (err) {
-      console.error(err);
-      showNotification(parseErrorMessage(err), 'error');
-    }
+  const handleDeleteMerch = (id: string, name?: string) => {
+    const item = merch.find(m => m.id === id);
+    setDeleteTarget({
+      type: 'merch',
+      id,
+      name: name || item?.name || 'Garment Item',
+    });
   };
 
   // TOGGLE IN-STOCK QUICK ACTION
@@ -424,6 +480,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             { id: 'dashboard' as AdminSection, label: 'Store Overview', count: undefined, icon: LayoutDashboard },
             { id: 'orders' as AdminSection, label: 'Customer Orders', count: orders.length, icon: ClipboardList, pendingBadge: pendingOrdersCount > 0 ? `${pendingOrdersCount} new` : undefined },
             { id: 'merch' as AdminSection, label: 'Store Products', count: merch.length, icon: ShoppingBag },
+            { id: 'images' as AdminSection, label: 'Image Management', count: undefined, icon: ImageIcon },
             { id: 'settings' as AdminSection, label: 'Brand & Settings', count: undefined, icon: Sliders },
           ].map(tab => {
             const Icon = tab.icon;
@@ -759,11 +816,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                     : 'bg-red-950/40 border-red-500/50 text-red-300'
                                 }`}
                               >
-                                <option value="pending" className="bg-[#111] text-amber-300">Pending / قيد الانتظار</option>
-                                <option value="confirmed" className="bg-[#111] text-blue-300">Confirmed / تم التأكيد</option>
-                                <option value="shipped" className="bg-[#111] text-purple-300">Shipped / تم الشحن</option>
-                                <option value="delivered" className="bg-[#111] text-emerald-300">Delivered / تم التوصيل</option>
-                                <option value="cancelled" className="bg-[#111] text-red-300">Cancelled / ملغي</option>
+                                <option value="pending" className="bg-[#111] text-amber-300">Pending Review</option>
+                                <option value="confirmed" className="bg-[#111] text-blue-300">Confirmed</option>
+                                <option value="shipped" className="bg-[#111] text-purple-300">Shipped</option>
+                                <option value="delivered" className="bg-[#111] text-emerald-300">Delivered</option>
+                                <option value="cancelled" className="bg-[#111] text-red-300">Cancelled</option>
                               </select>
                             </div>
                           </div>
@@ -865,7 +922,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                               </a>
 
                               <button
-                                onClick={() => handleDeleteOrder(order.id)}
+                                onClick={() => promptDeleteOrder(order.id, order.orderNumber)}
                                 className="p-1.5 text-[#707070] hover:text-red-400 transition-colors cursor-pointer"
                                 title="Delete order record"
                               >
@@ -1025,10 +1082,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         <div>
                           <label className="text-xs uppercase tracking-wider text-white font-mono font-bold flex items-center gap-2">
                             <Tag className="w-4 h-4 text-emerald-400" />
-                            <span>Product Photos by Color / صور القطعة حسب اللون (أسود، أبيض، إلخ)</span>
+                            <span>Product Photos by Colorway (Primary &amp; Secondary)</span>
                           </label>
                           <span className="text-[11px] text-[#A1A1A1] font-mono block mt-0.5">
-                            ارفع صورة للون الأول (مثلاً أسود) وصورة للون الثاني (مثلاً أبيض). عند اختيار العميل للون ستظهر صورته تلقائياً!
+                            Upload a photo for your primary color (e.g. Black) and secondary color (e.g. White). Switching colorways dynamically updates the storefront preview!
                           </span>
                         </div>
 
@@ -1043,7 +1100,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             }}
                             className="px-2.5 py-1 bg-[#1A1A1A] hover:bg-[#252525] border border-emerald-500/50 text-[10px] font-mono text-emerald-300 uppercase tracking-wider flex items-center gap-1 cursor-pointer"
                           >
-                            <span>+ Set: Black & White (أسود وأبيض)</span>
+                            <span>+ Set Black &amp; White Palette</span>
                           </button>
                         </div>
                       </div>
@@ -1055,7 +1112,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             <div className="flex items-center gap-2">
                               <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
                               <span className="text-xs font-mono uppercase text-white font-bold">
-                                Photo 1 / اللون الأول:
+                                Photo 1 (Primary Color):
                               </span>
                               <input
                                 type="text"
@@ -1094,7 +1151,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                               <div className="text-center p-4 text-[#555555] space-y-2">
                                 <Upload className="w-6 h-6 mx-auto text-[#444444]" />
                                 <p className="text-[11px] font-mono text-[#888888]">Photo 1 (Required)</p>
-                                <p className="text-[10px] font-mono text-[#555555]">صورة اللون الأول (مثلاً أسود)</p>
+                                <p className="text-[10px] font-mono text-[#555555]">Primary colorway photo (e.g. Washed Black)</p>
                               </div>
                             )}
                             <div className="absolute top-2 left-2 bg-black/90 border border-emerald-500/60 px-2 py-0.5 text-[10px] font-mono text-emerald-400 uppercase font-bold">
@@ -1131,7 +1188,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             <div className="flex items-center gap-2">
                               <span className="w-2.5 h-2.5 rounded-full bg-blue-400" />
                               <span className="text-xs font-mono uppercase text-white font-bold">
-                                Photo 2 / اللون الثاني:
+                                Photo 2 (Secondary Color):
                               </span>
                               <input
                                 type="text"
@@ -1171,7 +1228,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                               <div className="text-center p-4 text-[#555555] space-y-2">
                                 <Upload className="w-6 h-6 mx-auto text-[#444444]" />
                                 <p className="text-[11px] font-mono text-[#888888]">Photo 2 (Second Color)</p>
-                                <p className="text-[10px] font-mono text-[#555555]">صورة اللون الثاني (مثلاً أبيض)</p>
+                                <p className="text-[10px] font-mono text-[#555555]">Secondary colorway photo (e.g. Vintage White)</p>
                               </div>
                             )}
                             <div className="absolute top-2 left-2 bg-black/90 border border-blue-500/60 px-2 py-0.5 text-[10px] font-mono text-blue-300 uppercase font-bold">
@@ -1314,11 +1371,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       </div>
                     </div>
 
-                    {/* 6. Available Colors (ألوان القطعة للطلب) */}
+                    {/* 6. Available Colors (Customer Selectable at Checkout) */}
                     <div>
                       <div className="flex items-center justify-between mb-1">
                         <label className="block text-[11px] uppercase tracking-wider text-[#A1A1A1] font-mono">
-                          Available Colors / ألوان القطعة (يختار منها العميل عند الطلب)
+                          Available Garment Colors (Customer selectable at checkout)
                         </label>
                         <span className="text-[10px] text-[#707070] font-mono">
                           {editingMerch.colors?.length || 0} Colors Selected
@@ -1571,7 +1628,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         </button>
 
                         <button
-                          onClick={() => handleDeleteMerch(item.id)}
+                          onClick={() => handleDeleteMerch(item.id, item.name)}
                           className="p-2 text-[#707070] hover:text-red-400 cursor-pointer"
                           title="Delete Garment"
                         >
@@ -1582,6 +1639,523 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   ))
                 )}
               </div>
+            </div>
+          )}
+
+          {/* ================= SECTION: IMAGE MANAGEMENT ================= */}
+          {activeSection === 'images' && (
+            <div className="space-y-8">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#242424] pb-4">
+                <div>
+                  <h2 className="text-lg font-bold uppercase tracking-tight text-[#F5F5F5] flex items-center gap-2 font-mono">
+                    <ImageIcon className="w-5 h-5 text-emerald-400" />
+                    <span>Image &amp; Media Studio</span>
+                  </h2>
+                  <p className="text-xs text-[#888888] font-mono mt-1">
+                    Upload, replace, and reorder all product photos and campaign banners without editing code.
+                  </p>
+                </div>
+
+                {/* Subtab Switcher */}
+                <div className="flex items-center gap-1.5 p-1 bg-[#111111] border border-[#262626]">
+                  <button
+                    type="button"
+                    onClick={() => setImageSubtab('website')}
+                    className={`px-3 py-1.5 text-xs font-mono uppercase tracking-wider transition-colors cursor-pointer ${
+                      imageSubtab === 'website'
+                        ? 'bg-white text-black font-bold'
+                        : 'text-[#888888] hover:text-white'
+                    }`}
+                  >
+                    Website Banners
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setImageSubtab('products')}
+                    className={`px-3 py-1.5 text-xs font-mono uppercase tracking-wider transition-colors cursor-pointer ${
+                      imageSubtab === 'products'
+                        ? 'bg-white text-black font-bold'
+                        : 'text-[#888888] hover:text-white'
+                    }`}
+                  >
+                    Product Photos ({merch.length})
+                  </button>
+                </div>
+              </div>
+
+              {/* SUBTAB 1: WEBSITE & CAMPAIGN BANNERS */}
+              {imageSubtab === 'website' && (
+                <div className="space-y-6">
+                  <div className="p-4 bg-[#111111] border border-[#222222] text-xs font-mono text-[#CCCCCC] flex items-center justify-between">
+                    <span>Manage all flagship lookbook photos, campaign capsules, and brand story media.</span>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        setSavingImages(true);
+                        try {
+                          await updateWebsiteImages(editableSettings.websiteImages || {});
+                          await onRefreshData();
+                          showNotification('Website images saved successfully');
+                        } catch (err) {
+                          showNotification(parseErrorMessage(err), 'error');
+                        } finally {
+                          setSavingImages(false);
+                        }
+                      }}
+                      disabled={savingImages}
+                      className="px-4 py-2 bg-white text-black font-bold uppercase tracking-wider text-xs flex items-center gap-1.5 hover:bg-white/90 cursor-pointer disabled:opacity-50"
+                    >
+                      <Save className="w-3.5 h-3.5" />
+                      <span>{savingImages ? 'Saving...' : 'Save All Changes'}</span>
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {([
+                      {
+                        key: 'homeHeroImage' as const,
+                        label: 'Homepage Hero Lookbook Backdrop',
+                        aspect: 'aspect-[16/9]',
+                        defaultUrl: 'https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=2000&q=85',
+                        description: 'Main full-screen background on the homepage hero section.',
+                      },
+                      {
+                        key: 'capsuleHeavyweightImage' as const,
+                        label: 'Capsule 01: 480GSM Boxy Hoodies Banner',
+                        aspect: 'aspect-[16/10]',
+                        defaultUrl: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=1200&q=85',
+                        description: 'Featured editorial banner for heavyweight hoodie drops.',
+                      },
+                      {
+                        key: 'capsuleAcidWashImage' as const,
+                        label: 'Capsule 02: 280GSM Acid Wash Tees Banner',
+                        aspect: 'aspect-[16/10]',
+                        defaultUrl: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=1200&q=85',
+                        description: 'Featured banner for stone acid wash tee collection.',
+                      },
+                      {
+                        key: 'capsuleTacticalImage' as const,
+                        label: 'Capsule 03: Tactical Movement & Cargo Banner',
+                        aspect: 'aspect-[16/10]',
+                        defaultUrl: 'https://images.unsplash.com/photo-1552902865-b72c031ac5ea?auto=format&fit=crop&w=1200&q=85',
+                        description: 'Featured banner for wide-leg pants and utility gear.',
+                      },
+                      {
+                        key: 'capsuleHeadwearImage' as const,
+                        label: 'Capsule 04: Dark Luxury Headwear Banner',
+                        aspect: 'aspect-[16/10]',
+                        defaultUrl: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=1400&q=85',
+                        description: 'Featured banner for trucker caps and ribbed beanies.',
+                      },
+                      {
+                        key: 'brandStoryImage' as const,
+                        label: 'Atelier Brand Story Workshop Image',
+                        aspect: 'aspect-[4/3]',
+                        defaultUrl: 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=1200&q=85',
+                        description: 'Craftsmanship showcase image on homepage brand story.',
+                      },
+                      {
+                        key: 'aboutHeroImage' as const,
+                        label: 'About Page Editorial Showcase Photo',
+                        aspect: 'aspect-[3/4]',
+                        defaultUrl: 'https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=1200&q=85',
+                        description: 'Main editorial portrait on the About brand page.',
+                      },
+                      {
+                        key: 'promoBannerImage' as const,
+                        label: 'Promotional & Announcement Banner',
+                        aspect: 'aspect-[16/9]',
+                        defaultUrl: 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=1400&q=85',
+                        description: 'Secondary campaign lookbook highlight.',
+                      },
+                    ] as const).map(slot => {
+                      const rawVal = editableSettings.websiteImages?.[slot.key];
+                      const currentVal: string = typeof rawVal === 'string' ? rawVal : '';
+                      const displayUrl: string = currentVal || slot.defaultUrl;
+
+                      return (
+                        <div key={slot.key} className="bg-[#0B0B0B] border border-[#242424] p-5 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-mono font-bold uppercase text-white">
+                              {slot.label}
+                            </span>
+                            {currentVal && (
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  const updated = { ...(editableSettings.websiteImages || {}) };
+                                  delete updated[slot.key];
+                                  setEditableSettings({ ...editableSettings, websiteImages: updated });
+                                  try {
+                                    await updateWebsiteImages(updated);
+                                    await onRefreshData();
+                                    showNotification(`Reset ${slot.label} to default`);
+                                  } catch (err) {
+                                    showNotification(parseErrorMessage(err), 'error');
+                                  }
+                                }}
+                                className="text-[10px] font-mono text-red-400 hover:text-red-300 uppercase cursor-pointer"
+                              >
+                                Reset to Default
+                              </button>
+                            )}
+                          </div>
+
+                          {/* Image Preview */}
+                          <div className={`${slot.aspect} bg-[#0A0A0A] border border-[#1F1F1F] relative overflow-hidden flex items-center justify-center group`}>
+                            <img
+                              src={displayUrl}
+                              alt={slot.label}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            />
+                            <div className="absolute top-2 left-2 bg-black/85 border border-white/20 px-2 py-0.5 text-[10px] font-mono text-white uppercase">
+                              {currentVal ? 'Custom Active' : 'Default Asset'}
+                            </div>
+                          </div>
+
+                          <p className="text-[11px] text-[#707070] font-mono">
+                            {slot.description}
+                          </p>
+
+                          {/* Inputs: URL & File Upload */}
+                          <div className="space-y-2">
+                            <input
+                              type="text"
+                              value={currentVal}
+                              onChange={e => {
+                                const newWebImages = {
+                                  ...(editableSettings.websiteImages || {}),
+                                  [slot.key]: e.target.value,
+                                };
+                                setEditableSettings({ ...editableSettings, websiteImages: newWebImages });
+                              }}
+                              placeholder="Paste image URL here..."
+                              className="w-full bg-[#111111] border border-[#262626] px-3 py-2 text-xs text-[#F5F5F5] font-mono focus:border-white outline-none"
+                            />
+
+                            <div className="flex gap-2">
+                              <label className="flex-1 py-2 bg-[#161616] hover:bg-[#202020] border border-[#2D2D2D] hover:border-white text-xs text-white font-mono flex items-center justify-center gap-1.5 transition-colors cursor-pointer">
+                                <Upload className="w-3.5 h-3.5 text-emerald-400" />
+                                <span>Upload File</span>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={e => handleImageFileUpload(e, base64 => {
+                                    const newWebImages = {
+                                      ...(editableSettings.websiteImages || {}),
+                                      [slot.key]: base64,
+                                    };
+                                    setEditableSettings({ ...editableSettings, websiteImages: newWebImages });
+                                  })}
+                                />
+                              </label>
+
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  try {
+                                    await updateWebsiteImages(editableSettings.websiteImages || {});
+                                    await onRefreshData();
+                                    showNotification(`${slot.label} updated successfully`);
+                                  } catch (err) {
+                                    showNotification(parseErrorMessage(err), 'error');
+                                  }
+                                }}
+                                className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/30 text-white text-xs font-mono uppercase tracking-wider transition-colors cursor-pointer"
+                              >
+                                Save
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* SUBTAB 2: PRODUCT PHOTOS MANAGER */}
+              {imageSubtab === 'products' && (
+                <div className="space-y-6">
+                  {/* Product Picker */}
+                  <div className="bg-[#0B0B0B] border border-[#242424] p-5 space-y-3">
+                    <label className="text-xs font-mono font-bold uppercase tracking-wider text-white flex items-center gap-2">
+                      <ShoppingBag className="w-4 h-4 text-emerald-400" />
+                      <span>Select Garment to Manage Photos</span>
+                    </label>
+                    <select
+                      value={selectedProductId}
+                      onChange={e => setSelectedProductId(e.target.value)}
+                      className="w-full bg-[#111111] border border-[#333333] px-3.5 py-2.5 text-xs text-white font-mono uppercase font-semibold outline-none cursor-pointer focus:border-white"
+                    >
+                      {merch.map(m => (
+                        <option key={m.id} value={m.id} className="bg-[#111111] text-white">
+                          {m.name} &bull; {m.category.toUpperCase()} ({m.images?.length || 1} photos)
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Selected Product Gallery Cards */}
+                  {(() => {
+                    const currentProduct = merch.find(m => m.id === selectedProductId) || merch[0];
+                    if (!currentProduct) {
+                      return (
+                        <div className="p-8 text-center text-[#707070] font-mono text-xs">
+                          No garments found in database.
+                        </div>
+                      );
+                    }
+
+                    const productImages: string[] = Array.isArray(currentProduct.images) && currentProduct.images.length > 0
+                      ? [...currentProduct.images]
+                      : [currentProduct.coverImage];
+
+                    return (
+                      <div className="space-y-6">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#242424]">
+                          <div>
+                            <span className="text-[10px] font-mono uppercase tracking-widest text-[#707070] block">
+                              Active Garment
+                            </span>
+                            <h3 className="text-base font-bold uppercase text-white font-mono mt-0.5">
+                              {currentProduct.name}
+                            </h3>
+                            <span className="text-xs text-[#A1A1A1] font-mono">
+                              {productImages.length} Photos in Gallery &bull; Price: {currentProduct.price} {currentProduct.currency || 'EGP'}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-[#888888] font-mono">
+                              Main Cover:
+                            </span>
+                            <span className="text-xs font-mono text-emerald-400 font-bold uppercase">
+                              Photo 1
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Current Photos Grid */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                          {productImages.map((imgUrl, idx) => {
+                            const isMainCover = idx === 0 || imgUrl === currentProduct.coverImage;
+
+                            return (
+                              <div
+                                key={idx}
+                                className={`bg-[#0E0E0E] border p-4 space-y-3 relative ${
+                                  isMainCover ? 'border-emerald-500/60 shadow-lg shadow-emerald-950/20' : 'border-[#242424]'
+                                }`}
+                              >
+                                {/* Header / Badge */}
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-1.5">
+                                    {isMainCover ? (
+                                      <span className="px-2 py-0.5 bg-emerald-500/20 border border-emerald-500/50 text-emerald-300 text-[10px] font-mono uppercase font-bold flex items-center gap-1">
+                                        <Star className="w-3 h-3 fill-emerald-300" />
+                                        <span>Main Cover</span>
+                                      </span>
+                                    ) : (
+                                      <span className="text-[11px] font-mono text-[#888888]">
+                                        Photo #{idx + 1}
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  <div className="flex items-center gap-1">
+                                    {/* Move Left */}
+                                    <button
+                                      type="button"
+                                      disabled={idx === 0}
+                                      onClick={async () => {
+                                        const reordered = [...productImages];
+                                        const temp = reordered[idx - 1];
+                                        reordered[idx - 1] = reordered[idx];
+                                        reordered[idx] = temp;
+                                        try {
+                                          await updateProductImages(currentProduct.id, reordered, reordered[0]);
+                                          await onRefreshData();
+                                          showNotification('Photos reordered');
+                                        } catch (err) {
+                                          showNotification(parseErrorMessage(err), 'error');
+                                        }
+                                      }}
+                                      className="p-1 text-[#707070] hover:text-white disabled:opacity-30 cursor-pointer"
+                                      title="Move Left"
+                                    >
+                                      <MoveLeft className="w-3.5 h-3.5" />
+                                    </button>
+
+                                    {/* Move Right */}
+                                    <button
+                                      type="button"
+                                      disabled={idx === productImages.length - 1}
+                                      onClick={async () => {
+                                        const reordered = [...productImages];
+                                        const temp = reordered[idx + 1];
+                                        reordered[idx + 1] = reordered[idx];
+                                        reordered[idx] = temp;
+                                        try {
+                                          await updateProductImages(currentProduct.id, reordered, reordered[0]);
+                                          await onRefreshData();
+                                          showNotification('Photos reordered');
+                                        } catch (err) {
+                                          showNotification(parseErrorMessage(err), 'error');
+                                        }
+                                      }}
+                                      className="p-1 text-[#707070] hover:text-white disabled:opacity-30 cursor-pointer"
+                                      title="Move Right"
+                                    >
+                                      <MoveRight className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                </div>
+
+                                {/* Thumbnail */}
+                                <div className="aspect-[3/4] bg-[#080808] border border-[#1A1A1A] relative overflow-hidden flex items-center justify-center">
+                                  <img
+                                    src={imgUrl}
+                                    alt={`Product Photo ${idx + 1}`}
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
+
+                                {/* Action Buttons for Photo */}
+                                <div className="space-y-2 pt-1">
+                                  {!isMainCover && (
+                                    <button
+                                      type="button"
+                                      onClick={async () => {
+                                        const reordered = [imgUrl, ...productImages.filter((_, i) => i !== idx)];
+                                        try {
+                                          await updateProductImages(currentProduct.id, reordered, imgUrl);
+                                          await onRefreshData();
+                                          showNotification('Set as main cover image');
+                                        } catch (err) {
+                                          showNotification(parseErrorMessage(err), 'error');
+                                        }
+                                      }}
+                                      className="w-full py-1.5 px-2 bg-[#1A1A1A] hover:bg-[#252525] border border-[#333] text-[11px] font-mono text-white uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer"
+                                    >
+                                      <Star className="w-3 h-3 text-emerald-400" />
+                                      <span>Set as Main Cover</span>
+                                    </button>
+                                  )}
+
+                                  <div className="flex gap-2">
+                                    <label className="flex-1 py-1.5 px-2 bg-[#141414] hover:bg-[#1E1E1E] border border-[#2B2B2B] text-[11px] font-mono text-[#CCCCCC] uppercase tracking-wider flex items-center justify-center gap-1 cursor-pointer">
+                                      <Upload className="w-3 h-3 text-blue-400" />
+                                      <span>Replace</span>
+                                      <input
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={e => handleImageFileUpload(e, async base64 => {
+                                          const updated = [...productImages];
+                                          updated[idx] = base64;
+                                          try {
+                                            await updateProductImages(currentProduct.id, updated, isMainCover ? base64 : undefined);
+                                            await onRefreshData();
+                                            showNotification('Photo replaced successfully');
+                                          } catch (err) {
+                                            showNotification(parseErrorMessage(err), 'error');
+                                          }
+                                        })}
+                                      />
+                                    </label>
+
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setDeleteTarget({
+                                          type: 'product_image',
+                                          id: currentProduct.id,
+                                          name: `Photo #${idx + 1} (${currentProduct.name})`,
+                                          extraData: { productId: currentProduct.id, imageUrl: imgUrl },
+                                        });
+                                      }}
+                                      className="p-1.5 text-[#707070] hover:text-red-400 border border-[#2B2B2B] hover:border-red-900/40 transition-colors cursor-pointer"
+                                      title="Delete Photo"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+
+                          {/* CARD: UPLOAD & ADD NEW PHOTO */}
+                          <div className="bg-[#0B0B0B] border border-dashed border-[#333333] hover:border-white p-5 flex flex-col justify-between space-y-4">
+                            <div className="text-center py-4 space-y-2">
+                              <Plus className="w-8 h-8 mx-auto text-[#666666]" />
+                              <h4 className="text-xs font-mono font-bold uppercase text-white">
+                                Add Another Product Photo
+                              </h4>
+                              <p className="text-[11px] font-mono text-[#707070]">
+                                Upload additional angles, close-ups of fabric, or alternate colorways.
+                              </p>
+                            </div>
+
+                            <div className="space-y-2.5">
+                              <label className="w-full py-2.5 bg-white text-black font-mono font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all hover:bg-white/90 cursor-pointer">
+                                <Upload className="w-3.5 h-3.5" />
+                                <span>Upload Image File</span>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={e => handleImageFileUpload(e, async base64 => {
+                                    const updated = [...productImages, base64];
+                                    try {
+                                      await updateProductImages(currentProduct.id, updated);
+                                      await onRefreshData();
+                                      showNotification('New photo added to gallery');
+                                    } catch (err) {
+                                      showNotification(parseErrorMessage(err), 'error');
+                                    }
+                                  })}
+                                />
+                              </label>
+
+                              <div className="flex gap-1.5">
+                                <input
+                                  type="text"
+                                  value={newProductImageUrl}
+                                  onChange={e => setNewProductImageUrl(e.target.value)}
+                                  placeholder="Or paste image URL..."
+                                  className="flex-1 bg-[#141414] border border-[#262626] px-2.5 py-1.5 text-xs text-white font-mono focus:border-white outline-none"
+                                />
+                                <button
+                                  type="button"
+                                  disabled={!newProductImageUrl.trim()}
+                                  onClick={async () => {
+                                    if (!newProductImageUrl.trim()) return;
+                                    const updated = [...productImages, newProductImageUrl.trim()];
+                                    try {
+                                      await updateProductImages(currentProduct.id, updated);
+                                      await onRefreshData();
+                                      setNewProductImageUrl('');
+                                      showNotification('New photo URL added to gallery');
+                                    } catch (err) {
+                                      showNotification(parseErrorMessage(err), 'error');
+                                    }
+                                  }}
+                                  className="px-3 py-1.5 bg-[#222222] hover:bg-[#333333] text-white text-xs font-mono uppercase cursor-pointer disabled:opacity-40"
+                                >
+                                  Add
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
             </div>
           )}
 
@@ -1680,9 +2254,80 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </form>
             </div>
           )}
-
         </div>
       </div>
+
+      {/* IN-APP CONFIRMATION MODAL FOR DELETIONS */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-150">
+          <div className="bg-[#0B0B0B] border border-[#441C1C] max-w-md w-full p-6 sm:p-7 space-y-5 shadow-2xl relative">
+            <button
+              onClick={() => !isDeleting && setDeleteTarget(null)}
+              className="absolute top-4 right-4 text-[#707070] hover:text-white p-1 cursor-pointer"
+              aria-label="Close dialog"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="flex items-center gap-3.5">
+              <div className="w-10 h-10 bg-[#1F0A0A] border border-[#4D1A1A] flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-5 h-5 text-red-400" />
+              </div>
+              <div>
+                <h3 className="text-xs sm:text-sm font-bold tracking-widest text-[#F5F5F5] uppercase font-mono">
+                  Confirm Deletion
+                </h3>
+                <p className="text-[11px] text-[#888888]">
+                  This action is permanent and cannot be undone.
+                </p>
+              </div>
+            </div>
+
+            <p className="text-xs text-[#CCCCCC] leading-relaxed">
+              {deleteTarget.type === 'merch' &&
+                'Are you sure you want to delete this garment? It will be permanently removed from the storefront, inventory database, and any customer carts.'}
+              {deleteTarget.type === 'order' &&
+                'Are you sure you want to delete this customer order? This record will be permanently purged from database order history.'}
+              {deleteTarget.type === 'product_image' &&
+                'Are you sure you want to remove this photo from the product gallery? The storefront will reflect this change immediately.'}
+            </p>
+
+            <div className="p-3 bg-[#111111] border border-[#262626] text-xs font-mono text-white break-all flex items-center gap-2">
+              <span className="text-red-400">&bull;</span>
+              <span className="font-semibold">{deleteTarget.name}</span>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={() => setDeleteTarget(null)}
+                className="px-4 py-2.5 bg-[#141414] hover:bg-[#1E1E1E] border border-[#2B2B2B] text-xs text-[#A1A1A1] hover:text-white font-mono uppercase tracking-wider transition-colors cursor-pointer disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={executeConfirmedDelete}
+                className="px-5 py-2.5 bg-red-600 hover:bg-red-500 text-white text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer shadow-lg active:scale-[0.99] disabled:opacity-50"
+              >
+                {isDeleting ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Deleting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Confirm Delete</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

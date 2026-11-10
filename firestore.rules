@@ -6,56 +6,82 @@ service cloud.firestore {
       return id is string && id.size() <= 128;
     }
 
-    // Public read and authorized catalog management
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Super Admin Authorization Gate
+    // Authorizes only the designated super admin email or verified admin document
+    function isSuperAdmin() {
+      return isSignedIn() && (
+        (request.auth.token.email == 'mostafahessein695@gmail.com' && request.auth.token.email_verified == true) ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    // Merch/Products:
+    // Public storefront can read all published items
+    // Only authorized Super Admin can add, edit, or permanently delete items
+    match /merch/{merchId} {
+      allow read: if true;
+      allow write: if isSuperAdmin() && isValidId(merchId);
+    }
+
+    // Orders:
+    // Customers can submit orders during checkout
+    // Only Super Admin can read order lists, update statuses, or delete orders
+    match /orders/{orderId} {
+      allow create: if isValidId(orderId);
+      allow read, update, delete: if isSuperAdmin();
+    }
+
+    // Global Site Settings & Managed Website Images:
+    // Public can read website settings
+    // Only Super Admin can update settings and imagery
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isSuperAdmin() && isValidId(settingId);
+    }
+
+    // Admin Accounts Collection:
+    // Only authenticated Super Admin can view or provision admin records
+    match /admins/{adminId} {
+      allow read: if isSuperAdmin();
+      allow write: if isSuperAdmin() && isValidId(adminId);
+    }
+
+    // Other Content Collections (Music, Collections, Gallery, Quotes)
     match /songs/{songId} {
       allow read: if true;
-      allow write: if isValidId(songId);
+      allow write: if isSuperAdmin() && isValidId(songId);
     }
 
     match /artists/{artistId} {
       allow read: if true;
-      allow write: if isValidId(artistId);
+      allow write: if isSuperAdmin() && isValidId(artistId);
     }
 
     match /albums/{albumId} {
       allow read: if true;
-      allow write: if isValidId(albumId);
+      allow write: if isSuperAdmin() && isValidId(albumId);
     }
 
     match /collections/{collectionId} {
       allow read: if true;
-      allow write: if isValidId(collectionId);
+      allow write: if isSuperAdmin() && isValidId(collectionId);
     }
 
     match /gallery/{galleryId} {
       allow read: if true;
-      allow write: if isValidId(galleryId);
+      allow write: if isSuperAdmin() && isValidId(galleryId);
     }
 
     match /quotes/{quoteId} {
       allow read: if true;
-      allow write: if isValidId(quoteId);
+      allow write: if isSuperAdmin() && isValidId(quoteId);
     }
 
-    match /settings/{settingId} {
-      allow read: if true;
-      allow write: if isValidId(settingId);
-    }
-
-    match /merch/{merchId} {
-      allow read: if true;
-      allow write: if isValidId(merchId);
-    }
-
-    match /orders/{orderId} {
-      allow create: if isValidId(orderId);
-      allow read, update, delete: if true;
-    }
-
-    match /admins/{adminId} {
-      allow read, write: if true;
-    }
-
+    // Default deny catch-all
     match /{document=**} {
       allow read, write: if false;
     }

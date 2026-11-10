@@ -29,7 +29,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ settings, onExploreShop })
         <div className="lg:col-span-5">
           <div className="aspect-[3/4] bg-[#0A0A0A] border border-white/15 rounded-3xl overflow-hidden sticky top-28 shadow-2xl group">
             <img
-              src="https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=1200&q=85"
+              src={settings?.websiteImages?.aboutHeroImage || settings?.aboutPhoto || "https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=1200&q=85"}
               alt="TURVEX Studio Atelier"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 filter grayscale contrast-125"
             />
