@@ -39,7 +39,7 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
       onSuccess();
       onClose();
     } else {
-      setError('Incorrect password. Administrator key is: rogy');
+      setError('Incorrect password. Please try again.');
     }
   };
 
@@ -60,7 +60,7 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : String(err);
       if (errMsg.includes('auth/unauthorized-domain')) {
-        setGoogleError('Domain not configured in Firebase console. Please use Admin Password (rogy) below.');
+        setGoogleError('Domain not configured in Firebase console. Please use Admin Password below.');
       } else if (errMsg.includes('auth/popup-closed-by-user')) {
         setGoogleError('Sign-in popup was closed before completion.');
       } else {
@@ -155,14 +155,14 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
           </div>
         </div>
 
-        {/* Alternate: Password Login (rogy) */}
+        {/* Alternate: Password Login */}
         {!usePasswordMethod ? (
           <button
             onClick={() => setUsePasswordMethod(true)}
             className="w-full py-2.5 px-3 bg-[#111111] hover:bg-[#161616] border border-[#2B2B2B] hover:border-[#3D3D3D] text-[#CCCCCC] text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-colors cursor-pointer font-mono"
           >
             <Key className="w-3.5 h-3.5 text-[#888888]" />
-            <span>Sign In with Password Key (rogy)</span>
+            <span>Sign In with Password Key</span>
           </button>
         ) : (
           <form onSubmit={handlePasswordLogin} className="space-y-4">
@@ -172,25 +172,6 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
                 <span className="leading-relaxed font-sans">{error}</span>
               </div>
             )}
-
-            {/* Quick helper badge */}
-            <div className="p-2.5 bg-[#111111] border border-[#262626] flex items-center justify-between text-xs">
-              <span className="text-[#888888] flex items-center gap-1.5 font-mono text-[11px]">
-                <Key className="w-3 h-3 text-white" />
-                <span>Default Key:</span>
-              </span>
-              <button
-                type="button"
-                onClick={() => {
-                  setPassword('rogy');
-                  setError(null);
-                }}
-                className="px-2 py-0.5 bg-[#1F1F1F] hover:bg-[#2A2A2A] border border-[#3A3A3A] text-white text-[11px] font-mono tracking-wider transition-colors cursor-pointer"
-                title="Click to auto-fill 'rogy'"
-              >
-                rogy (Click to fill)
-              </button>
-            </div>
 
             {/* Username */}
             <div className="space-y-1">
@@ -210,7 +191,7 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
             <div className="space-y-1">
               <div className="flex items-center justify-between">
                 <label className="text-[11px] uppercase tracking-wider text-[#CCCCCC] block font-mono font-semibold">
-                  Password <span className="text-white font-mono font-bold">(rogy)</span>
+                  Password
                 </label>
                 <button
                   type="button"
@@ -237,7 +218,7 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
                   setPassword(e.target.value);
                   if (error) setError(null);
                 }}
-                placeholder="Enter password (rogy)"
+                placeholder="Enter password"
                 autoFocus
                 className="w-full px-3 py-2 bg-[#050505] border border-[#333333] focus:border-white text-xs text-white placeholder-[#555555] font-mono outline-none transition-colors"
               />

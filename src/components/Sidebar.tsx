@@ -121,7 +121,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 className="w-full flex items-center gap-3.5 px-3 py-2.5 text-xs uppercase tracking-wider text-[#707070] hover:text-[#F5F5F5] hover:bg-[#0B0B0B] transition-all cursor-pointer rounded-none text-left"
               >
                 <Lock className="w-4 h-4 shrink-0 text-[#707070]" />
-                <span className="truncate">Admin Login (Pass: rogy)</span>
+                <span className="truncate">Admin Access</span>
               </button>
             </div>
           )}

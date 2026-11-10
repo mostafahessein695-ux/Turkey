@@ -143,7 +143,7 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
               <button
                 onClick={onOpenAdminAuth}
                 className="hidden lg:flex items-center gap-1.5 px-3 py-1 text-[11px] uppercase tracking-wider text-[#707070] hover:text-white border border-white/10 hover:border-white/25 rounded-full transition-all cursor-pointer"
-                title="Admin access (pass: rogy)"
+                title="Admin access"
               >
                 <Lock className="w-3 h-3 text-[#888888]" />
                 <span>Admin</span>
@@ -241,7 +241,7 @@ export const LiquidGlassNavbar: React.FC<LiquidGlassNavbarProps> = ({
                   className="w-full py-2 px-3 text-center text-[11px] text-[#707070] hover:text-white flex items-center justify-center gap-1.5 transition-colors"
                 >
                   <Lock className="w-3 h-3" />
-                  <span>Admin Login (Pass: rogy)</span>
+                  <span>Admin Access</span>
                 </button>
               )}
             </div>

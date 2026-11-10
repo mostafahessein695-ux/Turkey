@@ -160,14 +160,14 @@ const MainApp: React.FC = () => {
                       Admin Access Restricted
                     </h2>
                     <p className="text-xs text-[#888888] leading-relaxed">
-                      TURVEX studio administration portal. Please log in with the administrator password (<strong className="text-white font-mono">rogy</strong>).
+                      TURVEX studio administration portal. Please authenticate with administrator credentials to continue.
                     </p>
                   </div>
                   <button
                     onClick={() => setAdminAuthOpen(true)}
                     className="px-6 py-3 bg-white text-black text-xs uppercase font-bold tracking-wider rounded-xl cursor-pointer hover:bg-white/90 shadow-xl transition-all"
                   >
-                    Enter Password (rogy)
+                    Admin Sign In
                   </button>
                 </div>
               )

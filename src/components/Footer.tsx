@@ -79,7 +79,7 @@ export const Footer: React.FC<FooterProps> = ({
                 onClick={() => { onOpenAdminAuth(); scrollToTop(); }}
                 className="text-left text-[#707070] hover:text-[#F5F5F5] transition-colors flex items-center gap-1.5 pt-2"
               >
-                <span>Admin Login (rogy)</span>
+                <span>Admin Access</span>
               </button>
             </div>
           </div>
