@@ -76,6 +76,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [activeSection, setActiveSection] = useState<AdminSection>('dashboard');
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
   const [saving, setSaving] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   // ORDERS STATE
   const [orders, setOrders] = useState<CustomerOrder[]>([]);
@@ -189,25 +190,71 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     return raw;
   };
 
-  // IMAGE UPLOADER HELPER
+  // IMAGE UPLOADER HELPER WITH AUTOMATIC CANVAS COMPRESSION (<100KB for Firestore safe documents)
   const handleImageFileUpload = (
     e: React.ChangeEvent<HTMLInputElement>,
     onUploaded: (base64: string) => void
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024) {
-      showNotification('File exceeds 2MB limit. Please choose a smaller image or use a URL.', 'error');
-      return;
-    }
+
+    setIsUploadingImage(true);
+    showNotification('Processing and optimizing photo...', 'success');
+
     const reader = new FileReader();
+    reader.onerror = () => {
+      setIsUploadingImage(false);
+      showNotification('Failed to read image file. Please try another.', 'error');
+    };
     reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        onUploaded(reader.result);
-        showNotification('Image uploaded successfully');
+      if (typeof reader.result !== 'string') {
+        setIsUploadingImage(false);
+        return;
       }
+
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const maxDim = 1200;
+          let width = img.width;
+          let height = img.height;
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            const compressed = canvas.toDataURL('image/jpeg', 0.82);
+            onUploaded(compressed);
+            showNotification('Image uploaded and optimized successfully');
+          } else {
+            onUploaded(reader.result as string);
+            showNotification('Image uploaded successfully');
+          }
+        } catch {
+          onUploaded(reader.result as string);
+          showNotification('Image uploaded successfully');
+        } finally {
+          setIsUploadingImage(false);
+        }
+      };
+      img.onerror = () => {
+        setIsUploadingImage(false);
+        showNotification('Invalid image format', 'error');
+      };
+      img.src = reader.result;
     };
     reader.readAsDataURL(file);
+    e.target.value = '';
   };
 
   const secondImage = editingMerch?.images?.[0] || '';
@@ -288,11 +335,37 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     });
   };
 
-  // SAVE MERCH
-  const handleSaveMerch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingMerch || !editingMerch.name || !editingMerch.coverImage) {
-      showNotification('Garment name and front cover image are required', 'error');
+  // SAVE MERCH (CREATE & UPDATE)
+  const handleSaveMerch = async (e?: React.FormEvent) => {
+    if (e && e.preventDefault) {
+      e.preventDefault();
+    }
+
+    // 1. Prevent duplicate saves or saving while image is optimizing
+    if (saving) {
+      return;
+    }
+    if (isUploadingImage) {
+      showNotification('Please wait for image optimization to complete...', 'error');
+      return;
+    }
+
+    if (!editingMerch) {
+      showNotification('No garment information found to save', 'error');
+      return;
+    }
+
+    // 2. Validate product name
+    const trimmedName = (editingMerch.name || '').trim();
+    if (!trimmedName) {
+      showNotification('Please enter a garment name (e.g. OVERSIZED HOODIE)', 'error');
+      return;
+    }
+
+    // 3. Validate price
+    const rawPrice = editingMerch.price;
+    if (rawPrice === undefined || isNaN(Number(rawPrice)) || Number(rawPrice) < 0) {
+      showNotification('Please enter a valid price in EGP', 'error');
       return;
     }
 
@@ -311,6 +384,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         });
       }
 
+      // Check coverImage: fallback gracefully to secondImage or default premium streetwear photo if left blank
+      let resolvedCoverImage = (editingMerch.coverImage || '').trim();
+      if (!resolvedCoverImage) {
+        if (secondImage.trim()) {
+          resolvedCoverImage = secondImage.trim();
+        } else if (gatheredImages.length > 0) {
+          resolvedCoverImage = gatheredImages[0];
+        } else {
+          resolvedCoverImage = 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=1200&q=85';
+          showNotification('Default high-res streetwear photo set for cover. You can replace it anytime.', 'success');
+        }
+      }
+
       // Colors & Color-Images Mapping
       const color1 = editingMerch.colors?.[0] || 'Black';
       const color2 = editingMerch.colors?.[1] || (secondImage.trim() ? 'White' : undefined);
@@ -322,8 +408,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       const colorImages: Record<string, string> = {
         ...(editingMerch.colorImages || {})
       };
-      if (editingMerch.coverImage) {
-        colorImages[resolvedColors[0] || 'Black'] = editingMerch.coverImage.trim();
+      if (resolvedCoverImage) {
+        colorImages[resolvedColors[0] || 'Black'] = resolvedCoverImage;
       }
       if (secondImage.trim() && resolvedColors.length > 1) {
         colorImages[resolvedColors[1] || 'White'] = secondImage.trim();
@@ -331,13 +417,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
       const itemToSave: MerchItem = {
         id: editingMerch.id || `merch_${Date.now()}`,
-        name: editingMerch.name.trim(),
+        name: trimmedName,
         price: Number(editingMerch.price) || 0,
         currency: editingMerch.currency?.trim() || 'EGP',
         category: editingMerch.category || 'hoodies',
         description: editingMerch.description || '',
-        coverImage: editingMerch.coverImage.trim(),
-        images: gatheredImages,
+        coverImage: resolvedCoverImage,
+        images: gatheredImages.length > 0 ? gatheredImages : [resolvedCoverImage],
         sizes: editingMerch.sizes && editingMerch.sizes.length > 0 ? editingMerch.sizes : ['S', 'M', 'L', 'XL'],
         colors: resolvedColors,
         colorImages: colorImages,
@@ -353,9 +439,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       await saveMerchItem(itemToSave);
       await onRefreshData();
       setEditingMerch(null);
-      showNotification('Garment saved to store successfully');
+      showNotification(`Garment "${itemToSave.name}" saved to store successfully!`);
     } catch (err) {
-      console.error(err);
+      console.error('Failed to save garment:', err);
       showNotification(parseErrorMessage(err), 'error');
     } finally {
       setSaving(false);
@@ -997,7 +1083,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     </button>
                   </div>
 
-                  <form onSubmit={handleSaveMerch} className="space-y-4">
+                  <form onSubmit={handleSaveMerch} noValidate className="space-y-4">
                     {/* 1. Name & Category */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       <div className="sm:col-span-2">
@@ -1006,7 +1092,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         </label>
                         <input
                           type="text"
-                          required
                           value={editingMerch.name || ''}
                           onChange={e => setEditingMerch({ ...editingMerch, name: e.target.value })}
                           placeholder="e.g. OVERSIZED ACID HOODIE, ARCHIVE HEAVY TEE..."
@@ -1042,7 +1127,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         <input
                           type="number"
                           step="any"
-                          required
                           value={editingMerch.price ?? 0}
                           onChange={e => setEditingMerch({ ...editingMerch, price: parseFloat(e.target.value) || 0 })}
                           className="w-full bg-[#111111] border border-[#242424] px-3 py-2 text-xs text-[#F5F5F5] focus:outline-none focus:border-white font-mono tabular-nums"
@@ -1163,7 +1247,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           <div className="space-y-2">
                             <input
                               type="text"
-                              required
                               value={editingMerch.coverImage || ''}
                               onChange={e => setEditingMerch({ ...editingMerch, coverImage: e.target.value })}
                               placeholder="Photo 1 URL or use upload button..."
@@ -1521,11 +1604,25 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       </button>
                       <button
                         type="submit"
-                        disabled={saving}
-                        className="px-6 py-2 bg-[#F5F5F5] text-[#050505] text-xs font-bold uppercase tracking-wider hover:bg-white flex items-center gap-2 cursor-pointer"
+                        disabled={saving || isUploadingImage}
+                        className="px-6 py-2.5 bg-[#F5F5F5] text-[#050505] text-xs font-bold uppercase tracking-wider hover:bg-white flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                       >
-                        <Check className="w-3.5 h-3.5" />
-                        <span>{saving ? 'Saving...' : 'Save Garment'}</span>
+                        {saving ? (
+                          <>
+                            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                            <span>Saving Garment...</span>
+                          </>
+                        ) : isUploadingImage ? (
+                          <>
+                            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                            <span>Optimizing Photo...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Check className="w-3.5 h-3.5" />
+                            <span>Save Garment</span>
+                          </>
+                        )}
                       </button>
                     </div>
                   </form>

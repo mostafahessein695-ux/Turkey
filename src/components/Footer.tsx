@@ -1,6 +1,6 @@
 import React from 'react';
 import { SiteSettings, NavTab } from '../types';
-import { Disc, ArrowUp } from 'lucide-react';
+import { ArrowUp, Instagram } from 'lucide-react';
 
 interface FooterProps {
   settings: SiteSettings;
@@ -67,7 +67,7 @@ export const Footer: React.FC<FooterProps> = ({
                 onClick={() => { onSelectTab('collections'); scrollToTop(); }}
                 className="text-left hover:text-[#F5F5F5] transition-colors"
               >
-                Capsule Collections
+                Collections
               </button>
               <button
                 onClick={() => { onSelectTab('about'); scrollToTop(); }}
@@ -90,18 +90,21 @@ export const Footer: React.FC<FooterProps> = ({
               Channels & Connect
             </h4>
             <div className="flex flex-col gap-2 text-sm text-[#A1A1A1]">
-              {settings.socialLinks?.map((link, i) => (
-                <a
-                  key={i}
-                  href={link.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-[#F5F5F5] transition-colors flex items-center justify-between group max-w-xs"
-                >
-                  <span>{link.platform}</span>
-                  <span className="text-xs text-[#707070] group-hover:text-[#A1A1A1]">{link.handle}</span>
-                </a>
-              ))}
+              <a
+                href="https://www.instagram.com/turvex.eg/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-[#F5F5F5] transition-colors flex items-center justify-between group max-w-xs"
+                title="Follow TURVEX on Instagram"
+              >
+                <div className="flex items-center gap-2.5">
+                  <Instagram className="w-4 h-4 text-[#A1A1A1] group-hover:text-white transition-colors shrink-0" />
+                  <span>Instagram</span>
+                </div>
+                <span className="text-xs font-mono text-[#707070] group-hover:text-[#A1A1A1] transition-colors">
+                  TURVEX.EG
+                </span>
+              </a>
             </div>
           </div>
         </div>

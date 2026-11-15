@@ -1,5 +1,6 @@
+import React, { useState } from 'react';
 import { MerchItem, SiteSettings } from '../types';
-import { ArrowRight, Sparkles, Layers } from 'lucide-react';
+import { ArrowRight, Sparkles, Layers, Eye, ShoppingBag } from 'lucide-react';
 
 interface CollectionsPageProps {
   products: MerchItem[];
@@ -13,6 +14,7 @@ interface StreetwearCollection {
   title: string;
   season: string;
   tagline: string;
+  specs: string;
   description: string;
   heroImage: string;
   categoryFilter: string;
@@ -25,6 +27,7 @@ const DEFAULT_CAPSULES: StreetwearCollection[] = [
     title: 'Capsule 01: The Heavyweight Foundation',
     season: 'Permanent Drop',
     tagline: '480GSM & 500GSM Boxy Silhouettes',
+    specs: '480GSM Combed Organic French Terry · Loopback Interior · Zero Drawstring Hood',
     description: 'Constructed from custom-spun 100% combed organic French terry and loopback fleece. Cut with an exaggerated drop shoulder and double-lined hood with zero drawstrings for pure minimalist architecture.',
     heroImage: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=1400&q=85',
     categoryFilter: 'hoodies',
@@ -35,6 +38,7 @@ const DEFAULT_CAPSULES: StreetwearCollection[] = [
     title: 'Capsule 02: Acid Wash & Mineral Patina',
     season: 'Autumn / Winter',
     tagline: '280GSM Hand-Washed Combed Cotton',
+    specs: '280GSM Heavy Jersey · 4-Stage Mineral Stone Wash · Reinforced Blind Hems',
     description: 'Each piece undergoes a 4-stage mineral stone wash, creating unique distressed grey and chalk patinas that age with character. Finished with raw blind hems and thick reinforced collars.',
     heroImage: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=1400&q=85',
     categoryFilter: 'tees',
@@ -45,6 +49,7 @@ const DEFAULT_CAPSULES: StreetwearCollection[] = [
     title: 'Capsule 03: Tactical Movement & Cargo',
     season: 'Limited Series',
     tagline: '450GSM Fleece & Ballistic Cordura',
+    specs: '450GSM Brushed Fleece · 1000D Cordura Accents · Magnetic German Hardware',
     description: 'Engineered for seamless transit. Wide-leg pooling sweatpants with internal bungee toggles, combined with waterproof 1000D Cordura utility crossbodies featuring German magnetic hardware.',
     heroImage: 'https://images.unsplash.com/photo-1552902865-b72c031ac5ea?auto=format&fit=crop&w=1400&q=85',
     categoryFilter: 'pants',
@@ -55,6 +60,7 @@ const DEFAULT_CAPSULES: StreetwearCollection[] = [
     title: 'Capsule 04: Dark Luxury Headwear',
     season: 'Core Accessories',
     tagline: 'Sculpted Foam & Merino Lambswool',
+    specs: 'Structured 5-Panel Foam · 3D High-Density Embroidery · Double-Ribbed Lambswool',
     description: '3D embroidered curved-brim trucker caps and double-layered ribbed lambswool beanies with laser-engraved metal bars. The final touch of quiet streetwear sophistication.',
     heroImage: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=1400&q=85',
     categoryFilter: 'headwear',

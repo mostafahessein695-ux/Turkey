@@ -33,14 +33,13 @@ const MainApp: React.FC = () => {
 
   // Database state
   const [merch, setMerch] = useState<MerchItem[]>([]);
+  const [shopCategory, setShopCategory] = useState<string>('all');
   const [settings, setSettings] = useState<SiteSettings>({
     heroHeadline: 'TURVEX. HEAVYWEIGHT STREETWEAR.',
     heroSubhead: 'Bespoke cuts, heavyweight knits, and limited capsule drops designed for everyday movement.',
     aboutBio: 'TURVEX is an independent streetwear atelier and garment archive focused on custom 480GSM heavyweight cotton silhouettes, stone acid washes, and durable minimalism.',
     socialLinks: [
-      { platform: 'Instagram', url: 'https://instagram.com/turvex.studio', handle: '@turvex.studio' },
-      { platform: 'WhatsApp', url: 'https://wa.me/201000000000', handle: 'Studio Direct' },
-      { platform: 'TikTok', url: 'https://tiktok.com/@turvex', handle: '@turvex' },
+      { platform: 'Instagram', url: 'https://www.instagram.com/turvex.eg/', handle: 'TURVEX.EG' },
     ],
   });
 
@@ -71,10 +70,14 @@ const MainApp: React.FC = () => {
 
   const handleTabChange = (tab: NavTab) => {
     setCurrentTab(tab);
+    if (tab === 'shop' || tab === 'merch') {
+      setShopCategory('all');
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleNavigateToShopWithCategory = (category: string) => {
+    setShopCategory(category);
     setCurrentTab('shop');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -114,6 +117,7 @@ const MainApp: React.FC = () => {
             {(currentTab === 'shop' || currentTab === 'merch') && (
               <ShopPage
                 products={merch}
+                initialCategory={shopCategory}
                 onOpenProductDetail={item => setSelectedProduct(item)}
               />
             )}

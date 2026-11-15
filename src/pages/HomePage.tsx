@@ -111,7 +111,7 @@ export const HomePage: React.FC<HomePageProps> = ({
         {/* Animated Scroll Indicator */}
         <div className="pt-8 flex flex-col items-center gap-2 z-10">
           <button
-            onClick={() => scrollToSection('featured-capsules')}
+            onClick={() => scrollToSection('new-arrivals')}
             className="group flex flex-col items-center gap-2 text-[10px] uppercase font-mono tracking-[0.25em] text-[#707070] hover:text-white transition-colors cursor-pointer"
           >
             <span>Scroll to Discover</span>
@@ -144,115 +144,8 @@ export const HomePage: React.FC<HomePageProps> = ({
         </div>
       </section>
 
-      {/* 3. FEATURED CAPSULE SHOWCASES */}
-      <section id="featured-capsules" className="max-w-7xl mx-auto px-4 sm:px-6 space-y-10">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-          <div className="space-y-2">
-            <span className="text-[11px] uppercase tracking-[0.25em] text-[#707070] font-mono block">
-              Curated Series
-            </span>
-            <h2 className="text-2xl sm:text-4xl font-black uppercase text-white tracking-tight">
-              Featured Collections
-            </h2>
-          </div>
-          <button
-            onClick={() => onSelectTab('collections')}
-            className="text-xs uppercase tracking-widest text-[#A1A1A1] hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
-          >
-            <span>View All Capsules</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
-          {/* Card 1 */}
-          <div
-            onClick={() => onSelectTab('shop')}
-            className="group relative aspect-[4/5] rounded-3xl overflow-hidden liquid-glass-card cursor-pointer"
-          >
-            <img
-              src={settings?.websiteImages?.capsuleHeavyweightImage || "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=1200&q=85"}
-              alt="Heavyweight Hoodie Series"
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 filter grayscale"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
-            <div className="absolute bottom-6 left-6 right-6 space-y-2">
-              <span className="text-[10px] uppercase font-mono tracking-widest text-[#CCCCCC]">
-                Capsule 01
-              </span>
-              <h3 className="text-xl font-bold uppercase text-white">
-                480GSM Boxy Hoodies
-              </h3>
-              <p className="text-xs text-[#A1A1A1] line-clamp-2">
-                Double-lined zero-drawstring hoods in Washed Black, Vintage Bone, and Raw Clay.
-              </p>
-              <div className="pt-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-white">
-                <span>Shop Hoodies</span>
-                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-              </div>
-            </div>
-          </div>
-
-          {/* Card 2 */}
-          <div
-            onClick={() => onSelectTab('shop')}
-            className="group relative aspect-[4/5] rounded-3xl overflow-hidden liquid-glass-card cursor-pointer"
-          >
-            <img
-              src={settings?.websiteImages?.capsuleAcidWashImage || "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=1200&q=85"}
-              alt="Acid Wash Tees"
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 filter grayscale"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
-            <div className="absolute bottom-6 left-6 right-6 space-y-2">
-              <span className="text-[10px] uppercase font-mono tracking-widest text-[#CCCCCC]">
-                Capsule 02
-              </span>
-              <h3 className="text-xl font-bold uppercase text-white">
-                Acid Wash &amp; Patina Tees
-              </h3>
-              <p className="text-xs text-[#A1A1A1] line-clamp-2">
-                280GSM stone-washed combed cotton with tight reinforced necklines.
-              </p>
-              <div className="pt-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-white">
-                <span>Shop Tees</span>
-                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-              </div>
-            </div>
-          </div>
-
-          {/* Card 3 */}
-          <div
-            onClick={() => onSelectTab('shop')}
-            className="group relative aspect-[4/5] rounded-3xl overflow-hidden liquid-glass-card cursor-pointer"
-          >
-            <img
-              src={settings?.websiteImages?.capsuleTacticalImage || "https://images.unsplash.com/photo-1552902865-b72c031ac5ea?auto=format&fit=crop&w=1200&q=85"}
-              alt="Tactical Sweatpants"
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 filter grayscale"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
-            <div className="absolute bottom-6 left-6 right-6 space-y-2">
-              <span className="text-[10px] uppercase font-mono tracking-widest text-[#CCCCCC]">
-                Capsule 03
-              </span>
-              <h3 className="text-xl font-bold uppercase text-white">
-                Wide-Leg Cargo Sweatpants
-              </h3>
-              <p className="text-xs text-[#A1A1A1] line-clamp-2">
-                450GSM brushed fleece featuring internal ankle toggles and zippered pockets.
-              </p>
-              <div className="pt-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-white">
-                <span>Shop Pants</span>
-                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 4. NEW ARRIVALS SECTION */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 space-y-8">
+      {/* 3. NEW ARRIVALS SECTION */}
+      <section id="new-arrivals" className="max-w-7xl mx-auto px-4 sm:px-6 space-y-8">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div className="space-y-2">
             <span className="text-[11px] uppercase tracking-[0.25em] text-[#707070] font-mono block">

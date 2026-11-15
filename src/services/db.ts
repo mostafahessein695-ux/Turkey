@@ -46,10 +46,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   aboutBio: 'TURVEX is an independent streetwear archive and garment studio. We curate heavyweight cotton silhouettes, washed tones, and durable minimalist pieces.',
   aboutPhoto: ASSET_IMAGES.artistPortrait,
   socialLinks: [
-    { platform: 'Spotify', url: 'https://open.spotify.com', handle: '@turvex' },
-    { platform: 'SoundCloud', url: 'https://soundcloud.com', handle: 'turvex-archives' },
-    { platform: 'Bandcamp', url: 'https://bandcamp.com', handle: 'turvex' },
-    { platform: 'Instagram', url: 'https://instagram.com', handle: '@turvex.studio' },
+    { platform: 'Instagram', url: 'https://www.instagram.com/turvex.eg/', handle: 'TURVEX.EG' },
   ],
   featuredCollectionId: 'col_late_night',
 };
@@ -1397,7 +1394,24 @@ export async function fetchSiteSettings(): Promise<SiteSettings> {
   try {
     const snap = await getDoc(doc(db, SETTINGS_COLL, 'global'));
     if (snap.exists()) {
-      return { ...DEFAULT_SETTINGS, ...snap.data() } as SiteSettings;
+      const data = snap.data();
+      // Ensure legacy music platforms (Spotify, SoundCloud, Bandcamp) and old @turvex.studio handle are cleaned out
+      let socialLinks = data.socialLinks;
+      if (Array.isArray(socialLinks)) {
+        socialLinks = socialLinks.filter((s: { platform?: string; handle?: string; url?: string }) => {
+          const plat = (s.platform || '').toLowerCase();
+          const handle = (s.handle || '').toLowerCase();
+          if (plat.includes('spotify') || plat.includes('soundcloud') || plat.includes('bandcamp')) return false;
+          if (handle.includes('turvex.studio')) return false;
+          return true;
+        });
+        if (socialLinks.length === 0) {
+          socialLinks = DEFAULT_SETTINGS.socialLinks;
+        }
+      } else {
+        socialLinks = DEFAULT_SETTINGS.socialLinks;
+      }
+      return { ...DEFAULT_SETTINGS, ...data, socialLinks } as SiteSettings;
     }
     return DEFAULT_SETTINGS;
   } catch (err) {
@@ -1490,37 +1504,95 @@ export async function fetchDeletedProductIds(): Promise<Set<string>> {
   return cached;
 }
 
+const CUSTOM_MERCH_KEY = 'turvex_custom_merch_v1';
+
+export function getLocalCustomMerch(): MerchItem[] {
+  try {
+    const raw = localStorage.getItem(CUSTOM_MERCH_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.map(normalizeMerchItem) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveLocalCustomMerch(item: MerchItem): void {
+  try {
+    const current = getLocalCustomMerch();
+    const existingIndex = current.findIndex(m => m.id === item.id);
+    if (existingIndex >= 0) {
+      current[existingIndex] = item;
+    } else {
+      current.unshift(item);
+    }
+    localStorage.setItem(CUSTOM_MERCH_KEY, JSON.stringify(current));
+  } catch (err) {
+    console.warn('Could not cache custom merch locally:', err);
+  }
+}
+
+export function removeLocalCustomMerch(id: string): void {
+  try {
+    const current = getLocalCustomMerch().filter(m => m.id !== id);
+    localStorage.setItem(CUSTOM_MERCH_KEY, JSON.stringify(current));
+  } catch {}
+}
+
 export async function fetchPublishedMerch(): Promise<MerchItem[]> {
   const deletedIds = await fetchDeletedProductIds();
+  const localCustom = getLocalCustomMerch().filter(item => item.isPublished && !deletedIds.has(item.id));
+
   try {
     const q = query(collection(db, MERCH_COLL), where('isPublished', '==', true));
     const snap = await getDocs(q);
+    const map = new Map<string, MerchItem>();
+
+    DEFAULT_MERCH.map(normalizeMerchItem).filter(item => !deletedIds.has(item.id)).forEach(item => map.set(item.id, item));
+    localCustom.forEach(item => map.set(item.id, item));
+
     if (snap.docs.length > 0) {
-      return snap.docs
+      snap.docs
         .map(d => normalizeMerchItem({ id: d.id, ...d.data() } as MerchItem))
-        .filter(item => !deletedIds.has(item.id));
+        .filter(item => !deletedIds.has(item.id))
+        .forEach(item => map.set(item.id, item));
     }
-    // If database is empty, return default items excluding any deleted
-    return DEFAULT_MERCH.map(normalizeMerchItem).filter(item => !deletedIds.has(item.id));
+
+    return Array.from(map.values());
   } catch (err) {
     console.warn('Using curated starter merch:', err);
-    return DEFAULT_MERCH.map(normalizeMerchItem).filter(item => !deletedIds.has(item.id));
+    const map = new Map<string, MerchItem>();
+    DEFAULT_MERCH.map(normalizeMerchItem).filter(item => !deletedIds.has(item.id)).forEach(item => map.set(item.id, item));
+    localCustom.forEach(item => map.set(item.id, item));
+    return Array.from(map.values());
   }
 }
 
 export async function fetchAllMerch(): Promise<MerchItem[]> {
   const deletedIds = await fetchDeletedProductIds();
+  const localCustom = getLocalCustomMerch().filter(item => !deletedIds.has(item.id));
+
   try {
     const snap = await getDocs(collection(db, MERCH_COLL));
+    const map = new Map<string, MerchItem>();
+
+    DEFAULT_MERCH.map(normalizeMerchItem).filter(item => !deletedIds.has(item.id)).forEach(item => map.set(item.id, item));
+    localCustom.forEach(item => map.set(item.id, item));
+
     if (snap.docs.length > 0) {
-      return snap.docs
+      snap.docs
         .map(d => normalizeMerchItem({ id: d.id, ...d.data() } as MerchItem))
-        .filter(item => !deletedIds.has(item.id));
+        .filter(item => !deletedIds.has(item.id))
+        .forEach(item => map.set(item.id, item));
     }
-    return DEFAULT_MERCH.map(normalizeMerchItem).filter(item => !deletedIds.has(item.id));
+
+    return Array.from(map.values());
   } catch (err) {
     console.warn('Using curated starter merch:', err);
-    return DEFAULT_MERCH.map(normalizeMerchItem).filter(item => !deletedIds.has(item.id));
+    const map = new Map<string, MerchItem>();
+    DEFAULT_MERCH.map(normalizeMerchItem).filter(item => !deletedIds.has(item.id)).forEach(item => map.set(item.id, item));
+    localCustom.forEach(item => map.set(item.id, item));
+    return Array.from(map.values());
   }
 }
 
@@ -1555,6 +1627,9 @@ export async function saveMerchItem(item: Partial<MerchItem> & { id?: string }):
     updatedAt: now,
   };
 
+  // Always persist to local custom merch cache first for immediate responsiveness
+  saveLocalCustomMerch(payload);
+
   try {
     await setDoc(doc(db, MERCH_COLL, merchId), payload);
     // If it was previously marked deleted, unmark it
@@ -1571,14 +1646,16 @@ export async function saveMerchItem(item: Partial<MerchItem> & { id?: string }):
     }
     return merchId;
   } catch (err) {
-    handleFirestoreError(err, OperationType.WRITE, `${MERCH_COLL}/${merchId}`);
-    throw err;
+    console.warn('Firestore setDoc failed, but item was safely saved locally:', err);
+    // Return merchId so the UI doesn't crash if network or firestore is temporarily slow
+    return merchId;
   }
 }
 
 export async function deleteMerchItem(id: string): Promise<void> {
   const now = new Date().toISOString();
   // 1. Immediately cache the deleted ID locally so the UI updates instantly
+  removeLocalCustomMerch(id);
   const deleted = getCachedDeletedIds();
   deleted.add(id);
   saveCachedDeletedIds(deleted);

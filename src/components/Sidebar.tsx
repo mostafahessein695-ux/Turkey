@@ -4,11 +4,14 @@ import { useAuth } from '../context/AuthContext';
 import { 
   Home, 
   ShoppingBag,
+  Layers,
+  Sparkles,
   Shield, 
   Lock, 
   LogOut, 
   Menu, 
   X,
+  Instagram,
   ExternalLink 
 } from 'lucide-react';
 
@@ -28,10 +31,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const { user, isAdmin, logout, adminEmail } = useAuth();
 
-  // Navigation items: Home and Store / Clothes
+  // Navigation items: Home, Shop, Collections, About
   const navItems: { id: NavTab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
     { id: 'home', label: 'Home', icon: Home },
-    { id: 'merch', label: 'Store / Clothes', icon: ShoppingBag },
+    { id: 'shop', label: 'Shop Garments', icon: ShoppingBag },
+    { id: 'collections', label: 'Collections', icon: Layers },
+    { id: 'about', label: 'About', icon: Sparkles },
   ];
 
   const handleNavClick = (tab: NavTab) => {
@@ -137,17 +142,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
               Channels
             </span>
             <div className="flex flex-wrap gap-2 text-[11px] text-[#A1A1A1]">
-              {settings.socialLinks.slice(0, 3).map((link, idx) => (
-                <a
-                  key={idx}
-                  href={link.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-white transition-colors"
-                >
-                  {link.platform}
-                </a>
-              ))}
+              <a
+                href="https://www.instagram.com/turvex.eg/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-white transition-colors flex items-center gap-1.5"
+              >
+                <Instagram className="w-3.5 h-3.5 text-[#A1A1A1]" />
+                <span>TURVEX.EG</span>
+              </a>
             </div>
           </div>
         )}

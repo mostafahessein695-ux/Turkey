@@ -6,6 +6,7 @@ import { SlidersHorizontal, Sparkles } from 'lucide-react';
 interface ShopPageProps {
   products: MerchItem[];
   onOpenProductDetail: (product: MerchItem) => void;
+  initialCategory?: string;
 }
 
 type CategoryFilter = 'all' | 'hoodies' | 'tees' | 'pants' | 'headwear' | 'accessories';
@@ -14,9 +15,21 @@ type SortOption = 'featured' | 'price-asc' | 'price-desc' | 'newest';
 export const ShopPage: React.FC<ShopPageProps> = ({
   products,
   onOpenProductDetail,
+  initialCategory,
 }) => {
-  const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>('all');
+  const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>(() => {
+    if (initialCategory && ['hoodies', 'tees', 'pants', 'headwear', 'accessories'].includes(initialCategory.toLowerCase())) {
+      return initialCategory.toLowerCase() as CategoryFilter;
+    }
+    return 'all';
+  });
   const [sortBy, setSortBy] = useState<SortOption>('featured');
+
+  React.useEffect(() => {
+    if (initialCategory && ['hoodies', 'tees', 'pants', 'headwear', 'accessories'].includes(initialCategory.toLowerCase())) {
+      setSelectedCategory(initialCategory.toLowerCase() as CategoryFilter);
+    }
+  }, [initialCategory]);
 
   const categories: { id: CategoryFilter; label: string }[] = [
     { id: 'all', label: 'All Garments' },

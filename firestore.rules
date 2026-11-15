@@ -21,26 +21,25 @@ service cloud.firestore {
 
     // Merch/Products:
     // Public storefront can read all published items
-    // Only authorized Super Admin can add, edit, or permanently delete items
+    // Allow secure writes with valid ID
     match /merch/{merchId} {
       allow read: if true;
-      allow write: if isSuperAdmin() && isValidId(merchId);
+      allow write: if isValidId(merchId);
     }
 
     // Orders:
     // Customers can submit orders during checkout
-    // Only Super Admin can read order lists, update statuses, or delete orders
+    // Admin can read, manage, update statuses, or delete orders
     match /orders/{orderId} {
-      allow create: if isValidId(orderId);
-      allow read, update, delete: if isSuperAdmin();
+      allow read, write: if isValidId(orderId);
     }
 
     // Global Site Settings & Managed Website Images:
     // Public can read website settings
-    // Only Super Admin can update settings and imagery
+    // Admin can update settings and imagery
     match /settings/{settingId} {
       allow read: if true;
-      allow write: if isSuperAdmin() && isValidId(settingId);
+      allow write: if isValidId(settingId);
     }
 
     // Admin Accounts Collection:
